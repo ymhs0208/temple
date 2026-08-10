@@ -1059,6 +1059,18 @@ export default function Home() {
         <b>帳號服務</b>
         <button
           onClick={() => {
+            location.href = "/coach";
+          }}
+        >
+          <span>✦</span>
+          <div>
+            <strong>AI 學習軍師</strong>
+            <small>依今天狀態取得可執行建議</small>
+          </div>
+          <em>›</em>
+        </button>
+        <button
+          onClick={() => {
             location.href = "/goal";
           }}
         >
