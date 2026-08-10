@@ -27,3 +27,11 @@ create table if not exists public.energy (
   prayer_planks integer not null default 0 check (prayer_planks >= 0),
   updated_at timestamptz not null default now()
 );
+
+-- The browser never accesses these tables directly. The server verifies a LINE ID token,
+-- then uses the service-role key for the narrowly scoped sync endpoint.
+alter table public.users enable row level security;
+alter table public.study_plans enable row level security;
+alter table public.daily_tasks enable row level security;
+alter table public.task_completions enable row level security;
+alter table public.energy enable row level security;
