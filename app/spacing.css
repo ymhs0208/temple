@@ -105,3 +105,28 @@
   color: #9a927f;
   font-size: 9px;
 }
+.daily-feature {
+  position: relative;
+  overflow: hidden;
+  margin: 0 0 15px;
+  padding: 17px;
+  border: 1px solid #d9bf78;
+  border-radius: 20px;
+  background: radial-gradient(circle at 92% 8%, #ffe6a2 0, transparent 24%), linear-gradient(135deg, #fff9e9, #f5ebce);
+  box-shadow: 0 10px 24px #9b76210d;
+}
+.daily-feature::after {
+  position: absolute;
+  right: -14px;
+  bottom: -30px;
+  color: #d6b3632e;
+  content: "文昌";
+  font: 60px Georgia, "Noto Serif TC", serif;
+}
+.daily-feature-heading { display: flex; position: relative; z-index: 1; align-items: center; gap: 9px; }
+.daily-feature-heading > span { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 10px; background: #c89b47; color: #fffdf5; font-size: 16px; }
+.daily-feature-heading b, .daily-feature-heading small { display: block; }
+.daily-feature-heading b { color: #755623; font-size: 13px; }
+.daily-feature-heading small { margin-top: 3px; color: #a18a5e; font-size: 9px; }
+.daily-feature > p { position: relative; z-index: 1; margin: 15px 3px; color: #5e5036; font: 17px/1.7 Georgia, "Noto Serif TC", serif; }
+.daily-feature-footer { position: relative; z-index: 1; display: flex; justify-content: space-between; color: #9a8050; font-size: 9px; }
