@@ -1,7 +1,9 @@
 import { verifyLineIdToken } from "@/lib/line";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+const timePattern = /^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/;
+const normalizeTime = (value: string | null | undefined, fallback: string) =>
+  value?.slice(0, 5) || fallback;
 
 async function resolveUser(idToken: string) {
   const identity = await verifyLineIdToken(idToken);
@@ -32,8 +34,8 @@ export async function GET(request: Request) {
     if (error) throw error;
     return Response.json({
       enabled: data?.notifications_enabled ?? true,
-      morningTime: data?.morning_time ?? "08:00",
-      eveningTime: data?.evening_time ?? "20:30",
+      morningTime: normalizeTime(data?.morning_time, "08:00"),
+      eveningTime: normalizeTime(data?.evening_time, "20:30"),
       timezone: data?.timezone ?? "Asia/Taipei",
     });
   } catch {
@@ -66,8 +68,8 @@ export async function POST(request: Request) {
       .upsert({
         user_id: user.id,
         notifications_enabled: enabled,
-        morning_time: morningTime,
-        evening_time: eveningTime,
+        morning_time: normalizeTime(morningTime, "08:00"),
+        evening_time: normalizeTime(eveningTime, "20:30"),
         timezone: "Asia/Taipei",
         updated_at: new Date().toISOString(),
       });
