@@ -1,72 +1,30 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const initialTasks = [
-  { subject: "數學", minutes: 45, detail: "弱點複習・一元二次方程式", done: true, color: "amber" },
-  { subject: "英文", minutes: 30, detail: "單字 + 閱讀練習", done: true, color: "jade" },
-  { subject: "自然", minutes: 30, detail: "化學基礎・酸鹼與鹽", done: false, color: "violet" },
-];
+type Subject = "數學" | "英文" | "國文" | "自然" | "社會";
+type Task = { subject: Subject; minutes: number; detail: string; done: boolean; color: string };
+const defaults: Task[] = [{ subject: "數學", minutes: 45, detail: "弱點複習・一元二次方程式", done: true, color: "amber" }, { subject: "英文", minutes: 30, detail: "單字 + 閱讀練習", done: true, color: "jade" }, { subject: "自然", minutes: 30, detail: "化學基礎・酸鹼與鹽", done: false, color: "violet" }];
+const colors: Record<Subject, string> = { 數學: "amber", 英文: "jade", 國文: "rose", 自然: "violet", 社會: "blue" };
+const details: Record<Subject, string> = { 數學: "題組練習", 英文: "單字 + 閱讀練習", 國文: "閱讀理解・重點整理", 自然: "觀念複習・題組練習", 社會: "重點複習・歷屆題" };
+
+function makePlan(hours: number, weak: Subject): Task[] {
+  const total = hours * 60; const other = (Object.keys(colors) as Subject[]).filter((item) => item !== weak); const subjects = total <= 60 ? [weak, other[0]] : [weak, other[0], other[1]]; const weakMinutes = Math.min(45, Math.max(30, Math.round(total * .42 / 15) * 15)); const rest = total - weakMinutes;
+  return subjects.map((subject, index) => ({ subject, minutes: index === 0 ? weakMinutes : Math.max(15, Math.round((rest / (subjects.length - 1)) / 15) * 15), detail: index === 0 ? `弱點加強・${details[subject]}` : details[subject], done: false, color: colors[subject] }));
+}
 
 export default function Home() {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [started, setStarted] = useState(false);
-  const completed = tasks.filter((task) => task.done).length;
-  const energy = 62 + completed * 10;
-  const planks = 10 + completed;
-  const progress = Math.round((completed / tasks.length) * 100);
-  const remaining = useMemo(() => tasks.filter((task) => !task.done).reduce((sum, task) => sum + task.minutes, 0), [tasks]);
-
-  function toggleTask(index: number) {
-    setTasks((current) => current.map((task, i) => i === index ? { ...task, done: !task.done } : task));
-  }
-
-  return (
-    <main>
-      <section className="app-shell">
-        <header className="topbar">
-          <div className="brand"><span className="brand-mark">✦</span><span>文昌同行</span></div>
-          <button className="avatar" aria-label="開啟個人設定">林</button>
-        </header>
-
-        <section className="hero">
-          <p className="eyebrow">30 日學習挑戰</p>
-          <h1>今天的每一步，<br /><em>都算數。</em></h1>
-          <div className="countdown"><span>距離國中會考</span><strong>29</strong><span>天</span></div>
-          <div className="hero-orb orb-one" /><div className="hero-orb orb-two" />
-        </section>
-
-        <section className="stats" aria-label="今日學習狀態">
-          <div className="stat"><span className="stat-icon fire">♨</span><div><small>今日能量</small><b>{energy}<i> / 100</i></b></div></div>
-          <div className="stat"><span className="stat-icon blossom">✿</span><div><small>祈福木牌</small><b>{planks}<i> 枚</i></b></div></div>
-        </section>
-
-        <section className="progress-card">
-          <div className="section-heading"><div><p className="eyebrow">DAY 29</p><h2>今日任務</h2></div><span className="completion">{completed} / {tasks.length} 完成</span></div>
-          <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
-
-          <div className="tasks">
-            {tasks.map((task, index) => (
-              <button className={`task ${task.done ? "done" : ""}`} onClick={() => toggleTask(index)} key={task.subject} aria-pressed={task.done}>
-                <span className={`check ${task.done ? "checked" : ""}`}>{task.done ? "✓" : ""}</span>
-                <span className={`subject-dot ${task.color}`} />
-                <span className="task-copy"><b>{task.subject}</b><small>{task.detail}</small></span>
-                <span className="minutes">{task.minutes}<small>分</small></span>
-              </button>
-            ))}
-          </div>
-          <div className="reward"><span>✿</span><p>完成今天全部任務，即可再獲得 <b>1 枚祈福木牌</b></p></div>
-        </section>
-
-        <section className="encouragement">
-          <span>「</span><p>{completed === tasks.length ? "今日圓滿完成。你的堅持，正在為未來開路。" : "不用一次做到完美，持續前進就是最好的答案。"}</p><span>」</span>
-        </section>
-
-        <button className="start-button" onClick={() => setStarted(!started)}>
-          <span>{started ? "✓" : "▶"}</span>{started ? "正在進行今日挑戰" : remaining ? `開始學習 · ${remaining} 分鐘` : "今日任務已全數完成"}
-        </button>
-        <nav><button className="active">⌂<span>今日</span></button><button>▥<span>進度</span></button><button>✿<span>祈福</span></button><button>◌<span>我的</span></button></nav>
-      </section>
-    </main>
-  );
+  const [tasks, setTasks] = useState<Task[]>(defaults); const [started, setStarted] = useState(false); const [showSetup, setShowSetup] = useState(false); const [hours, setHours] = useState(2); const [weak, setWeak] = useState<Subject>("數學"); const [goal, setGoal] = useState("穩定完成每天的讀書計畫"); const [ready, setReady] = useState(false);
+  useEffect(() => { const saved = localStorage.getItem("wenchang-mvp"); if (saved) { const data = JSON.parse(saved) as { tasks?: Task[]; hours?: number; weak?: Subject; goal?: string }; if (data.tasks) setTasks(data.tasks); if (data.hours) setHours(data.hours); if (data.weak) setWeak(data.weak); if (data.goal) setGoal(data.goal); } else setShowSetup(true); setReady(true); }, []);
+  useEffect(() => { if (ready) localStorage.setItem("wenchang-mvp", JSON.stringify({ tasks, hours, weak, goal })); }, [tasks, hours, weak, goal, ready]);
+  const completed = tasks.filter((task) => task.done).length; const energy = Math.min(100, 42 + completed * 10); const planks = 10 + completed; const progress = Math.round((completed / tasks.length) * 100); const remaining = useMemo(() => tasks.filter((task) => !task.done).reduce((sum, task) => sum + task.minutes, 0), [tasks]);
+  const toggleTask = (index: number) => setTasks((current) => current.map((task, i) => i === index ? { ...task, done: !task.done } : task));
+  const saveSetup = () => { setTasks(makePlan(hours, weak)); setShowSetup(false); setStarted(false); };
+  return <main><section className="app-shell"><header className="topbar"><div className="brand"><span className="brand-mark">✦</span><span>文昌同行</span></div><button className="avatar" onClick={() => setShowSetup(true)} aria-label="調整挑戰設定">林</button></header>
+    <section className="hero"><p className="eyebrow">30 日學習挑戰</p><h1>今天的每一步，<br /><em>都算數。</em></h1><div className="countdown"><span>距離國中會考</span><strong>29</strong><span>天</span></div><div className="hero-orb orb-one" /><div className="hero-orb orb-two" /></section>
+    <section className="stats" aria-label="今日學習狀態"><div className="stat"><span className="stat-icon fire">♨</span><div><small>今日能量</small><b>{energy}<i> / 100</i></b></div></div><div className="stat"><span className="stat-icon blossom">✿</span><div><small>祈福木牌</small><b>{planks}<i> 枚</i></b></div></div></section>
+    <section className="progress-card"><div className="section-heading"><div><p className="eyebrow">DAY 29 · {weak}加強</p><h2>今日任務</h2></div><span className="completion">{completed} / {tasks.length} 完成</span></div><div className="progress-track"><span style={{ width: `${progress}%` }} /></div><div className="tasks">{tasks.map((task, index) => <button className={`task ${task.done ? "done" : ""}`} onClick={() => toggleTask(index)} key={`${task.subject}-${index}`} aria-pressed={task.done}><span className={`check ${task.done ? "checked" : ""}`}>{task.done ? "✓" : ""}</span><span className={`subject-dot ${task.color}`} /><span className="task-copy"><b>{task.subject}</b><small>{task.detail}</small></span><span className="minutes">{task.minutes}<small>分</small></span></button>)}</div><div className="reward"><span>✿</span><p>完成今天全部任務，即可再獲得 <b>1 枚祈福木牌</b></p></div></section>
+    <section className="encouragement"><span>「</span><p>{completed === tasks.length ? "今日圓滿完成。你的堅持，正在為未來開路。" : `你的目標：${goal}`}</p><span>」</span></section><button className="start-button" onClick={() => setStarted(!started)}><span>{started ? "✓" : "▶"}</span>{started ? "正在進行今日挑戰" : remaining ? `開始學習 · ${remaining} 分鐘` : "今日任務已全數完成"}</button><button className="plan-link" onClick={() => setShowSetup(true)}>調整我的 30 天計畫</button><nav><button className="active">⌂<span>今日</span></button><button>▥<span>進度</span></button><button>✿<span>祈福</span></button><button>◌<span>我的</span></button></nav>
+    {showSetup && <div className="setup-backdrop" role="dialog" aria-modal="true" aria-label="建立學習挑戰"><section className="setup-card"><p className="eyebrow">你的第一天</p><h2>建立 30 天計畫</h2><p className="setup-note">先用固定規則安排，之後再讓 AI 幫你微調。</p><label>每天可讀多久？<select value={hours} onChange={(event) => setHours(Number(event.target.value))}><option value={1}>1 小時</option><option value={2}>2 小時</option><option value={3}>3 小時</option></select></label><label>最想加強的科目？<select value={weak} onChange={(event) => setWeak(event.target.value as Subject)}>{(Object.keys(colors) as Subject[]).map((subject) => <option key={subject}>{subject}</option>)}</select></label><label>這次挑戰的目標<input value={goal} onChange={(event) => setGoal(event.target.value)} maxLength={30} /></label><button className="start-button" onClick={saveSetup}>產生我的今日任務</button><button className="later" onClick={() => setShowSetup(false)}>稍後再說</button></section></div>}
+  </section></main>;
 }
