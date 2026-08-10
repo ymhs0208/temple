@@ -35,3 +35,9 @@ alter table public.study_plans enable row level security;
 alter table public.daily_tasks enable row level security;
 alter table public.task_completions enable row level security;
 alter table public.energy enable row level security;
+
+create table if not exists public.temple_visits (
+  id uuid primary key default gen_random_uuid(), user_id uuid not null references public.users(id) on delete cascade,
+  temple_code text not null, visited_at timestamptz not null default now(), unique(user_id, temple_code)
+);
+alter table public.temple_visits enable row level security;
