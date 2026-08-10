@@ -1,0 +1,5 @@
+.quick-actions { margin-bottom: 18px; }
+.quick-title { margin-bottom: 10px; }
+.quick-grid { gap: 12px; }
+.quick-grid button:nth-child(2) { margin-bottom: 3px; }
+.progress-card + .start-button { margin-top: 16px; }

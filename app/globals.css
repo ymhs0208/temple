@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./spacing.css";
 
 :root { --ink:#202723; --paper:#f8f4ea; --green:#173e32; --gold:#d7a955; --muted:#7d837b; }
 * { box-sizing:border-box; }
