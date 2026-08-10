@@ -3,3 +3,47 @@
 .quick-grid { gap: 12px; }
 .quick-grid button:nth-child(2) { margin-bottom: 3px; }
 .progress-card + .start-button { margin-top: 16px; }
+
+.topbar {
+  margin: -7px -5px 4px;
+  padding: 10px 11px;
+  border: 1px solid #e9dfc7;
+  border-radius: 16px;
+  background: linear-gradient(115deg, #fffdf7, #f8f0dc);
+  box-shadow: 0 5px 15px #583e1609;
+}
+.brand { gap: 9px; }
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #c89b47, #e5c777);
+  color: #fffdf6;
+  font-size: 17px;
+  box-shadow: 0 4px 9px #c89b4740;
+}
+.brand span:last-child {
+  color: #173e32;
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: 17px;
+  letter-spacing: .1em;
+}
+.line-login {
+  min-height: 30px;
+  padding: 7px 10px;
+  border-color: #bcd8c3;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #eff8ef, #f8fcf5);
+  color: #2f7a46;
+  font-size: 10px;
+  box-shadow: 0 3px 8px #2a72320d;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #fffaf0;
+  background: linear-gradient(145deg, #bb805e, #dfb37d);
+  box-shadow: 0 3px 8px #8a573326;
+}
