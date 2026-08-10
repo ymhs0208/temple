@@ -16,7 +16,13 @@ type CoachRequest = {
   };
 };
 
-type GeminiPayload = { output_text?: string };
+type GeminiPayload = {
+  output_text?: string;
+  steps?: Array<{
+    type?: string;
+    content?: Array<{ type?: string; text?: string }>;
+  }>;
+};
 
 const clean = (value: unknown, limit: number) =>
   typeof value === "string" ? value.trim().slice(0, limit) : "";
@@ -72,7 +78,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: "gemini-2.5-flash-lite",
         store: false,
-        generation_config: { max_output_tokens: 500, temperature: 0.55 },
+        generation_config: { max_output_tokens: 500, thinking_level: "minimal" },
         system_instruction:
           "你是『文昌同行』的 AI 學習軍師。以繁體中文回答，語氣溫和、務實、具體。只依據輸入的學習資料提出建議，不要捏造成績或承諾考試結果。給出一個可立即開始的下一步，並以條列列出短時段安排。若使用者焦慮，先肯定感受，再提供不超過 15 分鐘的起步行動。建議僅限學習規劃與鼓勵，不進行醫療、心理診斷或預言。不要嘗試修改任何資料或宣稱已修改計畫。",
         input,
@@ -87,7 +93,15 @@ export async function POST(request: Request) {
       );
     }
     const payload = (await upstream.json()) as GeminiPayload;
-    const answer = payload.output_text?.trim();
+    const answer =
+      payload.output_text?.trim() ||
+      (payload.steps ?? [])
+        .filter((step) => step.type === "model_output")
+        .flatMap((step) => step.content ?? [])
+        .filter((content) => content.type === "text")
+        .map((content) => content.text ?? "")
+        .join("\n")
+        .trim();
     if (!answer) throw new Error("Empty AI response");
     return Response.json({ answer });
   } catch (error) {
