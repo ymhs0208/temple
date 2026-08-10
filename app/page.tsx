@@ -977,8 +977,8 @@ export default function Home() {
       setEveningTime(draftEveningTime);
       setEditingNotifications(false);
       setSyncStatus("通知偏好已儲存至 LINE 帳號");
-    } catch {
-      setSyncStatus("通知偏好暫時無法儲存，請稍後再試");
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : "通知偏好暫時無法儲存，請稍後再試。");
     } finally {
       setSavingNotifications(false);
     }
