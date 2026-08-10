@@ -6,6 +6,8 @@ import liff from "@line/liff";
 type Task = { subject: string; minutes: number; detail: string; done: boolean; color: string };
 type Tab = "today" | "progress" | "prayer" | "profile";
 type SavedPlan = { tasks?: Task[]; challengeName?: string; examDate?: string; goal?: string; hours?: number; weak?: string; templeVisits?: string[] };
+// LIFF IDs are public client identifiers, unlike channel secrets or access tokens.
+const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
 const defaultTasks: Task[] = [
   { subject: "數學", minutes: 45, detail: "弱點複習與錯題整理", done: false, color: "amber" },
   { subject: "英文", minutes: 30, detail: "單字＋閱讀練習", done: false, color: "jade" },
@@ -20,7 +22,7 @@ export default function Home() {
   const [lineName, setLineName] = useState<string | null>(null); const [liffId, setLiffId] = useState<string | null>(null); const [syncStatus, setSyncStatus] = useState(""); const [ready, setReady] = useState(false);
   useEffect(() => { const stored = localStorage.getItem("wenchang-mvp"); if (stored) try { const data = JSON.parse(stored) as SavedPlan; if (data.tasks?.length) setTasks(data.tasks); if (data.challengeName) setName(data.challengeName); if (data.examDate) setExamDate(data.examDate); if (data.goal) setGoal(data.goal); if (data.hours) setHours(data.hours); if (data.weak) setWeak(data.weak); if (data.templeVisits) setVisits(data.templeVisits); } catch {} setReady(true); }, []);
   useEffect(() => { if (ready) localStorage.setItem("wenchang-mvp", JSON.stringify({ tasks, challengeName: name, examDate, goal, hours, weak, templeVisits: visits })); }, [tasks, name, examDate, goal, hours, weak, visits, ready]);
-  useEffect(() => { fetch("/api/config").then(response => response.json()).then(data => setLiffId(typeof data.liffId === "string" ? data.liffId : null)).catch(() => setSyncStatus("LINE 設定暫時無法讀取")); }, []);
+  useEffect(() => { setLiffId(LIFF_ID); }, []);
   useEffect(() => { if (!liffId) return; liff.init({ liffId }).then(() => { if (liff.isLoggedIn()) { const token = liff.getIDToken(); if (token) setIdToken(token); setLineName(liff.getDecodedIDToken()?.name ?? null); } }).catch(() => setSyncStatus("LINE 服務暫時無法使用")); }, [liffId]);
   const daysLeft = Math.max(0, Math.ceil((new Date(`${examDate}T00:00:00`).getTime() - Date.now()) / 86400000)); const completed = tasks.filter(t => t.done).length;
   const progress = Math.round(completed / tasks.length * 100); const energy = Math.min(100, 42 + completed * 10 + visits.length * 3); const planks = 10 + completed + visits.length;
