@@ -1028,6 +1028,7 @@ export default function Home() {
             </div>
           )}
           <small className="notification-timezone">台灣時間・設定會同步至你的 LINE 帳號</small>
+          {lineName && <button className="notification-test" onClick={reminder} disabled={!remindersEnabled}>{remindersEnabled ? "傳送 LINE OA 測試提醒" : "請先啟用提醒後再測試"}<span>›</span></button>}
         </section>
       </div>
       <section className="service-section">
@@ -1060,16 +1061,6 @@ export default function Home() {
               {lineName
                 ? "將目前任務與完成狀態存入雲端"
                 : "跨裝置保存進度與巡禮徽章"}
-            </small>
-          </div>
-          <em>›</em>
-        </button>
-        <button onClick={reminder} disabled={!remindersEnabled}>
-          <span>◌</span>
-          <div>
-            <strong>LINE OA 學習提醒</strong>
-            <small>
-              {remindersEnabled ? "傳送測試提醒至 LINE" : "通知已在此裝置關閉"}
             </small>
           </div>
           <em>›</em>

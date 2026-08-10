@@ -173,3 +173,5 @@
 .notification-login-notice { margin: 11px 0 0; border-left: 3px solid #c69237; border-radius: 7px; padding: 8px 9px; background: #fff3d7; color: #76541d; font-size: 10px; font-weight: 700; line-height: 1.45; }
 .account-list .notification-preference, .notification-heading, .notification-heading > div { text-align: left; }
 .notification-heading { justify-content: space-between; }
+.notification-test { display: flex; width: 100%; align-items: center; justify-content: space-between; margin-top: 11px; border: 1px solid #c4d7c8; border-radius: 10px; padding: 10px 11px; background: #eff7ee; color: #2f7047; font-size: 10px; font-weight: 700; cursor: pointer; }
+.notification-test span { color: #4b9261; font-size: 19px; line-height: .6; }.notification-test:disabled { border-color: #e2ddd1; background: #f6f4ef; color: #a5aaa2; cursor: default; }
