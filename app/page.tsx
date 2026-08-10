@@ -10,6 +10,7 @@ type Task = {
   done: boolean;
   color: string;
 };
+type LearningDay = { date: string; minutes: number };
 type Tab = "today" | "progress" | "prayer" | "profile";
 type FocusSession = {
   taskIndex: number;
@@ -74,6 +75,8 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [weeklyMinutes, setWeeklyMinutes] = useState(0);
   const [streakDays, setStreakDays] = useState(0);
+  const [learningDays, setLearningDays] = useState<LearningDay[]>([]);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [morningTime, setMorningTime] = useState("08:00");
   const [eveningTime, setEveningTime] = useState("20:30");
@@ -263,6 +266,7 @@ export default function Home() {
       .then((data) => {
         setWeeklyMinutes(data.weeklyMinutes ?? 0);
         setStreakDays(data.streakDays ?? 0);
+        setLearningDays(Array.isArray(data.days) ? data.days : []);
       })
       .catch(() => undefined);
   }, [idToken, tasks]);
@@ -529,6 +533,25 @@ export default function Home() {
       {syncStatus && <p className="reminder-status">{syncStatus}</p>}
     </>
   );
+  const todayMinutes = tasks
+    .filter((task) => task.done)
+    .reduce((sum, task) => sum + task.minutes, 0);
+  const calendarData = useMemo(() => {
+    const records = new Map(learningDays.map((day) => [day.date, day.minutes]));
+    const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
+    if (todayMinutes) records.set(todayKey, todayMinutes);
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells = Array.from({ length: firstWeekday + daysInMonth }, (_, index) => {
+      if (index < firstWeekday) return null;
+      const day = index - firstWeekday + 1;
+      const date = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      return { day, date, minutes: records.get(date) ?? 0, isToday: date === todayKey, isFuture: date > todayKey };
+    });
+    return { cells, monthLabel: new Intl.DateTimeFormat("zh-TW", { year: "numeric", month: "long" }).format(calendarMonth), activeDays: [...records.keys()].filter((date) => date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)).length };
+  }, [calendarMonth, learningDays, todayMinutes]);
   const progressView = (
     <section className="journey">
       <p className="eyebrow">動態目標進度</p>
@@ -560,6 +583,23 @@ export default function Home() {
         </b>
         <span>小步累積，會比一次衝刺走得更遠。</span>
       </div>
+      <section className="learning-calendar" aria-label="行事曆式學習進度">
+        <div className="calendar-header">
+          <div>
+            <p>學習行事曆</p>
+            <b>{calendarData.monthLabel}</b>
+          </div>
+          <div className="calendar-controls">
+            <button aria-label="上個月" onClick={() => setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}>‹</button>
+            <button className="calendar-today" onClick={() => setCalendarMonth(new Date())}>本月</button>
+            <button aria-label="下個月" onClick={() => setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}>›</button>
+          </div>
+        </div>
+        <div className="calendar-legend"><span><i className="legend-done" />完成學習</span><span><i className="legend-today" />今天</span><b>{calendarData.activeDays} 天已累積</b></div>
+        <div className="calendar-weekdays">{["一", "二", "三", "四", "五", "六", "日"].map((day) => <span key={day}>{day}</span>)}</div>
+        <div className="calendar-grid">{calendarData.cells.map((cell, index) => cell ? <div key={cell.date} className={`calendar-day ${cell.minutes ? "has-learning" : ""} ${cell.isToday ? "is-today" : ""} ${cell.isFuture ? "is-future" : ""}`}><b>{cell.day}</b>{cell.minutes ? <small>{cell.minutes} 分</small> : <i>{cell.isToday ? "今天" : ""}</i>}</div> : <span key={`blank-${index}`} aria-hidden="true" />)}</div>
+        <p className="calendar-note">有色日期代表已完成學習；點亮每一天，讓努力留下足跡。</p>
+      </section>
       <div className="empty-panel">
         <b>需要調整計畫嗎？</b>
         <p>
@@ -637,9 +677,6 @@ export default function Home() {
       </div>
     </section>
   );
-  const todayMinutes = tasks
-    .filter((task) => task.done)
-    .reduce((sum, task) => sum + task.minutes, 0);
   const learningBadges = [
     {
       icon: "✦",
