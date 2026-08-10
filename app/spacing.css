@@ -149,3 +149,17 @@
 .calendar-day.has-learning { background: linear-gradient(145deg, #dceee1, #edf7e8); color: #2e7654; box-shadow: inset 0 0 0 1px #b9d9bf; }.calendar-day.has-learning small { color: #4d8b69; }
 .calendar-day.is-today { box-shadow: inset 0 0 0 1.5px #c69b48; }.calendar-day.is-future { background: #fbfaf6; color: #c5c7c1; }.calendar-day.is-future small { display: none; }
 .calendar-note { margin: 11px 2px 0; color: #93988f; font-size: 9px; line-height: 1.5; }
+.account-list .notification-preference { display: block; padding: 14px 15px; border: 0; background: #fbfaf5; }
+.notification-heading { display: flex; align-items: center; justify-content: space-between; }
+.notification-heading > div { display: block; padding: 0; border: 0; }
+.notification-heading span, .notification-heading small { display: block; }
+.notification-heading span { color: #667267; font-size: 11px; }
+.notification-heading small { margin-top: 3px; color: #9b927f; font-size: 9px; }
+.notification-heading button { border: 1px solid #d9caa7; border-radius: 8px; padding: 6px 10px; background: #fffaf0; color: #896930; font-size: 10px; font-weight: 700; cursor: pointer; }
+.notification-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.account-list .notification-summary > div { display: block; padding: 9px 10px; border: 1px solid #e8e2d6; border-radius: 10px; background: #fffef9; }
+.notification-summary span, .notification-summary b { display: block; }.notification-summary span { color: #8d958c; font-size: 9px; }.notification-summary b { margin-top: 4px; color: #3c5748; font-size: 12px; }
+.notification-timezone { display: block; margin-top: 10px; color: #9d9689; font-size: 9px; }
+.notification-toggle { display: flex; align-items: center; justify-content: space-between; margin: 13px 0 10px; color: #657168; font-size: 10px; }.notification-toggle input { accent-color: #4d8468; }
+.account-list .notification-times { margin-top: 0; padding: 0; background: transparent; }.account-list .notification-times > label { display: grid; gap: 5px; padding: 0; border: 0; }.account-list .notification-times label span { color: #848c84; font-size: 10px; }
+.notification-actions { display: flex; gap: 7px; margin-top: 12px; }.notification-actions button { flex: 1; border-radius: 9px; padding: 10px; font-size: 11px; font-weight: 700; cursor: pointer; }.notification-actions .cancel { border: 1px solid #ded9cc; background: #fffef9; color: #798177; }.notification-actions .save { border: 0; background: #214d3d; color: #fffdf7; }.notification-actions .save:disabled { opacity: .6; }

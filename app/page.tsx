@@ -80,7 +80,11 @@ export default function Home() {
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [morningTime, setMorningTime] = useState("08:00");
   const [eveningTime, setEveningTime] = useState("20:30");
-  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [editingNotifications, setEditingNotifications] = useState(false);
+  const [savingNotifications, setSavingNotifications] = useState(false);
+  const [draftRemindersEnabled, setDraftRemindersEnabled] = useState(true);
+  const [draftMorningTime, setDraftMorningTime] = useState("08:00");
+  const [draftEveningTime, setDraftEveningTime] = useState("20:30");
   const [showSettlement, setShowSettlement] = useState(false);
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
   const [focusSeconds, setFocusSeconds] = useState(0);
@@ -278,18 +282,12 @@ export default function Home() {
         setRemindersEnabled(data.enabled ?? true);
         setMorningTime(data.morningTime ?? "08:00");
         setEveningTime(data.eveningTime ?? "20:30");
+        setDraftRemindersEnabled(data.enabled ?? true);
+        setDraftMorningTime(data.morningTime ?? "08:00");
+        setDraftEveningTime(data.eveningTime ?? "20:30");
       })
-      .catch(() => undefined)
-      .finally(() => setPreferencesLoaded(true));
+      .catch(() => undefined);
   }, [idToken]);
-  useEffect(() => {
-    if (!idToken || !preferencesLoaded) return;
-    fetch("/api/preferences", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ idToken, enabled: remindersEnabled, morningTime, eveningTime }),
-    }).catch(() => undefined);
-  }, [idToken, preferencesLoaded, remindersEnabled, morningTime, eveningTime]);
   const daysLeft = Math.max(
     0,
     Math.ceil(
@@ -926,6 +924,40 @@ export default function Home() {
       </div>
     </section>
   );
+  const formatReminderTime = (value: string) => {
+    const [hour, minute] = value.split(":").map(Number);
+    return `${hour >= 12 ? "下午" : "上午"} ${String(hour % 12 || 12).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  };
+  const beginEditNotifications = () => {
+    setDraftRemindersEnabled(remindersEnabled);
+    setDraftMorningTime(morningTime);
+    setDraftEveningTime(eveningTime);
+    setEditingNotifications(true);
+  };
+  const saveNotifications = async () => {
+    if (!idToken) {
+      setSyncStatus("請先登入 LINE，才能儲存通知偏好");
+      return;
+    }
+    setSavingNotifications(true);
+    try {
+      const response = await fetch("/api/preferences", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ idToken, enabled: draftRemindersEnabled, morningTime: draftMorningTime, eveningTime: draftEveningTime }),
+      });
+      if (!response.ok) throw new Error("Save failed");
+      setRemindersEnabled(draftRemindersEnabled);
+      setMorningTime(draftMorningTime);
+      setEveningTime(draftEveningTime);
+      setEditingNotifications(false);
+      setSyncStatus("通知偏好已儲存至 LINE 帳號");
+    } catch {
+      setSyncStatus("通知偏好暫時無法儲存，請稍後再試");
+    } finally {
+      setSavingNotifications(false);
+    }
+  };
   const profileView = (
     <section className="journey profile-page">
       <p className="eyebrow">我的帳號與服務</p>
@@ -961,40 +993,40 @@ export default function Home() {
           <span>雲端同步</span>
           <b>{lineName ? "已啟用" : "尚未啟用"}</b>
         </div>
-        <div>
-          <span>通知偏好</span>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={remindersEnabled}
-              onChange={(e) => setRemindersEnabled(e.target.checked)}
-            />
-            <i />
-          </label>
-        </div>
-        <div className="notification-times">
-          <div>
-            <span>早晨提醒</span>
-            <input
-              aria-label="早晨提醒時間"
-              type="time"
-              value={morningTime}
-              disabled={!remindersEnabled}
-              onChange={(event) => setMorningTime(event.target.value)}
-            />
+        <section className="notification-preference">
+          <div className="notification-heading">
+            <div>
+              <span>通知偏好</span>
+              <small>{remindersEnabled ? "提醒已啟用" : "提醒已關閉"}</small>
+            </div>
+            {!editingNotifications && <button onClick={beginEditNotifications}>修改</button>}
           </div>
-          <div>
-            <span>晚間提醒</span>
-            <input
-              aria-label="晚間提醒時間"
-              type="time"
-              value={eveningTime}
-              disabled={!remindersEnabled}
-              onChange={(event) => setEveningTime(event.target.value)}
-            />
-          </div>
-          <small>台灣時間・設定會同步至你的 LINE 帳號</small>
-        </div>
+          {editingNotifications ? (
+            <>
+              <label className="notification-toggle">
+                <span>啟用 LINE 學習提醒</span>
+                <input type="checkbox" checked={draftRemindersEnabled} onChange={(event) => setDraftRemindersEnabled(event.target.checked)} />
+              </label>
+              <div className="notification-times">
+                <label>
+                  <span>早晨提醒</span>
+                  <input aria-label="早晨提醒時間" type="time" value={draftMorningTime} disabled={!draftRemindersEnabled} onChange={(event) => setDraftMorningTime(event.target.value)} />
+                </label>
+                <label>
+                  <span>晚間提醒</span>
+                  <input aria-label="晚間提醒時間" type="time" value={draftEveningTime} disabled={!draftRemindersEnabled} onChange={(event) => setDraftEveningTime(event.target.value)} />
+                </label>
+              </div>
+              <div className="notification-actions"><button className="cancel" onClick={() => setEditingNotifications(false)}>取消</button><button className="save" onClick={saveNotifications} disabled={savingNotifications}>{savingNotifications ? "儲存中…" : "儲存設定"}</button></div>
+            </>
+          ) : (
+            <div className="notification-summary">
+              <div><span>早晨提醒</span><b>{formatReminderTime(morningTime)}</b></div>
+              <div><span>晚間提醒</span><b>{formatReminderTime(eveningTime)}</b></div>
+            </div>
+          )}
+          <small className="notification-timezone">台灣時間・設定會同步至你的 LINE 帳號</small>
+        </section>
       </div>
       <section className="service-section">
         <b>帳號服務</b>
