@@ -17,11 +17,7 @@ type CoachRequest = {
 };
 
 type GeminiPayload = {
-  output_text?: string;
-  steps?: Array<{
-    type?: string;
-    content?: Array<{ type?: string; text?: string }>;
-  }>;
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
 };
 
 const clean = (value: unknown, limit: number) =>
@@ -68,7 +64,7 @@ export async function POST(request: Request) {
   const input = JSON.stringify({ userRequest: message, learningProfile: profile });
   try {
     const upstream = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/interactions",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
       {
       method: "POST",
       headers: {
@@ -76,12 +72,8 @@ export async function POST(request: Request) {
         "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
-        model: "gemini-2.5-flash-lite",
-        store: false,
-        generation_config: { max_output_tokens: 500 },
-        system_instruction:
-          "你是『文昌同行』的 AI 學習軍師。以繁體中文回答，語氣溫和、務實、具體。只依據輸入的學習資料提出建議，不要捏造成績或承諾考試結果。給出一個可立即開始的下一步，並以條列列出短時段安排。若使用者焦慮，先肯定感受，再提供不超過 15 分鐘的起步行動。建議僅限學習規劃與鼓勵，不進行醫療、心理診斷或預言。不要嘗試修改任何資料或宣稱已修改計畫。",
-        input,
+        contents: [{ parts: [{ text: `你是『文昌同行』的 AI 學習軍師。以繁體中文回答，語氣溫和、務實、具體。只依據輸入的學習資料提出建議，不要捏造成績或承諾考試結果。給出一個可立即開始的下一步，並以條列列出短時段安排。若使用者焦慮，先肯定感受，再提供不超過 15 分鐘的起步行動。建議僅限學習規劃與鼓勵，不進行醫療、心理診斷或預言。不要嘗試修改任何資料或宣稱已修改計畫。\n\n${input}` }] }],
+        generationConfig: { maxOutputTokens: 500, temperature: 0.55 },
       }),
       },
     );
@@ -99,15 +91,11 @@ export async function POST(request: Request) {
       );
     }
     const payload = (await upstream.json()) as GeminiPayload;
-    const answer =
-      payload.output_text?.trim() ||
-      (payload.steps ?? [])
-        .filter((step) => step.type === "model_output")
-        .flatMap((step) => step.content ?? [])
-        .filter((content) => content.type === "text")
-        .map((content) => content.text ?? "")
-        .join("\n")
-        .trim();
+    const answer = (payload.candidates ?? [])
+      .flatMap((candidate) => candidate.content?.parts ?? [])
+      .map((part) => part.text ?? "")
+      .join("\n")
+      .trim();
     if (!answer) throw new Error("Empty AI response");
     return Response.json({ answer });
   } catch (error) {
