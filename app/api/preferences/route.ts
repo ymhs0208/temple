@@ -73,9 +73,15 @@ export async function POST(request: Request) {
       });
     if (preferenceError) throw preferenceError;
     return Response.json({ ok: true, enabled, morningTime, eveningTime });
-  } catch {
+  } catch (error) {
+    console.error("Unable to save LINE notification preference", error);
+    const message = error instanceof Error ? error.message : "";
     return Response.json(
-      { error: "Unable to save preference" },
+      {
+        error: message.includes("LINE")
+          ? "LINE 登入資訊已失效，請重新從 LIFF 開啟並登入。"
+          : "通知偏好暫時無法儲存，請稍後再試。",
+      },
       { status: 500 },
     );
   }

@@ -970,7 +970,8 @@ export default function Home() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ idToken, enabled: draftRemindersEnabled, morningTime: draftMorningTime, eveningTime: draftEveningTime }),
       });
-      if (!response.ok) throw new Error("Save failed");
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "通知偏好暫時無法儲存，請稍後再試。");
       setRemindersEnabled(draftRemindersEnabled);
       setMorningTime(draftMorningTime);
       setEveningTime(draftEveningTime);
