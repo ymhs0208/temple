@@ -167,3 +167,5 @@
 .wish-card .wall-link b { color: #62471e; font-size: 12px; }
 .wish-card .wall-link small { color: #7b6744; font-size: 10px; }
 .wish-card .wall-link i { color: #846023; }
+.notification-login { display: flex; width: 100%; align-items: center; justify-content: space-between; margin-top: 11px; border: 1px dashed #c8b486; border-radius: 10px; padding: 10px 11px; background: #fffaf0; color: #77592c; font-size: 10px; font-weight: 700; cursor: pointer; }
+.notification-login span { color: #b1873a; font-size: 19px; line-height: .6; }

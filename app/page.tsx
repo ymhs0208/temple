@@ -997,11 +997,13 @@ export default function Home() {
           <div className="notification-heading">
             <div>
               <span>通知偏好</span>
-              <small>{remindersEnabled ? "提醒已啟用" : "提醒已關閉"}</small>
+              <small>{lineName ? (remindersEnabled ? "提醒已啟用" : "提醒已關閉") : "請先登入 LINE，才能儲存提醒設定"}</small>
             </div>
-            {!editingNotifications && <button onClick={beginEditNotifications}>修改</button>}
+            {!editingNotifications && <button onClick={lineName ? beginEditNotifications : login}>{lineName ? "修改" : "登入後設定"}</button>}
           </div>
-          {editingNotifications ? (
+          {!lineName ? (
+            <button className="notification-login" onClick={login}>登入 LINE 後設定早晚提醒 <span>›</span></button>
+          ) : editingNotifications ? (
             <>
               <label className="notification-toggle">
                 <span>啟用 LINE 學習提醒</span>
