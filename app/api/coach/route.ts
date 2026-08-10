@@ -86,10 +86,16 @@ export async function POST(request: Request) {
       },
     );
     if (!upstream.ok) {
-      console.error("Coach API failed", upstream.status);
+      const detail = await upstream.text();
+      console.error("Coach API failed", upstream.status, detail.slice(0, 500));
       return Response.json(
-        { error: "AI 軍師暫時忙碌，請稍後再試。" },
-        { status: 502 },
+        {
+          error:
+            upstream.status === 401 || upstream.status === 403
+              ? "AI 軍師的服務金鑰尚未取得使用權限。"
+              : "AI 軍師暫時忙碌，請稍後再試。",
+        },
+        { status: upstream.status },
       );
     }
     const payload = (await upstream.json()) as GeminiPayload;
