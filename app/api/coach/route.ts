@@ -16,26 +16,13 @@ type CoachRequest = {
   };
 };
 
-type ResponsesPayload = {
-  output_text?: string;
-  output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
-};
+type GeminiPayload = { output_text?: string };
 
 const clean = (value: unknown, limit: number) =>
   typeof value === "string" ? value.trim().slice(0, limit) : "";
 
-function responseText(payload: ResponsesPayload) {
-  if (payload.output_text?.trim()) return payload.output_text.trim();
-  return (payload.output ?? [])
-    .flatMap((item) => item.content ?? [])
-    .filter((item) => item.type === "output_text")
-    .map((item) => item.text ?? "")
-    .join("\n")
-    .trim();
-}
-
 export async function POST(request: Request) {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return Response.json(
       { error: "AI 學習軍師尚未完成服務設定，請稍後再試。" },
@@ -74,22 +61,24 @@ export async function POST(request: Request) {
 
   const input = JSON.stringify({ userRequest: message, learningProfile: profile });
   try {
-    const upstream = await fetch("https://api.openai.com/v1/responses", {
+    const upstream = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/interactions",
+      {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        authorization: `Bearer ${apiKey}`,
+        "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
-        model: "gpt-5.6-luna",
+        model: "gemini-2.5-flash-lite",
         store: false,
-        max_output_tokens: 500,
-        text: { verbosity: "low" },
-        instructions:
+        generation_config: { max_output_tokens: 500, temperature: 0.55 },
+        system_instruction:
           "你是『文昌同行』的 AI 學習軍師。以繁體中文回答，語氣溫和、務實、具體。只依據輸入的學習資料提出建議，不要捏造成績或承諾考試結果。給出一個可立即開始的下一步，並以條列列出短時段安排。若使用者焦慮，先肯定感受，再提供不超過 15 分鐘的起步行動。建議僅限學習規劃與鼓勵，不進行醫療、心理診斷或預言。不要嘗試修改任何資料或宣稱已修改計畫。",
         input,
       }),
-    });
+      },
+    );
     if (!upstream.ok) {
       console.error("Coach API failed", upstream.status);
       return Response.json(
@@ -97,8 +86,8 @@ export async function POST(request: Request) {
         { status: 502 },
       );
     }
-    const payload = (await upstream.json()) as ResponsesPayload;
-    const answer = responseText(payload);
+    const payload = (await upstream.json()) as GeminiPayload;
+    const answer = payload.output_text?.trim();
     if (!answer) throw new Error("Empty AI response");
     return Response.json({ answer });
   } catch (error) {
