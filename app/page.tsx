@@ -997,7 +997,7 @@ export default function Home() {
           <div className="notification-heading">
             <div>
               <span>通知偏好</span>
-              <small>{lineName ? (remindersEnabled ? "雲端同步已啟用提醒" : "雲端同步中・提醒已關閉") : "尚未啟用雲端同步"}</small>
+              <b className="notification-sync-state">{lineName ? (remindersEnabled ? "已啟用" : "已關閉") : "尚未啟用"}</b>
             </div>
             {!editingNotifications && <button onClick={lineName ? beginEditNotifications : login}>{lineName ? "修改" : "登入後設定"}</button>}
           </div>

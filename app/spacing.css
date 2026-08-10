@@ -152,9 +152,10 @@
 .account-list .notification-preference { display: block; padding: 14px 15px; border: 0; background: #fbfaf5; }
 .notification-heading { display: flex; align-items: center; justify-content: space-between; }
 .notification-heading > div { display: block; padding: 0; border: 0; }
-.notification-heading span, .notification-heading small { display: block; }
+.notification-heading span, .notification-heading small, .notification-heading .notification-sync-state { display: block; }
 .notification-heading span { color: #667267; font-size: 11px; }
 .notification-heading small { margin-top: 3px; color: #9b927f; font-size: 9px; }
+.notification-heading .notification-sync-state { margin-top: 4px; color: #355043; font-size: 12px; }
 .notification-heading button { border: 1px solid #d9caa7; border-radius: 8px; padding: 6px 10px; background: #fffaf0; color: #896930; font-size: 10px; font-weight: 700; cursor: pointer; }
 .notification-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
 .account-list .notification-summary > div { display: block; padding: 9px 10px; border: 1px solid #e8e2d6; border-radius: 10px; background: #fffef9; }
