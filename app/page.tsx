@@ -1002,7 +1002,7 @@ export default function Home() {
             {!editingNotifications && <button onClick={lineName ? beginEditNotifications : login}>{lineName ? "修改" : "登入後設定"}</button>}
           </div>
           {!lineName ? (
-            <button className="notification-login" onClick={login}>登入 LINE 後設定早晚提醒 <span>›</span></button>
+            <><p className="notification-login-notice">請先登入 LINE，才能儲存通知偏好</p><button className="notification-login" onClick={login}>登入 LINE 後設定早晚提醒 <span>›</span></button></>
           ) : editingNotifications ? (
             <>
               <label className="notification-toggle">
