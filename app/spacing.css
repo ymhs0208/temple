@@ -163,3 +163,7 @@
 .notification-toggle { display: flex; align-items: center; justify-content: space-between; margin: 13px 0 10px; color: #657168; font-size: 10px; }.notification-toggle input { accent-color: #4d8468; }
 .account-list .notification-times { margin-top: 0; padding: 0; background: transparent; }.account-list .notification-times > label { display: grid; gap: 5px; padding: 0; border: 0; }.account-list .notification-times label span { color: #848c84; font-size: 10px; }
 .notification-actions { display: flex; gap: 7px; margin-top: 12px; }.notification-actions button { flex: 1; border-radius: 9px; padding: 10px; font-size: 11px; font-weight: 700; cursor: pointer; }.notification-actions .cancel { border: 1px solid #ded9cc; background: #fffef9; color: #798177; }.notification-actions .save { border: 0; background: #214d3d; color: #fffdf7; }.notification-actions .save:disabled { opacity: .6; }
+.wish-card .wall-link { background: linear-gradient(110deg, #fff8e7, #f8e7bd); color: #62471e; }
+.wish-card .wall-link b { color: #62471e; font-size: 12px; }
+.wish-card .wall-link small { color: #7b6744; font-size: 10px; }
+.wish-card .wall-link i { color: #846023; }
