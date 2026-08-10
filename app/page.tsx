@@ -294,6 +294,7 @@ export default function Home() {
       (new Date(`${examDate}T00:00:00`).getTime() - Date.now()) / 86400000,
     ),
   );
+  const examModeActive = daysLeft <= 7;
   const completed = tasks.filter((t) => t.done).length;
   const progress = Math.round((completed / tasks.length) * 100);
   const energy = Math.min(100, 42 + completed * 10 + visits.length * 3);
@@ -303,6 +304,22 @@ export default function Home() {
     [tasks],
   );
   const pendingIndex = tasks.findIndex((task) => !task.done);
+  useEffect(() => {
+    if (!ready || !examModeActive) return;
+    const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
+    const modeKey = `wenchang-exam-mode-${examDate}-${todayKey}`;
+    if (localStorage.getItem(modeKey)) return;
+    setTasks((current) => {
+      const next = current.map((task) => {
+        const factor = task.subject === weak ? 0.8 : 0.6;
+        const minutes = Math.max(15, Math.round((task.minutes * factor) / 5) * 5);
+        return { ...task, minutes, detail: task.subject === weak ? "考前弱科重點複習" : "考前重點整理・保留體力" };
+      });
+      localStorage.setItem(modeKey, "applied");
+      void sync(next);
+      return next;
+    });
+  }, [ready, examModeActive, examDate, weak]);
   const toggleTask = (index: number) =>
     setTasks((current) => {
       const next = current.map((task, i) =>
@@ -401,6 +418,13 @@ export default function Home() {
         <div className="countdown">
           <span>每天 {hours} 小時・先完成今天</span>
         </div>
+        {examModeActive && (
+          <section className="exam-mode-card">
+            <div className="exam-mode-heading"><span>✦</span><div><small>EXAM MODE</small><b>考前衝刺模式・剩 {daysLeft} 天</b></div></div>
+            <p>今天已自動降低任務量，優先保留 <strong>{weak}</strong> 的重點複習；穩定完成，也要保留睡眠。</p>
+            <div className="exam-mode-footer"><span>🌙 今晚 22:30 前準備休息</span><button onClick={() => setSyncStatus("睡眠提醒：今晚 22:30 前結束複習，讓大腦好好休息。")} >查看提醒</button></div>
+          </section>
+        )}
         <div className="hero-orb orb-one" />
         <div className="hero-orb orb-two" />
       </section>
