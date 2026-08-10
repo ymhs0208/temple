@@ -1,0 +1,15 @@
+import { verifyLineIdToken } from "@/lib/line";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+
+const prohibited = ["詐騙", "賭博", "色情", "自殺", "幹", "操"];
+const clean = (value: string) => value.replace(/\s+/g, " ").trim();
+
+async function userForToken(idToken?: string) {
+  if (!idToken) throw new Error("Missing identity"); const identity = await verifyLineIdToken(idToken); const db = supabaseAdmin();
+  const { data: user, error } = await db.from("users").upsert({ line_user_id: identity.userId, display_name: identity.displayName }, { onConflict: "line_user_id" }).select("id").single();
+  if (error || !user) throw error ?? new Error("User unavailable"); return { db, userId: user.id, displayName: identity.displayName ?? "學習夥伴" };
+}
+export async function GET() { try { const db = supabaseAdmin(); const { data, error } = await db.from("prayer_wall_posts").select("id, display_name, message, is_anonymous, created_at").eq("moderation_status", "published").order("created_at", { ascending: false }).limit(30); if (error) throw error; return Response.json({ posts: data }); } catch { return Response.json({ error: "Prayer wall unavailable" }, { status: 500 }); } }
+export async function POST(request: Request) { try { const body = await request.json() as { action?: "post" | "report"; idToken?: string; message?: string; anonymous?: boolean; postId?: string }; const { db, userId, displayName } = await userForToken(body.idToken); if (body.action === "report") { if (!body.postId) return Response.json({ error: "Missing post" }, { status: 400 }); const { data: post, error } = await db.from("prayer_wall_posts").select("report_count").eq("id", body.postId).maybeSingle(); if (error || !post) return Response.json({ error: "Post unavailable" }, { status: 404 }); const reports = post.report_count + 1; await db.from("prayer_wall_posts").update({ report_count: reports, moderation_status: reports >= 3 ? "hidden" : "published" }).eq("id", body.postId); return Response.json({ ok: true, hidden: reports >= 3 }); }
+    const message = clean(body.message ?? ""); if (message.length < 2 || message.length > 120) return Response.json({ error: "Message must be 2–120 characters" }, { status: 400 }); const { data: recent } = await db.from("prayer_wall_posts").select("created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle(); if (recent && Date.now() - new Date(recent.created_at).getTime() < 60000) return Response.json({ error: "Please wait before posting again" }, { status: 429 }); const needsReview = prohibited.some(word => message.includes(word)) || /https?:\/\//i.test(message); const { error } = await db.from("prayer_wall_posts").insert({ user_id: userId, display_name: body.anonymous !== false ? "匿名學習夥伴" : displayName.slice(0, 20), message, is_anonymous: body.anonymous !== false, moderation_status: needsReview ? "pending" : "published" }); if (error) throw error; return Response.json({ ok: true, pending: needsReview });
+  } catch { return Response.json({ error: "Prayer wall unavailable" }, { status: 500 }); } }
