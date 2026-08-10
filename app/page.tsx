@@ -3,30 +3,66 @@
 import { useEffect, useMemo, useState } from "react";
 import liff from "@line/liff";
 
-type Subject = "數學" | "英文" | "國文" | "自然" | "社會";
-type Task = { subject: Subject; minutes: number; detail: string; done: boolean; color: string };
-type Screen = "today" | "progress" | "prayer" | "profile";
-const defaults: Task[] = [{ subject: "數學", minutes: 45, detail: "弱點複習・一元二次方程式", done: true, color: "amber" }, { subject: "英文", minutes: 30, detail: "單字 + 閱讀練習", done: true, color: "jade" }, { subject: "自然", minutes: 30, detail: "化學基礎・酸鹼與鹽", done: false, color: "violet" }];
-const colors: Record<Subject, string> = { 數學: "amber", 英文: "jade", 國文: "rose", 自然: "violet", 社會: "blue" };
-const details: Record<Subject, string> = { 數學: "題組練習", 英文: "單字 + 閱讀練習", 國文: "閱讀理解・重點整理", 自然: "觀念複習・題組練習", 社會: "重點複習・歷屆題" };
+type Task = { subject: string; minutes: number; detail: string; done: boolean; color: string };
+type Tab = "today" | "progress" | "prayer" | "profile";
 
-function makePlan(hours: number, weak: Subject): Task[] { const total = hours * 60; const other = (Object.keys(colors) as Subject[]).filter((item) => item !== weak); const subjects = total <= 60 ? [weak, other[0]] : [weak, other[0], other[1]]; const weakMinutes = Math.min(45, Math.max(30, Math.round(total * .42 / 15) * 15)); const rest = total - weakMinutes; return subjects.map((subject, index) => ({ subject, minutes: index === 0 ? weakMinutes : Math.max(15, Math.round((rest / (subjects.length - 1)) / 15) * 15), detail: index === 0 ? `弱點加強・${details[subject]}` : details[subject], done: false, color: colors[subject] })); }
+const defaultTasks: Task[] = [
+  { subject: "數學", minutes: 45, detail: "弱點複習與錯題整理", done: false, color: "amber" },
+  { subject: "英文", minutes: 30, detail: "單字＋閱讀練習", done: false, color: "jade" },
+  { subject: "自然", minutes: 30, detail: "觀念複習與題型演練", done: false, color: "violet" },
+];
 
 export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>(defaults); const [started, setStarted] = useState(false); const [showSetup, setShowSetup] = useState(false); const [hours, setHours] = useState(2); const [weak, setWeak] = useState<Subject>("數學"); const [goal, setGoal] = useState("穩定完成每天的讀書計畫"); const [challengeName, setChallengeName] = useState("我的學習目標"); const [examDate, setExamDate] = useState("2026-09-09"); const [ready, setReady] = useState(false); const [screen, setScreen] = useState<Screen>("today"); const [idToken, setIdToken] = useState<string | null>(null); const [lineName, setLineName] = useState<string | null>(null); const [syncing, setSyncing] = useState(false); const [reminderStatus, setReminderStatus] = useState("");
-  // Browser-only hydration must happen after the server-rendered shell is shown.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { const saved = localStorage.getItem("wenchang-mvp"); if (saved) { const data = JSON.parse(saved) as { tasks?: Task[]; hours?: number; weak?: Subject; goal?: string; challengeName?: string; examDate?: string }; if (data.tasks) setTasks(data.tasks); if (data.hours) setHours(data.hours); if (data.weak) setWeak(data.weak); if (data.goal) setGoal(data.goal); if (data.challengeName) setChallengeName(data.challengeName); if (data.examDate) setExamDate(data.examDate); } else setShowSetup(true); setReady(true); }, []);
-  useEffect(() => { if (ready) localStorage.setItem("wenchang-mvp", JSON.stringify({ tasks, hours, weak, goal, challengeName, examDate })); }, [tasks, hours, weak, goal, challengeName, examDate, ready]);
-  useEffect(() => { const liffId = process.env.NEXT_PUBLIC_LIFF_ID; if (!liffId) return; liff.init({ liffId }).then(() => { if (liff.isLoggedIn()) { const token = liff.getIDToken(); if (token) setIdToken(token); const decoded = liff.getDecodedIDToken(); setLineName(decoded?.name ?? null); } }).catch(() => undefined); }, []);
-  const completed = tasks.filter((task) => task.done).length; const energy = Math.min(100, 42 + completed * 10); const planks = 10 + completed; const progress = Math.round((completed / tasks.length) * 100); const remaining = useMemo(() => tasks.filter((task) => !task.done).reduce((sum, task) => sum + task.minutes, 0), [tasks]); const daysLeft = Math.max(0, Math.ceil((new Date(`${examDate}T00:00:00`).getTime() - Date.now()) / 86400000)); const currentDay = Math.max(1, daysLeft); const journey = Array.from({ length: Math.min(Math.max(currentDay, 1), 90) }, (_, i) => currentDay - i);
-  const sync = async (nextTasks: Task[], nextHours = hours, nextWeak = weak, nextGoal = goal) => { if (!idToken) return; setSyncing(true); try { await fetch("/api/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idToken, tasks: nextTasks, hours: nextHours, weak: nextWeak, goal: nextGoal, challengeName, examDate }) }); } finally { setSyncing(false); } };
-  const toggleTask = (index: number) => setTasks((current) => { const next = current.map((task, i) => i === index ? { ...task, done: !task.done } : task); void sync(next); return next; });
-  const saveSetup = () => { const next = makePlan(hours, weak); setTasks(next); setShowSetup(false); setStarted(false); void sync(next); };
-  const login = async () => { const liffId = process.env.NEXT_PUBLIC_LIFF_ID; if (!liffId) { setShowSetup(true); return; } if (!liff.isLoggedIn()) { liff.login(); return; } const token = liff.getIDToken(); if (token) { setIdToken(token); const decoded = liff.getDecodedIDToken(); setLineName(decoded?.name ?? null); void sync(tasks); } };
-  const sendTestReminder = async () => { if (!idToken) { await login(); return; } setReminderStatus("發送中…"); const response = await fetch("/api/reminders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idToken, kind: "morning" }) }); setReminderStatus(response.ok ? "已發送，請查看 LINE OA 對話。" : "發送失敗，請先加 OA 好友。 "); };
-  const today = <><section className="hero"><p className="eyebrow">30 日學習挑戰</p><h1>今天的每一步，<br /><em>都算數。</em></h1><div className="countdown"><span>距離國中會考</span><strong>29</strong><span>天</span></div><div className="hero-orb orb-one" /><div className="hero-orb orb-two" /></section><section className="stats" aria-label="今日學習狀態"><div className="stat"><span className="stat-icon fire">♨</span><div><small>今日能量</small><b>{energy}<i> / 100</i></b></div></div><div className="stat"><span className="stat-icon blossom">✿</span><div><small>祈福木牌</small><b>{planks}<i> 枚</i></b></div></div></section><section className="progress-card"><div className="section-heading"><div><p className="eyebrow">DAY 29 · {weak}加強</p><h2>今日任務</h2></div><span className="completion">{completed} / {tasks.length} 完成</span></div><div className="progress-track"><span style={{ width: `${progress}%` }} /></div><div className="tasks">{tasks.map((task, index) => <button className={`task ${task.done ? "done" : ""}`} onClick={() => toggleTask(index)} key={`${task.subject}-${index}`} aria-pressed={task.done}><span className={`check ${task.done ? "checked" : ""}`}>{task.done ? "✓" : ""}</span><span className={`subject-dot ${task.color}`} /><span className="task-copy"><b>{task.subject}</b><small>{task.detail}</small></span><span className="minutes">{task.minutes}<small>分</small></span></button>)}</div><div className="reward"><span>✿</span><p>完成今天全部任務，即可再獲得 <b>1 枚祈福木牌</b></p></div></section><section className="encouragement"><span>「</span><p>{completed === tasks.length ? "今日圓滿完成。你的堅持，正在為未來開路。" : `你的目標：${goal}`}</p><span>」</span></section><button className="start-button" onClick={() => setStarted(!started)}><span>{started ? "✓" : "▶"}</span>{started ? "正在進行今日挑戰" : remaining ? `開始學習 · ${remaining} 分鐘` : "今日任務已全數完成"}</button><button className="plan-link" onClick={() => setShowSetup(true)}>調整我的 30 天計畫</button></>;
-  const progressView = <section className="journey"><p className="eyebrow">你的 30 日旅程</p><h1>一步一腳印，<br /><em>走向考場。</em></h1><div className="journey-summary"><div><b>1</b><span>已完成天數</span></div><div><b>{completed}</b><span>今日已完成</span></div><div><b>7</b><span>最長連續天數</span></div></div><div className="journey-heading"><h2>挑戰地圖</h2><span>今天：Day 29</span></div><div className="day-grid">{journey.map((day) => <button key={day} className={`day-cell ${day === 29 ? "current" : day > 29 ? "past" : "future"}`} onClick={() => day === 29 && setScreen("today")}><small>DAY</small><b>{day}</b>{day > 29 && <i>✓</i>}</button>)}</div><div className="journey-tip"><span>✦</span><p>完成今天任務後，會自動解鎖下一天的學習節奏。</p></div></section>;
-  const placeholder = screen === "prayer" ? <section className="journey"><p className="eyebrow">祈福木牌</p><h1>努力不會白費，<br /><em>祝福一直都在。</em></h1><div className="empty-panel"><b>✿ {planks} 枚</b><p>完成今日任務即可收藏木牌。AI 籤詩與祈福牆會在核心學習流程穩定後加入。</p></div></section> : <section className="journey"><p className="eyebrow">我的挑戰</p><h1>為自己安排，<br /><em>穩穩前進。</em></h1><div className="empty-panel"><b>每日 {hours} 小時 · {weak}加強</b><p>{goal}</p><button className="start-button" onClick={() => setShowSetup(true)}>調整學習設定</button><button className="test-reminder" onClick={sendTestReminder}>傳送 OA 測試提醒</button>{reminderStatus && <small className="reminder-status">{reminderStatus}</small>}</div></section>;
-  return <main><section className="app-shell"><header className="topbar"><div className="brand"><span className="brand-mark">✦</span><span>文昌同行</span></div><div className="account"><button className="line-login" onClick={login}>{lineName ? `LINE · ${lineName}` : syncing ? "同步中" : "LINE 登入"}</button><button className="avatar" onClick={() => setShowSetup(true)} aria-label="調整挑戰設定">{lineName?.trim().slice(0, 1) ?? "我"}</button></div></header>{screen === "today" ? today : screen === "progress" ? progressView : placeholder}<nav><button className={screen === "today" ? "active" : ""} onClick={() => setScreen("today")}>⌂<span>今日</span></button><button className={screen === "progress" ? "active" : ""} onClick={() => setScreen("progress")}>▥<span>進度</span></button><button className={screen === "prayer" ? "active" : ""} onClick={() => setScreen("prayer")}>✿<span>祈福</span></button><button className={screen === "profile" ? "active" : ""} onClick={() => setScreen("profile")}>◌<span>我的</span></button></nav>{showSetup && <div className="setup-backdrop" role="dialog" aria-modal="true" aria-label="建立學習挑戰"><section className="setup-card"><p className="eyebrow">你的第一天</p><h2>建立 30 天計畫</h2><p className="setup-note">先用固定規則安排，之後再讓 AI 幫你微調。</p><label>每天可讀多久？<select value={hours} onChange={(event) => setHours(Number(event.target.value))}><option value={1}>1 小時</option><option value={2}>2 小時</option><option value={3}>3 小時</option></select></label><label>最想加強的科目？<select value={weak} onChange={(event) => setWeak(event.target.value as Subject)}>{(Object.keys(colors) as Subject[]).map((subject) => <option key={subject}>{subject}</option>)}</select></label><label>這次挑戰的目標<input value={goal} onChange={(event) => setGoal(event.target.value)} maxLength={30} /></label><button className="start-button" onClick={saveSetup}>產生我的今日任務</button><button className="later" onClick={() => setShowSetup(false)}>稍後再說</button></section></div>}</section></main>;
+  const [tab, setTab] = useState<Tab>("today");
+  const [tasks, setTasks] = useState<Task[]>(defaultTasks);
+  const [name, setName] = useState("30 日學習挑戰");
+  const [examDate, setExamDate] = useState("2026-10-31");
+  const [goal, setGoal] = useState("穩定完成每日學習任務");
+  const [hours, setHours] = useState(2);
+  const [lineName, setLineName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("wenchang-mvp");
+    if (stored) {
+      try {
+        const data = JSON.parse(stored) as Partial<{ tasks: Task[]; challengeName: string; examDate: string; goal: string; hours: number }>;
+        if (data.tasks) setTasks(data.tasks);
+        if (data.challengeName) setName(data.challengeName);
+        if (data.examDate) setExamDate(data.examDate);
+        if (data.goal) setGoal(data.goal);
+        if (data.hours) setHours(data.hours);
+      } catch { /* Ignore outdated local data. */ }
+    }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("wenchang-mvp", JSON.stringify({ tasks, challengeName: name, examDate, goal, hours }));
+  }, [tasks, name, examDate, goal, hours]);
+  useEffect(() => {
+    const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+    if (!liffId) return;
+    liff.init({ liffId }).then(() => {
+      if (liff.isLoggedIn()) setLineName(liff.getDecodedIDToken()?.name ?? null);
+    }).catch(() => undefined);
+  }, []);
+
+  const daysLeft = Math.max(0, Math.ceil((new Date(`${examDate}T00:00:00`).getTime() - Date.now()) / 86400000));
+  const completed = tasks.filter((task) => task.done).length;
+  const progress = Math.round((completed / tasks.length) * 100);
+  const energy = Math.min(100, 42 + completed * 10);
+  const planks = 10 + completed;
+  const remaining = useMemo(() => tasks.filter((task) => !task.done).reduce((sum, task) => sum + task.minutes, 0), [tasks]);
+  const toggleTask = (index: number) => setTasks((current) => current.map((task, i) => i === index ? { ...task, done: !task.done } : task));
+  const login = async () => { if (!process.env.NEXT_PUBLIC_LIFF_ID) return; if (!liff.isLoggedIn()) liff.login(); else setLineName(liff.getDecodedIDToken()?.name ?? null); };
+
+  const today = <>
+    <section className="hero"><p className="eyebrow">{name.toUpperCase()}</p><h1>距離目標還有<br /><em>{daysLeft} 天</em></h1><div className="countdown"><span>每天 {hours} 小時，持續累積</span></div><div className="hero-orb orb-one" /><div className="hero-orb orb-two" /></section>
+    <section className="stats"><div className="stat"><span className="stat-icon fire">🔥</span><div><small>今日能量</small><b>{energy}<i> / 100</i></b></div></div><div className="stat"><span className="stat-icon blossom">🌸</span><div><small>祈福木牌</small><b>{planks}<i> 枚</i></b></div></div></section>
+    <section className="progress-card"><div className="section-heading"><div><p className="eyebrow">今日任務</p><h2>一步一步完成</h2></div><span className="completion">{completed} / {tasks.length} 完成</span></div><div className="progress-track"><span style={{ width: `${progress}%` }} /></div><div className="tasks">{tasks.map((task, index) => <button className={`task ${task.done ? "done" : ""}`} onClick={() => toggleTask(index)} key={`${task.subject}-${index}`}><span className={`check ${task.done ? "checked" : ""}`}>{task.done ? "✓" : ""}</span><span className={`subject-dot ${task.color}`} /><span className="task-copy"><b>{task.subject}</b><small>{task.detail}</small></span><span className="minutes">{task.minutes}<small>分</small></span></button>)}</div><div className="reward"><span>🌸</span><p>完成一項任務，獲得能量與 1 枚祈福木牌。</p></div></section>
+    <section className="encouragement"><span>「</span><p>{completed === tasks.length ? "今天的努力已經完成，請帶著安心休息。" : `你的目標是：${goal}`}</p><span>」</span></section><button className="start-button" onClick={() => setTab("progress")}>繼續學習・剩餘 {remaining} 分鐘</button>
+  </>;
+  const progressView = <section className="journey"><p className="eyebrow">動態目標進度</p><h1>{name}<br /><em>倒數 {daysLeft} 天</em></h1><div className="journey-summary"><div><b>{progress}%</b><span>今日完成度</span></div><div><b>{completed}</b><span>完成任務</span></div><div><b>{energy}</b><span>累積能量</span></div></div><div className="empty-panel"><b>依你的目標持續調整</b><p>考試日期、每日可讀時間與弱科，都可以隨時重新設定。</p><button className="start-button" onClick={() => { location.href = "/goal"; }}>調整我的學習目標</button></div></section>;
+  const prayerView = <section className="journey"><p className="eyebrow">智慧宮廟加分主題</p><h1>文昌同行<br /><em>把學習轉成祈福文化體驗</em></h1><div className="empty-panel"><b>🌸 祈福木牌 × {planks}</b><p>到合作宮廟掃描 QR Code，解鎖文化故事、巡禮徽章與專屬祝福。</p><button className="start-button" onClick={() => { location.href = "/pilgrimage"; }}>開始文昌巡禮</button></div></section>;
+  const profileView = <section className="journey"><p className="eyebrow">我的帳號</p><h1>{lineName ?? "學習夥伴"}<br /><em>你的 30 日同行計畫</em></h1><div className="empty-panel"><b>目前設定：{name}</b><p>考試日：{examDate}<br />每日學習：{hours} 小時</p><button className="start-button" onClick={() => { location.href = "/goal"; }}>調整我的學習目標</button><button className="plan-link" onClick={() => { location.href = "/pilgrimage"; }}>智慧宮廟・文昌巡禮</button><button className="test-reminder" onClick={login}>{lineName ? "LINE 已連結" : "連結 LINE 帳號"}</button></div></section>;
+
+  return <main><section className="app-shell"><header className="topbar"><div className="brand"><span className="brand-mark">⛩</span><span>文昌同行</span></div><div className="account"><button className="line-login" onClick={login}>{lineName ? `LINE・${lineName}` : "LINE 登入"}</button><button className="avatar" onClick={() => setTab("profile")}>{lineName?.slice(0, 1) ?? "我"}</button></div></header>{tab === "today" ? today : tab === "progress" ? progressView : tab === "prayer" ? prayerView : profileView}<nav><button className={tab === "today" ? "active" : ""} onClick={() => setTab("today")}>⌂<span>今日</span></button><button className={tab === "progress" ? "active" : ""} onClick={() => setTab("progress")}>▥<span>進度</span></button><button className={tab === "prayer" ? "active" : ""} onClick={() => setTab("prayer")}>✿<span>祈福</span></button><button className={tab === "profile" ? "active" : ""} onClick={() => setTab("profile")}>◌<span>我的</span></button></nav></section></main>;
 }
