@@ -47,3 +47,19 @@
   background: linear-gradient(145deg, #bb805e, #dfb37d);
   box-shadow: 0 3px 8px #8a573326;
 }
+.learning-badges { margin: 0 5px 16px; padding: 15px; border: 1px solid #e5decd; border-radius: 18px; background: #fffdf8; }
+.badge-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.badge-heading b, .badge-heading small { display: block; }
+.badge-heading b { color: #3b5143; font-size: 13px; }
+.badge-heading small { margin-top: 3px; color: #989b91; font-size: 9px; }
+.badge-heading > span { font-size: 22px; }
+.badge-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.badge-grid > div { min-width: 0; padding: 8px 3px; border-radius: 10px; text-align: center; }
+.badge-grid i { display: grid; place-items: center; width: 28px; height: 28px; margin: 0 auto 5px; border-radius: 50%; font-style: normal; font-size: 14px; }
+.badge-grid b, .badge-grid small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge-grid b { font-size: 8px; }
+.badge-grid small { margin-top: 3px; font-size: 7px; }
+.badge-grid .unlocked { color: #76541e; background: #fff8e6; }
+.badge-grid .unlocked i { background: linear-gradient(145deg, #e1ba5d, #f4dc91); color: #70501d; }
+.badge-grid .locked { color: #a6aaa2; background: #f5f4ef; }
+.badge-grid .locked i { background: #e3e4df; color: #a5aaa3; }
