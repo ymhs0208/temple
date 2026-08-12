@@ -11,6 +11,7 @@ type Task = {
   color: string;
 };
 type LearningDay = { date: string; minutes: number };
+type LearningRecord = { date: string; minutes: number; tasks: { subject: string; detail: string; minutes: number; done: boolean }[] };
 type Tab = "today" | "progress" | "prayer" | "profile";
 type FocusSession = {
   taskIndex: number;
@@ -77,6 +78,8 @@ export default function Home() {
   const [weeklyMinutes, setWeeklyMinutes] = useState(0);
   const [streakDays, setStreakDays] = useState(0);
   const [learningDays, setLearningDays] = useState<LearningDay[]>([]);
+  const [learningRecords, setLearningRecords] = useState<LearningRecord[]>([]);
+  const [selectedLearningDate, setSelectedLearningDate] = useState<string | null>(null);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [morningTime, setMorningTime] = useState("08:00");
@@ -286,6 +289,7 @@ export default function Home() {
         setWeeklyMinutes(data.weeklyMinutes ?? 0);
         setStreakDays(data.streakDays ?? 0);
         setLearningDays(Array.isArray(data.days) ? data.days : []);
+        setLearningRecords(Array.isArray(data.records) ? data.records : []);
       })
       .catch(() => undefined);
   }, [idToken, tasks]);
@@ -576,9 +580,28 @@ export default function Home() {
   const todayMinutes = tasks
     .filter((task) => task.done)
     .reduce((sum, task) => sum + task.minutes, 0);
+  const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
+  const todayRecord: LearningRecord = {
+    date: todayKey,
+    minutes: todayMinutes,
+    tasks: tasks.map((task) => ({ subject: task.subject, detail: task.detail, minutes: task.minutes, done: task.done })),
+  };
+  const selectedRecord = (selectedLearningDate ?? todayKey) === todayKey
+    ? todayRecord
+    : learningRecords.find((record) => record.date === selectedLearningDate) ?? null;
+  useEffect(() => {
+    const selectCalendarDay = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      const cell = target?.closest(".calendar-day");
+      const day = Number(cell?.querySelector("b")?.textContent);
+      if (!cell || !Number.isInteger(day)) return;
+      setSelectedLearningDate(`${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`);
+    };
+    document.addEventListener("click", selectCalendarDay);
+    return () => document.removeEventListener("click", selectCalendarDay);
+  }, [calendarMonth]);
   const calendarData = useMemo(() => {
     const records = new Map(learningDays.map((day) => [day.date, day.minutes]));
-    const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
     if (todayMinutes) records.set(todayKey, todayMinutes);
     const year = calendarMonth.getFullYear();
     const month = calendarMonth.getMonth();
@@ -591,7 +614,7 @@ export default function Home() {
       return { day, date, minutes: records.get(date) ?? 0, isToday: date === todayKey, isFuture: date > todayKey };
     });
     return { cells, monthLabel: new Intl.DateTimeFormat("zh-TW", { year: "numeric", month: "long" }).format(calendarMonth), activeDays: [...records.keys()].filter((date) => date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)).length };
-  }, [calendarMonth, learningDays, todayMinutes]);
+  }, [calendarMonth, learningDays, todayMinutes, todayKey]);
   const progressView = (
     <section className="journey">
       <p className="eyebrow">動態目標進度</p>
@@ -640,7 +663,17 @@ export default function Home() {
         <div className="calendar-grid">{calendarData.cells.map((cell, index) => cell ? <div key={cell.date} className={`calendar-day ${cell.minutes ? "has-learning" : ""} ${cell.isToday ? "is-today" : ""} ${cell.isFuture ? "is-future" : ""}`}><b>{cell.day}</b>{cell.minutes ? <small>{cell.minutes} 分</small> : <i>{cell.isToday ? "今天" : ""}</i>}</div> : <span key={`blank-${index}`} aria-hidden="true" />)}</div>
         <p className="calendar-note">有色日期代表已完成學習；點亮每一天，讓努力留下足跡。</p>
       </section>
-      <div className="empty-panel">
+       <section className="calendar-record" aria-live="polite">
+         <div className="calendar-record-heading">
+           <span>當日學習紀錄</span>
+           <b>{selectedRecord?.date ?? selectedLearningDate ?? todayKey}</b>
+         </div>
+         {selectedRecord?.tasks.length ? <>
+           <div className="calendar-record-summary"><b>{selectedRecord.minutes} 分鐘</b><span>完成 {selectedRecord.tasks.filter((task) => task.done).length}/{selectedRecord.tasks.length} 項任務</span></div>
+           <ul>{selectedRecord.tasks.map((task, index) => <li key={`${task.subject}-${index}`} className={task.done ? "done" : "pending"}><i>{task.done ? "✓" : "○"}</i><div><b>{task.subject}</b><small>{task.detail}</small></div><span>{task.minutes} 分</span></li>)}</ul>
+         </> : <p>這一天尚未建立或同步學習紀錄。</p>}
+       </section>
+       <div className="empty-panel">
         <b>需要調整計畫嗎？</b>
         <p>
           考試日期、每日時間、弱科與目標都可以隨時重新設定，今天的任務會重新建立。
