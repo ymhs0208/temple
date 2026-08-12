@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const { data: user, error: userError } = await db.from("users").select("id").eq("line_user_id", identity.userId).maybeSingle();
     if (userError) throw userError;
     if (!user) return Response.json({ exists: false });
-    const { data: plan, error: planError } = await db.from("study_plans").select("id, exam_date, daily_hours, weak_subject, goal").eq("user_id", user.id).maybeSingle();
+    const { data: plan, error: planError } = await db.from("study_plans").select("id, exam_date, daily_hours, weak_subject, goal").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
     if (planError) throw planError;
     if (!plan) return Response.json({ exists: false });
     const { data: extendedPlan } = await db.from("study_plans").select("challenge_name, wishes").eq("id", plan.id).maybeSingle();
