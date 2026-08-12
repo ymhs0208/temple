@@ -270,3 +270,73 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .orb-one { transform: scale(.72); transform-origin: top right; }
   nav { padding-top: 7px; padding-bottom: 7px; }
 }
+
+/* Feature pages: goal setup, pilgrimage, prayer wall, and study coach */
+.feature-shell { overflow-wrap: anywhere; }
+.feature-page input, .feature-page select, .feature-page textarea, .feature-page button { max-width: 100%; }
+.feature-page input, .feature-page select, .feature-page textarea { font-size: max(16px, 1em); }
+.back-link, .code-row button, .compose-actions button, .editable-task > button, .service-section button { min-height: 40px; }
+
+@media (max-width: 360px) {
+  .feature-shell { padding: 20px 14px 32px; }
+  .feature-hero { padding: 23px 1px 21px; }
+  .feature-hero h1 { font-size: 26px; }
+  .feature-hero p, .temple-hero p, .coach-hero p { width: 67%; }
+  .goal-orbit, .coach-orbit { right: -24px; transform: scale(.82); transform-origin: top right; }
+  .temple-illustration { right: -38px; transform: scale(.82); transform-origin: bottom right; }
+  .two-fields { grid-template-columns: 1fr; gap: 0; }
+  .code-row { flex-direction: column; }
+  .code-row button { min-height: 43px; }
+  .culture-card { align-items: flex-start; gap: 10px; padding: 14px; }
+  .culture-symbol { width: 45px; height: 45px; font-size: 24px; }
+  .editable-task { grid-template-columns: 4px minmax(0, 1fr) 49px 20px; gap: 5px; padding: 8px 6px; }
+  .editable-task label { padding-left: 4px; }
+  .editable-task label input { width: 26px; font-size: 16px; }
+  .compose-actions { align-items: flex-start; flex-direction: column; gap: 9px; }
+  .compose-actions button { width: 100%; }
+  .wall-list article { padding-right: 55px; }
+}
+
+@media (min-width: 501px) and (max-width: 767px) {
+  .feature-shell { width: min(100%, 620px); padding: 32px 28px 52px; }
+  .feature-hero p { width: 64%; }
+  .goal-hero, .temple-hero { min-height: 225px; }
+}
+
+@media (min-width: 768px) {
+  .feature-shell { width: min(100%, 820px); padding: 38px 38px 62px; }
+  .feature-hero { padding: 39px 5px 32px; }
+  .feature-hero h1 { font-size: 38px; }
+  .feature-hero p { width: 58%; font-size: 14px; }
+  .goal-hero, .temple-hero { min-height: 245px; }
+  .goal-orbit { right: 28px; top: 35px; width: 145px; height: 145px; font-size: 49px; }
+  .temple-illustration { right: 28px; width: 184px; height: 164px; }
+  .temple-illustration span { margin-top: 48px; }
+  .form-card, .plan-preview, .scan-card, .wall-compose, .coach-card { padding: 22px; }
+  .editable-tasks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .culture-card { padding: 22px; }
+  .badge-card { padding: 18px 21px; }
+  .wall-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .wall-list-title, .empty-wall { grid-column: 1 / -1; }
+  .wall-list article { margin: 0; min-height: 144px; }
+  .coach-context { gap: 10px; }
+  .coach-card textarea { min-height: 110px; }
+}
+
+@media (min-width: 1100px) {
+  .feature-shell { width: min(100%, 1040px); padding-inline: 48px; }
+  .form-card, .plan-preview, .scan-card, .wall-compose, .coach-card { padding: 26px; }
+  .feature-hero p { width: 52%; }
+  .editable-tasks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-height: 540px) and (orientation: landscape) {
+  .feature-shell { padding-top: 16px; }
+  .feature-hero { padding-top: 17px; padding-bottom: 17px; }
+  .feature-hero h1 { font-size: 27px; }
+  .goal-hero, .temple-hero, .coach-hero { min-height: 180px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
