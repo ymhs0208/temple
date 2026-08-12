@@ -1175,6 +1175,18 @@ export default function Home() {
             ◌<span>我的</span>
           </button>
         </nav>
+        <a
+          className="line-official-banner"
+          href="https://lin.ee/nNsez9Q"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="加入文昌同行 LINE 官方好友"
+        >
+          <img
+            src="/line-official-banner.png"
+            alt="加入文昌同行 LINE 官方好友"
+          />
+        </a>
       </section>
     </main>
   );
