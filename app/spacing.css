@@ -195,3 +195,77 @@
 .coach-card { padding: 18px; border: 1px solid #e7dfcd; border-radius: 20px; background: #fffdf9; box-shadow: 0 10px 26px #3e45220a; }.coach-prompts { display: grid; gap: 7px; margin: 0 0 15px; }.coach-prompts button { border: 1px solid #e5ddca; border-radius: 10px; padding: 10px 11px; background: #fbf8ef; color: #5f6d62; font-size: 11px; line-height: 1.45; text-align: left; cursor: pointer; }.coach-prompts button:disabled, .feature-cta:disabled { opacity: .62; cursor: wait; }.coach-input-label { display: block; margin-bottom: 6px; color: #536158; font-size: 11px; font-weight: 700; }.coach-card textarea { width: 100%; min-height: 83px; resize: vertical; border: 1px solid #dfd8c8; border-radius: 11px; padding: 11px; background: #fffefa; color: #374b40; font: 12px/1.55 Arial, "Noto Sans TC", sans-serif; }.coach-card .feature-cta { margin-top: 11px; }
 .coach-today { margin-top: 13px; padding: 15px 16px; border: 1px solid #e4ddce; border-radius: 17px; background: #fffdf8; }.coach-today > div { display: flex; align-items: baseline; justify-content: space-between; gap: 9px; }.coach-today b { color: #365043; font-size: 12px; }.coach-today small { color: #949a90; font-size: 9px; }.coach-today ul { display: grid; gap: 6px; margin: 11px 0 0; padding: 0; list-style: none; }.coach-today li { display: flex; justify-content: space-between; padding-top: 7px; border-top: 1px solid #eee9dd; color: #647167; font-size: 11px; }.coach-today li b { color: #8a6b37; font-size: 11px; }
 .coach-answer { margin-top: 13px; padding: 17px; border: 1px solid #cbdccc; border-radius: 18px; background: linear-gradient(145deg, #edf6ea, #fffdf8); }.coach-answer > span { color: #4b7c62; font-size: 10px; font-weight: 800; letter-spacing: .1em; }.coach-answer p { margin: 11px 0 0; color: #42584a; font-size: 12px; line-height: 1.8; white-space: pre-wrap; }.coach-answer .coach-error { color: #9b5e42; }.coach-loading { display: flex; gap: 5px; margin: 13px 0 3px; }.coach-loading i { width: 7px; height: 7px; border-radius: 50%; background: #79a487; animation: coach-bounce 1s infinite ease-in-out; }.coach-loading i:nth-child(2) { animation-delay: .14s; }.coach-loading i:nth-child(3) { animation-delay: .28s; }@keyframes coach-bounce { 0%, 100% { transform: translateY(0); opacity: .45; } 50% { transform: translateY(-5px); opacity: 1; } }
+
+/* Responsive layout and touch refinements */
+html { -webkit-text-size-adjust: 100%; }
+body { overflow-x: hidden; }
+button, input, select, textarea { touch-action: manipulation; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #c99e4b; outline-offset: 2px; }
+
+@media (max-width: 360px) {
+  .app-shell { padding: 18px 14px 82px; }
+  .topbar { margin: -3px 0 2px; padding: 8px; }
+  .brand span:last-child { font-size: 14px; }
+  .line-login { padding: 6px 7px; font-size: 9px; }
+  .hero { padding: 30px 2px 19px; }
+  .hero h1 { font-size: 27px; }
+  .progress-card { padding: 16px 11px 12px; }
+  .section-heading h2 { font-size: 19px; }
+  .task { gap: 7px; padding: 9px 3px; }
+  .task-copy b { font-size: 13px; }
+  .minutes { font-size: 17px; }
+  .task-focus { padding: 7px 8px; }
+  .task-overview > div { flex-wrap: wrap; }
+  .task-primary-action, .task-secondary-action { flex: 1 1 100%; min-height: 38px; }
+  .calendar-weekdays, .calendar-grid { gap: 3px; }
+  .calendar-day { min-height: 34px; }
+  .calendar-header b { font-size: 18px; }
+  .badge-grid { gap: 3px; }
+  .badge-grid > div { padding: 7px 1px; }
+}
+
+@media (min-width: 501px) and (max-width: 767px) {
+  main { padding: 24px; }
+  .app-shell { width: min(100%, 560px); border-radius: 26px; }
+  nav { width: min(calc(100% - 48px), 520px); }
+  .task-focus, .task-primary-action, .task-secondary-action { min-height: 40px; }
+}
+
+@media (min-width: 768px) {
+  main { padding: 34px; }
+  .app-shell { width: min(100%, 760px); min-height: 760px; padding: 28px 30px 96px; border-radius: 32px; }
+  nav { width: min(calc(100% - 68px), 700px); }
+  .topbar { padding: 12px 14px; }
+  .hero { padding: 44px 10px 29px; }
+  .hero h1 { font-size: 36px; }
+  .progress-card { padding: 22px 21px 18px; }
+  .task-overview { grid-template-columns: repeat(2, max-content) 1fr; align-items: center; gap: 8px 18px; }
+  .task-overview > div { grid-column: 3; grid-row: 1; justify-content: flex-end; margin: 0; }
+  .task-primary-action { flex: none; }
+  .tasks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .task { min-height: 64px; }
+  .learning-calendar { padding: 20px; }
+  .calendar-day { min-height: 56px; }
+  .calendar-day b { font-size: 16px; }
+  .calendar-day small, .calendar-day i { font-size: 8px; }
+  .calendar-record ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settlement-modal { width: min(100%, 510px); }
+}
+
+@media (min-width: 1100px) {
+  main { padding: 42px; }
+  .app-shell { width: min(100%, 920px); padding-inline: 38px; }
+  nav { width: min(calc(100% - 84px), 840px); }
+  .tasks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .task { align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+  .task-copy { min-width: calc(100% - 45px); }
+  .task-focus { margin-left: auto; }
+}
+
+@media (max-height: 540px) and (orientation: landscape) {
+  .app-shell { min-height: 100vh; padding-top: 14px; padding-bottom: 72px; }
+  .hero { padding-top: 20px; padding-bottom: 16px; }
+  .hero h1 { font-size: 26px; }
+  .orb-one { transform: scale(.72); transform-origin: top right; }
+  nav { padding-top: 7px; padding-bottom: 7px; }
+}
