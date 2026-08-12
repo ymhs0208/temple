@@ -395,6 +395,9 @@ export default function Home() {
       void enqueueSync(next);
       return next;
     });
+    closeFocus();
+    setSyncStatus("專注完成，任務已同步更新！");
+  };
   const toggleAllTasks = () => {
     const shouldComplete = completed !== tasks.length;
     const confirmation = shouldComplete
@@ -406,9 +409,6 @@ export default function Home() {
       void enqueueSync(next);
       return next;
     });
-  };
-    closeFocus();
-    setSyncStatus("專注完成，任務已同步更新！");
   };
   const login = async () => {
     if (!liff.isLoggedIn()) {
