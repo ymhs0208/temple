@@ -632,17 +632,15 @@ export default function Home() {
   const selectedRecord = (selectedLearningDate ?? todayKey) === todayKey
     ? todayRecord
     : learningRecords.find((record) => record.date === selectedLearningDate) ?? null;
+  const openLearningRecord = (date: string) => setSelectedLearningDate(date);
   useEffect(() => {
-    const selectCalendarDay = (event: MouseEvent) => {
-      const target = event.target as Element | null;
-      const cell = target?.closest(".calendar-day");
-      const day = Number(cell?.querySelector("b")?.textContent);
-      if (!cell || !Number.isInteger(day)) return;
-      setSelectedLearningDate(`${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`);
+    if (!selectedLearningDate) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedLearningDate(null);
     };
-    document.addEventListener("click", selectCalendarDay);
-    return () => document.removeEventListener("click", selectCalendarDay);
-  }, [calendarMonth]);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [selectedLearningDate]);
   const calendarData = useMemo(() => {
     const records = new Map(learningDays.map((day) => [day.date, day.minutes]));
     if (todayMinutes) records.set(todayKey, todayMinutes);
@@ -703,19 +701,22 @@ export default function Home() {
         </div>
         <div className="calendar-legend"><span><i className="legend-done" />完成學習</span><span><i className="legend-today" />今天</span><b>{calendarData.activeDays} 天已累積</b></div>
         <div className="calendar-weekdays">{["一", "二", "三", "四", "五", "六", "日"].map((day) => <span key={day}>{day}</span>)}</div>
-        <div className="calendar-grid">{calendarData.cells.map((cell, index) => cell ? <div key={cell.date} className={`calendar-day ${cell.minutes ? "has-learning" : ""} ${cell.isToday ? "is-today" : ""} ${cell.isFuture ? "is-future" : ""}`}><b>{cell.day}</b>{cell.minutes ? <small>{cell.minutes} 分</small> : <i>{cell.isToday ? "今天" : ""}</i>}</div> : <span key={`blank-${index}`} aria-hidden="true" />)}</div>
+        <div className="calendar-grid">{calendarData.cells.map((cell, index) => cell ? <button type="button" key={cell.date} className={`calendar-day ${cell.minutes ? "has-learning" : ""} ${cell.isToday ? "is-today" : ""} ${cell.isFuture ? "is-future" : ""}`} onClick={() => openLearningRecord(cell.date)} aria-label={`查看 ${cell.date} 的學習紀錄`}><b>{cell.day}</b>{cell.minutes ? <small>{cell.minutes} 分</small> : <i>{cell.isToday ? "今天" : ""}</i>}</button> : <span key={`blank-${index}`} aria-hidden="true" />)}</div>
         <p className="calendar-note">有色日期代表已完成學習；點亮每一天，讓努力留下足跡。</p>
       </section>
-       <section className="calendar-record" aria-live="polite">
+       {selectedLearningDate && <div className="calendar-record-backdrop" role="presentation" onMouseDown={() => setSelectedLearningDate(null)}>
+       <section className="calendar-record" role="dialog" aria-modal="true" aria-labelledby="calendar-record-title" aria-live="polite" onMouseDown={(event) => event.stopPropagation()}>
          <div className="calendar-record-heading">
-           <span>當日學習紀錄</span>
+           <span id="calendar-record-title">當日學習紀錄</span>
            <b>{selectedRecord?.date ?? selectedLearningDate ?? todayKey}</b>
+           <button className="calendar-record-close" onClick={() => setSelectedLearningDate(null)} aria-label="關閉當日學習紀錄">×</button>
          </div>
          {selectedRecord?.tasks.length ? <>
            <div className="calendar-record-summary"><b>{selectedRecord.minutes} 分鐘</b><span>完成 {selectedRecord.tasks.filter((task) => task.done).length}/{selectedRecord.tasks.length} 項任務</span></div>
            <ul>{selectedRecord.tasks.map((task, index) => <li key={`${task.subject}-${index}`} className={task.done ? "done" : "pending"}><i>{task.done ? "✓" : "○"}</i><div><b>{task.subject}</b><small>{task.detail}</small></div><span>{task.minutes} 分</span></li>)}</ul>
          </> : <p>這一天尚未建立或同步學習紀錄。</p>}
        </section>
+       </div>}
        <div className="empty-panel">
         <b>需要調整計畫嗎？</b>
         <p>
