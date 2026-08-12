@@ -101,6 +101,13 @@ export default function Home() {
     setHydrated(true);
   }, []);
   useEffect(() => {
+    const refreshRestoredPage = (event: PageTransitionEvent) => {
+      if (event.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", refreshRestoredPage);
+    return () => window.removeEventListener("pageshow", refreshRestoredPage);
+  }, []);
+  useEffect(() => {
     const stored = localStorage.getItem("wenchang-mvp");
     if (stored)
       try {
