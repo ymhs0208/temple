@@ -95,7 +95,11 @@ export default function Home() {
   const [focusEndsAt, setFocusEndsAt] = useState<number | null>(null);
   const [focusPaused, setFocusPaused] = useState(false);
   const [focusEnded, setFocusEnded] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const syncQueue = useRef(Promise.resolve(true));
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
   useEffect(() => {
     const stored = localStorage.getItem("wenchang-mvp");
     if (stored)
@@ -1218,6 +1222,15 @@ export default function Home() {
       {syncStatus && <small className="reminder-status">{syncStatus}</small>}
     </section>
   );
+  if (!hydrated)
+    return (
+      <main>
+        <section className="app-shell app-loading" aria-busy="true" aria-label="載入學習計畫">
+          <span className="brand-mark">⛩</span>
+          <p>正在載入今日學習計畫…</p>
+        </section>
+      </main>
+    );
   return (
     <main>
       <section className="app-shell">
