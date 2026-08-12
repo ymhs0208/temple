@@ -315,7 +315,11 @@ export default function Home() {
   );
   const examModeActive = daysLeft <= 7;
   const completed = tasks.filter((t) => t.done).length;
-  const progress = Math.round((completed / tasks.length) * 100);
+  const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
+  const plannedMinutes = useMemo(
+    () => tasks.reduce((sum, task) => sum + task.minutes, 0),
+    [tasks],
+  );
   const energy = Math.min(100, 42 + completed * 10 + visits.length * 3);
   const planks = 10 + completed + visits.length;
   const remaining = useMemo(
@@ -349,8 +353,13 @@ export default function Home() {
     });
   const startFocus = () => {
     if (pendingIndex < 0) return;
-    const seconds = tasks[pendingIndex].minutes * 60;
-    setFocusIndex(pendingIndex);
+    startFocusAt(pendingIndex);
+  };
+  const startFocusAt = (index: number) => {
+    const task = tasks[index];
+    if (!task || task.done) return;
+    const seconds = task.minutes * 60;
+    setFocusIndex(index);
     setFocusSeconds(seconds);
     setFocusEndsAt(Date.now() + seconds * 1000);
     setFocusPaused(false);
@@ -382,6 +391,18 @@ export default function Home() {
       void enqueueSync(next);
       return next;
     });
+  const toggleAllTasks = () => {
+    const shouldComplete = completed !== tasks.length;
+    const confirmation = shouldComplete
+      ? "確定要將今天所有任務標記為完成嗎？"
+      : "確定要重新開啟今天所有任務嗎？";
+    if (!window.confirm(confirmation)) return;
+    setTasks((current) => {
+      const next = current.map((task) => ({ ...task, done: shouldComplete }));
+      void enqueueSync(next);
+      return next;
+    });
+  };
     closeFocus();
     setSyncStatus("專注完成，任務已同步更新！");
   };
@@ -485,17 +506,32 @@ export default function Home() {
         <div className="progress-track">
           <span style={{ width: `${progress}%` }} />
         </div>
+        <div className="task-overview" aria-label="今日任務摘要">
+          <span>已安排 <b>{plannedMinutes}</b> 分鐘</span>
+          <span>尚餘 <b>{remaining}</b> 分鐘</span>
+          <div>
+            <button className="task-primary-action" onClick={startFocus} disabled={pendingIndex < 0}>
+              {pendingIndex < 0 ? "今日已完成" : `專注下一項・${tasks[pendingIndex].minutes} 分`}
+            </button>
+            <button className="task-secondary-action" onClick={toggleAllTasks}>
+              {completed === tasks.length ? "重新開啟" : "全部完成"}
+            </button>
+          </div>
+        </div>
         <div className="tasks">
           {tasks.map((task, index) => (
-            <button
+            <div
               className={`task ${task.done ? "done" : ""}`}
-              onClick={() => toggleTask(index)}
               key={`${task.subject}-${index}`}
-              aria-pressed={task.done}
             >
-              <span className={`check ${task.done ? "checked" : ""}`}>
+              <button
+                className={`check ${task.done ? "checked" : ""}`}
+                onClick={() => toggleTask(index)}
+                aria-label={`${task.done ? "取消完成" : "完成"}${task.subject}：${task.detail}`}
+                aria-pressed={task.done}
+              >
                 {task.done ? "✓" : ""}
-              </span>
+              </button>
               <span className={`subject-dot ${task.color}`} />
               <span className="task-copy">
                 <b>{task.subject}</b>
@@ -505,7 +541,10 @@ export default function Home() {
                 {task.minutes}
                 <small>分</small>
               </span>
-            </button>
+              <button className="task-focus" onClick={() => startFocusAt(index)} disabled={task.done}>
+                {task.done ? "已完成" : "專注"}
+              </button>
+            </div>
           ))}
         </div>
       </section>
