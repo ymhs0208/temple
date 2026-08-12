@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import liff from "@line/liff";
 
 type Task = {
@@ -34,6 +34,7 @@ type SavedPlan = {
   eveningTime?: string;
 };
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
+const PENDING_SYNC_KEY = "wenchang-cloud-sync-pending";
 const defaultTasks: Task[] = [
   {
     subject: "數學",
@@ -91,6 +92,7 @@ export default function Home() {
   const [focusEndsAt, setFocusEndsAt] = useState<number | null>(null);
   const [focusPaused, setFocusPaused] = useState(false);
   const [focusEnded, setFocusEnded] = useState(false);
+  const syncQueue = useRef(Promise.resolve(true));
   useEffect(() => {
     const stored = localStorage.getItem("wenchang-mvp");
     if (stored)
@@ -213,32 +215,30 @@ export default function Home() {
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
   }, [focusIndex, focusPaused, focusEnded, focusEndsAt]);
-  const sync = async (nextTasks: Task[]) => {
-    if (!idToken) return;
-    setSyncStatus("同步中…");
-    try {
-      const response = await fetch("/api/progress", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          idToken,
-          tasks: nextTasks,
-          hours,
-          weak,
-          goal,
-          challengeName: name,
-          examDate,
-        }),
-      });
-      setSyncStatus(
-        response.ok ? "已同步至雲端學習紀錄" : "同步未完成，資料保留在此裝置",
-      );
-    } catch {
-      setSyncStatus("同步未完成，資料保留在此裝置");
+  const enqueueSync = (nextTasks: Task[], token = idToken, nextWishes = wishes) => {
+    if (!token) {
+      localStorage.setItem(PENDING_SYNC_KEY, "1");
+      return Promise.resolve(false);
     }
+    const payload = { idToken: token, tasks: nextTasks, hours, weak, goal, challengeName: name, wishes: nextWishes, examDate };
+    const request = syncQueue.current.catch(() => false).then(async () => {
+      setSyncStatus("同步中…");
+      try {
+        const response = await fetch("/api/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+        if (!response.ok) throw new Error("Sync failed");
+        setSyncStatus("已同步至雲端學習紀錄");
+        return true;
+      } catch {
+        localStorage.setItem(PENDING_SYNC_KEY, "1");
+        setSyncStatus("同步未完成，資料保留在此裝置");
+        return false;
+      }
+    });
+    syncQueue.current = request;
+    return request;
   };
   useEffect(() => {
-    if (!idToken) return;
+    if (!idToken || localStorage.getItem(PENDING_SYNC_KEY)) return;
     fetch("/api/progress/load", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -246,19 +246,30 @@ export default function Home() {
     })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data) => {
-        if (!data.exists) return;
+        if (!data.exists) {
+          void enqueueSync(tasks);
+          return;
+        }
         if (data.tasks?.length) setTasks(data.tasks);
         if (data.plan) {
+          setName(data.plan.challengeName ?? name);
           setExamDate(data.plan.examDate);
           setHours(data.plan.hours);
           setWeak(data.plan.weak);
           setGoal(data.plan.goal ?? goal);
+          if (Array.isArray(data.plan.wishes)) setWishes(data.plan.wishes);
         }
         if (Array.isArray(data.visits)) setVisits(data.visits);
         setSyncStatus("已從雲端還原學習紀錄");
       })
       .catch(() => setSyncStatus("雲端紀錄暫時無法讀取"));
   }, [idToken]);
+  useEffect(() => {
+    if (!idToken || !ready || !localStorage.getItem(PENDING_SYNC_KEY)) return;
+    void enqueueSync(tasks).then((synced) => {
+      if (synced) localStorage.removeItem(PENDING_SYNC_KEY);
+    });
+  }, [idToken, ready]);
   useEffect(() => {
     if (!idToken) return;
     fetch("/api/stats", {
@@ -316,7 +327,7 @@ export default function Home() {
         return { ...task, minutes, detail: task.subject === weak ? "考前弱科重點複習" : "考前重點整理・保留體力" };
       });
       localStorage.setItem(modeKey, "applied");
-      void sync(next);
+      void enqueueSync(next);
       return next;
     });
   }, [ready, examModeActive, examDate, weak]);
@@ -325,7 +336,7 @@ export default function Home() {
       const next = current.map((task, i) =>
         i === index ? { ...task, done: !task.done } : task,
       );
-      void sync(next);
+      void enqueueSync(next);
       return next;
     });
   const startFocus = () => {
@@ -360,7 +371,7 @@ export default function Home() {
       const next = current.map((task, index) =>
         index === focusIndex ? { ...task, done: true } : task,
       );
-      void sync(next);
+      void enqueueSync(next);
       return next;
     });
     closeFocus();
@@ -375,7 +386,6 @@ export default function Home() {
     if (token) {
       setIdToken(token);
       setLineName(liff.getDecodedIDToken()?.name ?? null);
-      void sync(tasks);
     }
   };
   const reminder = async () => {
@@ -402,7 +412,11 @@ export default function Home() {
   const saveWish = () => {
     const text = wish.trim();
     if (!text) return;
-    setWishes((current) => [text, ...current].slice(0, 5));
+    setWishes((current) => {
+      const next = [text, ...current].slice(0, 5);
+      void enqueueSync(tasks, idToken, next);
+      return next;
+    });
     setWish("");
   };
   const focusTime = `${String(Math.floor(focusSeconds / 60)).padStart(2, "0")}:${String(focusSeconds % 60).padStart(2, "0")}`;
@@ -1073,7 +1087,7 @@ export default function Home() {
           onClick={
             lineName
               ? () => {
-                  void sync(tasks);
+                  void enqueueSync(tasks);
                 }
               : login
           }

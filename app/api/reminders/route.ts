@@ -1,5 +1,6 @@
 import { verifyLineIdToken } from "@/lib/line";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { taipeiDate } from "@/lib/taipei-date";
 
 export async function POST(request: Request) {
   try {
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (!plan)
       return Response.json({ error: "找不到學習計畫" }, { status: 404 });
-    const date = new Date().toISOString().slice(0, 10);
+    const date = taipeiDate();
     const { data: tasks } = await db
       .from("daily_tasks")
       .select("id, subject, minutes, sort_order")

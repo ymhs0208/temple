@@ -2,6 +2,14 @@
 import { useEffect, useMemo, useState } from "react";
 type Task = { subject: string; minutes: number; detail: string; done: boolean; color: string };
 const colors = ["amber", "jade", "violet", "rose", "blue"];
+const PENDING_SYNC_KEY = "wenchang-cloud-sync-pending";
+if (typeof window !== "undefined") {
+  const initialGoalStorage = localStorage.getItem("wenchang-mvp");
+  window.addEventListener("pagehide", () => {
+    if (localStorage.getItem("wenchang-mvp") !== initialGoalStorage)
+      localStorage.setItem(PENDING_SYNC_KEY, "1");
+  }, { once: true });
+}
 function buildTasks(hours: number, weak: string): Task[] { const total = Math.max(60, hours * 60); const others = ["國文", "英文", "自然", "社會"].filter(subject => subject !== weak); const first = Math.min(60, Math.max(30, Math.round(total * .45 / 15) * 15)); const second = Math.max(15, Math.round((total - first) * .55 / 15) * 15); return [{ subject: weak, minutes: first, detail: "弱點複習與錯題整理", done: false, color: colors[0] }, { subject: others[0], minutes: second, detail: "核心觀念與題型練習", done: false, color: colors[1] }, { subject: others[1], minutes: Math.max(15, total - first - second), detail: "輕量複習與重點回顧", done: false, color: colors[2] }]; }
 export default function GoalPage() { const [name, setName] = useState("學測"); const [date, setDate] = useState("2026-10-31"); const [hours, setHours] = useState(2); const [weak, setWeak] = useState("數學"); const [goal, setGoal] = useState("穩定完成每日學習任務"); const [tasks, setTasks] = useState<Task[]>(() => buildTasks(2, "數學"));
   useEffect(() => { const raw = localStorage.getItem("wenchang-mvp"); if (!raw) return; try { const data = JSON.parse(raw); setName(data.challengeName ?? name); setDate(data.examDate ?? date); setHours(data.hours ?? hours); setWeak(data.weak ?? weak); setGoal(data.goal ?? goal); if (data.tasks?.length) setTasks(data.tasks); else setTasks(buildTasks(data.hours ?? 2, data.weak ?? "數學")); } catch {} }, []);

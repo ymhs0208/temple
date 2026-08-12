@@ -1,7 +1,8 @@
 import { verifyLineIdToken } from "@/lib/line";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { taipeiDate } from "@/lib/taipei-date";
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+const isoDate = (date: Date) => taipeiDate(date);
 
 export async function POST(request: Request) {
   try {

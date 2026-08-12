@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { taipeiDate } from "@/lib/taipei-date";
 
 type LineEvent = {
   type?: string;
@@ -7,7 +8,7 @@ type LineEvent = {
   message?: { type?: string; text?: string };
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => taipeiDate();
 
 async function signatureIsValid(body: string, receivedSignature: string | null) {
   const secret = process.env.LINE_MESSAGING_CHANNEL_SECRET;
