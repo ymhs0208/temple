@@ -225,12 +225,16 @@ export default function Home() {
       setSyncStatus("同步中…");
       try {
         const response = await fetch("/api/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-        if (!response.ok) throw new Error("Sync failed");
+        if (!response.ok) {
+          const failure = await response.json().catch(() => null) as { code?: string } | null;
+          throw new Error(failure?.code ?? "SYNC_UNKNOWN");
+        }
         setSyncStatus("已同步至雲端學習紀錄");
         return true;
-      } catch {
+      } catch (error) {
         localStorage.setItem(PENDING_SYNC_KEY, "1");
-        setSyncStatus("同步未完成，資料保留在此裝置");
+        const code = error instanceof Error ? error.message : "SYNC_UNKNOWN";
+        setSyncStatus(`同步未完成（${code}），資料保留在此裝置`);
         return false;
       }
     });

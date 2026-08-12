@@ -7,7 +7,7 @@ type IncomingTask = { subject: string; minutes: number; detail: string; done: bo
 async function legacySync(
   db: ReturnType<typeof supabaseAdmin>,
   identity: { userId: string; displayName: string | null },
-  body: { hours: number; weak: string; goal?: string; examDate?: string; tasks: IncomingTask[] },
+  body: { hours: number; weak: string; goal?: string; tasks: IncomingTask[] },
   examDate: string,
 ) {
   const { data: user, error: userError } = await db.from("users").upsert({ line_user_id: identity.userId, display_name: identity.displayName }, { onConflict: "line_user_id" }).select("id").single();
@@ -32,41 +32,36 @@ async function legacySync(
 }
 
 export async function POST(request: Request) {
+  let stage = "request";
   try {
-    const body = (await request.json()) as {
-      idToken?: string; hours?: number; weak?: string; goal?: string;
-      challengeName?: string; wishes?: string[]; examDate?: string; tasks?: IncomingTask[];
-    };
+    const body = (await request.json()) as { idToken?: string; hours?: number; weak?: string; goal?: string; challengeName?: string; wishes?: string[]; examDate?: string; tasks?: IncomingTask[] };
     if (!body.idToken || !body.hours || !body.weak || !body.tasks?.length)
-      return Response.json({ error: "缺少必要資料" }, { status: 400 });
+      return Response.json({ error: "Missing required progress data", code: "SYNC_REQUEST" }, { status: 400 });
     if (body.tasks.length > 5 || body.tasks.some((task) => !task.subject || !task.detail || task.minutes < 1 || task.minutes > 180))
-      return Response.json({ error: "任務資料不正確" }, { status: 400 });
+      return Response.json({ error: "Invalid task data", code: "SYNC_REQUEST" }, { status: 400 });
 
+    stage = "line_identity";
     const identity = await verifyLineIdToken(body.idToken);
-    const examDate = /^\d{4}-\d{2}-\d{2}$/.test(body.examDate ?? "")
-      ? body.examDate!
-      : taipeiDate(new Date(Date.now() + 29 * 86400000));
+    const examDate = /^\d{4}-\d{2}-\d{2}$/.test(body.examDate ?? "") ? body.examDate! : taipeiDate(new Date(Date.now() + 29 * 86400000));
+    stage = "supabase_connection";
     const db = supabaseAdmin();
+    stage = "atomic_sync";
     const { error } = await db.rpc("sync_learning_progress", {
-      p_line_user_id: identity.userId,
-      p_display_name: identity.displayName,
-      p_exam_date: examDate,
-      p_daily_hours: body.hours,
-      p_weak_subject: body.weak.slice(0, 30),
-      p_goal: body.goal?.slice(0, 30) ?? null,
-      p_challenge_name: body.challengeName?.slice(0, 20) ?? null,
+      p_line_user_id: identity.userId, p_display_name: identity.displayName,
+      p_exam_date: examDate, p_daily_hours: body.hours, p_weak_subject: body.weak.slice(0, 30),
+      p_goal: body.goal?.slice(0, 30) ?? null, p_challenge_name: body.challengeName?.slice(0, 20) ?? null,
       p_wishes: (body.wishes ?? []).filter((wish) => typeof wish === "string").map((wish) => wish.slice(0, 120)).slice(0, 20),
-      p_task_date: taipeiDate(),
-      p_tasks: body.tasks,
+      p_task_date: taipeiDate(), p_tasks: body.tasks,
     });
     if (error) {
       const functionMissing = error.code === "PGRST202" || error.message.includes("sync_learning_progress");
       if (!functionMissing) throw error;
-      await legacySync(db, identity, { hours: body.hours, weak: body.weak, goal: body.goal, examDate: body.examDate, tasks: body.tasks }, examDate);
+      stage = "legacy_sync";
+      await legacySync(db, identity, { hours: body.hours, weak: body.weak, goal: body.goal, tasks: body.tasks }, examDate);
     }
     return Response.json({ ok: true, displayName: identity.displayName });
   } catch (error) {
-    console.error("progress sync failed", error);
-    return Response.json({ error: "同步失敗，請稍後再試" }, { status: 500 });
+    console.error("progress sync failed", { stage, error });
+    return Response.json({ error: "Progress sync unavailable", code: `SYNC_${stage.toUpperCase()}` }, { status: 500 });
   }
 }
