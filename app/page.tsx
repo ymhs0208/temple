@@ -984,14 +984,15 @@ export default function Home() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ idToken, enabled: draftRemindersEnabled, morningTime: draftMorningTime, eveningTime: draftEveningTime }),
       });
-      if (!response.ok) throw new Error("Save failed");
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "通知偏好暫時無法儲存，請稍後再試。");
       setRemindersEnabled(draftRemindersEnabled);
       setMorningTime(draftMorningTime);
       setEveningTime(draftEveningTime);
       setEditingNotifications(false);
       setSyncStatus("通知偏好已儲存至 LINE 帳號");
-    } catch {
-      setSyncStatus("通知偏好暫時無法儲存，請稍後再試");
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : "通知偏好暫時無法儲存，請稍後再試。");
     } finally {
       setSavingNotifications(false);
     }
@@ -1071,6 +1072,18 @@ export default function Home() {
       </div>
       <section className="service-section">
         <b>帳號服務</b>
+        <button
+          onClick={() => {
+            location.href = "/coach";
+          }}
+        >
+          <span>✦</span>
+          <div>
+            <strong>AI 學習軍師</strong>
+            <small>依今天狀態取得可執行建議</small>
+          </div>
+          <em>›</em>
+        </button>
         <button
           onClick={() => {
             location.href = "/goal";
