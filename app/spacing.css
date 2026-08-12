@@ -340,3 +340,19 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Fluid sizing between breakpoints: follows the available viewport width. */
+@media (max-width: 500px) {
+  .app-shell { padding-inline: clamp(14px, 5vw, 20px); }
+  .feature-shell { padding-inline: clamp(14px, 5vw, 20px); }
+  .hero h1, .feature-hero h1 { font-size: clamp(26px, 8vw, 31px); }
+}
+
+@media (min-width: 501px) {
+  main { padding: clamp(20px, 4vw, 42px); }
+  .app-shell { width: min(100%, clamp(560px, 72vw, 920px)); padding-inline: clamp(20px, 3.5vw, 38px); }
+  .feature-shell { width: min(100%, clamp(620px, 76vw, 1040px)); padding-inline: clamp(28px, 4vw, 48px); }
+  .hero h1 { font-size: clamp(31px, 3.7vw, 38px); }
+  .feature-hero h1 { font-size: clamp(30px, 3.8vw, 38px); }
+  .learning-calendar, .progress-card, .form-card, .plan-preview, .scan-card, .wall-compose, .coach-card { padding: clamp(16px, 2.3vw, 26px); }
+}
