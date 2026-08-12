@@ -54,8 +54,7 @@ export async function POST(request: Request) {
       p_task_date: taipeiDate(), p_tasks: body.tasks,
     });
     if (error) {
-      const functionMissing = error.code === "PGRST202" || error.message.includes("sync_learning_progress");
-      if (!functionMissing) throw error;
+      console.error("atomic progress sync failed; using legacy fallback", error);
       stage = "legacy_sync";
       await legacySync(db, identity, { hours: body.hours, weak: body.weak, goal: body.goal, tasks: body.tasks }, examDate);
     }
