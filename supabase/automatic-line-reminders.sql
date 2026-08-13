@@ -26,6 +26,7 @@ declare
   access_token text;
   reminder record;
   message_text text;
+  request_body jsonb;
 begin
   select decrypted_secret into access_token
   from vault.decrypted_secrets
@@ -63,16 +64,21 @@ begin
         else '🌙 晚安前看一下今天的任務；只要專注 15 分鐘，也算前進。'
       end;
 
+      -- Build the wire payload explicitly. This avoids any driver-specific
+      -- JSONB coercion before pg_net sends it to the LINE Messaging API.
+      request_body := format(
+        '{"to":%s,"messages":[{"type":"text","text":%s}]}',
+        to_json(reminder.line_user_id)::text,
+        to_json(message_text)::text
+      )::jsonb;
+
       perform net.http_post(
         url := 'https://api.line.me/v2/bot/message/push',
         headers := jsonb_build_object(
-          'Content-Type', 'application/json',
+          'Content-Type', 'application/json; charset=utf-8',
           'Authorization', 'Bearer ' || access_token
         ),
-        body := jsonb_build_object(
-          'to', reminder.line_user_id,
-          'messages', jsonb_build_array(jsonb_build_object('type', 'text', 'text', message_text))
-        )
+        body := request_body
       );
     end if;
   end loop;
