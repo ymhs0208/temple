@@ -44,10 +44,12 @@ begin
     join public.users u on u.id = p.user_id
     cross join lateral (
       select 'morning'::text as reminder_kind
-      where p.morning_time::time(0) = (now() at time zone coalesce(p.timezone, 'Asia/Taipei'))::time(0)
+      -- pg_cron runs at an arbitrary second within a minute. Compare only
+      -- hour/minute, otherwise a run at 08:00:03 never matches 08:00:00.
+      where p.morning_time::time(0) = date_trunc('minute', now() at time zone coalesce(p.timezone, 'Asia/Taipei'))::time(0)
       union all
       select 'evening'::text
-      where p.evening_time::time(0) = (now() at time zone coalesce(p.timezone, 'Asia/Taipei'))::time(0)
+      where p.evening_time::time(0) = date_trunc('minute', now() at time zone coalesce(p.timezone, 'Asia/Taipei'))::time(0)
     ) due
     where p.notifications_enabled = true and u.line_user_id is not null
   loop
@@ -86,3 +88,7 @@ select cron.schedule(
   '* * * * *',
   $$select public.dispatch_line_reminders();$$
 );
+
+-- Verify after setup (run these separately in the SQL editor when needed):
+-- select jobname, schedule, active from cron.job where jobname = 'line-reminders-every-minute';
+-- select name from vault.decrypted_secrets where name = 'line_messaging_access_token';
