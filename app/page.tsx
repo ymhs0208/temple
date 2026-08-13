@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import liff from "@line/liff";
 
 type Task = {
@@ -11,7 +11,6 @@ type Task = {
   color: string;
 };
 type LearningDay = { date: string; minutes: number };
-type LearningRecord = { date: string; minutes: number; tasks: { subject: string; detail: string; minutes: number; done: boolean }[] };
 type Tab = "today" | "progress" | "prayer" | "profile";
 type FocusSession = {
   taskIndex: number;
@@ -35,7 +34,6 @@ type SavedPlan = {
   eveningTime?: string;
 };
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
-const PENDING_SYNC_KEY = "wenchang-cloud-sync-pending";
 const defaultTasks: Task[] = [
   {
     subject: "數學",
@@ -78,8 +76,6 @@ export default function Home() {
   const [weeklyMinutes, setWeeklyMinutes] = useState(0);
   const [streakDays, setStreakDays] = useState(0);
   const [learningDays, setLearningDays] = useState<LearningDay[]>([]);
-  const [learningRecords, setLearningRecords] = useState<LearningRecord[]>([]);
-  const [selectedLearningDate, setSelectedLearningDate] = useState<string | null>(null);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [morningTime, setMorningTime] = useState("08:00");
@@ -95,18 +91,6 @@ export default function Home() {
   const [focusEndsAt, setFocusEndsAt] = useState<number | null>(null);
   const [focusPaused, setFocusPaused] = useState(false);
   const [focusEnded, setFocusEnded] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-  const syncQueue = useRef(Promise.resolve(true));
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-  useEffect(() => {
-    const refreshRestoredPage = (event: PageTransitionEvent) => {
-      if (event.persisted) window.location.reload();
-    };
-    window.addEventListener("pageshow", refreshRestoredPage);
-    return () => window.removeEventListener("pageshow", refreshRestoredPage);
-  }, []);
   useEffect(() => {
     const stored = localStorage.getItem("wenchang-mvp");
     if (stored)
@@ -229,34 +213,32 @@ export default function Home() {
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
   }, [focusIndex, focusPaused, focusEnded, focusEndsAt]);
-  const enqueueSync = (nextTasks: Task[], token = idToken, nextWishes = wishes) => {
-    if (!token) {
-      localStorage.setItem(PENDING_SYNC_KEY, "1");
-      return Promise.resolve(false);
+  const sync = async (nextTasks: Task[]) => {
+    if (!idToken) return;
+    setSyncStatus("同步中…");
+    try {
+      const response = await fetch("/api/progress", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          idToken,
+          tasks: nextTasks,
+          hours,
+          weak,
+          goal,
+          challengeName: name,
+          examDate,
+        }),
+      });
+      setSyncStatus(
+        response.ok ? "已同步至雲端學習紀錄" : "同步未完成，資料保留在此裝置",
+      );
+    } catch {
+      setSyncStatus("同步未完成，資料保留在此裝置");
     }
-    const payload = { idToken: token, tasks: nextTasks, hours, weak, goal, challengeName: name, wishes: nextWishes, examDate };
-    const request = syncQueue.current.catch(() => false).then(async () => {
-      setSyncStatus("同步中…");
-      try {
-        const response = await fetch("/api/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-        if (!response.ok) {
-          const failure = await response.json().catch(() => null) as { code?: string } | null;
-          throw new Error(failure?.code ?? "SYNC_UNKNOWN");
-        }
-        setSyncStatus("已同步至雲端學習紀錄");
-        return true;
-      } catch (error) {
-        localStorage.setItem(PENDING_SYNC_KEY, "1");
-        const code = error instanceof Error ? error.message : "SYNC_UNKNOWN";
-        setSyncStatus(`同步未完成（${code}），資料保留在此裝置`);
-        return false;
-      }
-    });
-    syncQueue.current = request;
-    return request;
   };
   useEffect(() => {
-    if (!idToken || localStorage.getItem(PENDING_SYNC_KEY)) return;
+    if (!idToken) return;
     fetch("/api/progress/load", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -264,30 +246,19 @@ export default function Home() {
     })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data) => {
-        if (!data.exists) {
-          void enqueueSync(tasks);
-          return;
-        }
+        if (!data.exists) return;
         if (data.tasks?.length) setTasks(data.tasks);
         if (data.plan) {
-          setName(data.plan.challengeName ?? name);
           setExamDate(data.plan.examDate);
           setHours(data.plan.hours);
           setWeak(data.plan.weak);
           setGoal(data.plan.goal ?? goal);
-          if (Array.isArray(data.plan.wishes)) setWishes(data.plan.wishes);
         }
         if (Array.isArray(data.visits)) setVisits(data.visits);
         setSyncStatus("已從雲端還原學習紀錄");
       })
       .catch(() => setSyncStatus("雲端紀錄暫時無法讀取"));
   }, [idToken]);
-  useEffect(() => {
-    if (!idToken || !ready || !localStorage.getItem(PENDING_SYNC_KEY)) return;
-    void enqueueSync(tasks).then((synced) => {
-      if (synced) localStorage.removeItem(PENDING_SYNC_KEY);
-    });
-  }, [idToken, ready]);
   useEffect(() => {
     if (!idToken) return;
     fetch("/api/stats", {
@@ -300,7 +271,6 @@ export default function Home() {
         setWeeklyMinutes(data.weeklyMinutes ?? 0);
         setStreakDays(data.streakDays ?? 0);
         setLearningDays(Array.isArray(data.days) ? data.days : []);
-        setLearningRecords(Array.isArray(data.records) ? data.records : []);
       })
       .catch(() => undefined);
   }, [idToken, tasks]);
@@ -326,11 +296,7 @@ export default function Home() {
   );
   const examModeActive = daysLeft <= 7;
   const completed = tasks.filter((t) => t.done).length;
-  const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
-  const plannedMinutes = useMemo(
-    () => tasks.reduce((sum, task) => sum + task.minutes, 0),
-    [tasks],
-  );
+  const progress = Math.round((completed / tasks.length) * 100);
   const energy = Math.min(100, 42 + completed * 10 + visits.length * 3);
   const planks = 10 + completed + visits.length;
   const remaining = useMemo(
@@ -350,7 +316,7 @@ export default function Home() {
         return { ...task, minutes, detail: task.subject === weak ? "考前弱科重點複習" : "考前重點整理・保留體力" };
       });
       localStorage.setItem(modeKey, "applied");
-      void enqueueSync(next);
+      void sync(next);
       return next;
     });
   }, [ready, examModeActive, examDate, weak]);
@@ -359,18 +325,13 @@ export default function Home() {
       const next = current.map((task, i) =>
         i === index ? { ...task, done: !task.done } : task,
       );
-      void enqueueSync(next);
+      void sync(next);
       return next;
     });
   const startFocus = () => {
     if (pendingIndex < 0) return;
-    startFocusAt(pendingIndex);
-  };
-  const startFocusAt = (index: number) => {
-    const task = tasks[index];
-    if (!task || task.done) return;
-    const seconds = task.minutes * 60;
-    setFocusIndex(index);
+    const seconds = tasks[pendingIndex].minutes * 60;
+    setFocusIndex(pendingIndex);
     setFocusSeconds(seconds);
     setFocusEndsAt(Date.now() + seconds * 1000);
     setFocusPaused(false);
@@ -393,29 +354,44 @@ export default function Home() {
     setFocusPaused(false);
     setFocusEnded(false);
   };
+  const sendCompletionNotice = async (
+    task: Task,
+    completedCount: number,
+  ) => {
+    if (!idToken) return;
+    try {
+      const response = await fetch("/api/notifications/completion", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          idToken,
+          subject: task.subject,
+          minutes: task.minutes,
+          completedCount,
+          totalCount: tasks.length,
+        }),
+      });
+      if (response.ok) setSyncStatus("專注完成，LINE 恭喜通知已傳送！");
+    } catch {
+      // LINE 通知失敗不影響任務完成與本機／雲端進度。
+    }
+  };
   const completeFocus = () => {
     if (focusIndex === null) return;
+    const completedTask = tasks[focusIndex];
+    const completedCount = tasks.filter((task) => task.done).length + 1;
     setTasks((current) => {
       const next = current.map((task, index) =>
         index === focusIndex ? { ...task, done: true } : task,
       );
-      void enqueueSync(next);
+      void sync(next);
       return next;
     });
+    void sendCompletionNotice(completedTask, completedCount);
     closeFocus();
-    setSyncStatus("專注完成，任務已同步更新！");
-  };
-  const toggleAllTasks = () => {
-    const shouldComplete = completed !== tasks.length;
-    const confirmation = shouldComplete
-      ? "確定要將今天所有任務標記為完成嗎？"
-      : "確定要重新開啟今天所有任務嗎？";
-    if (!window.confirm(confirmation)) return;
-    setTasks((current) => {
-      const next = current.map((task) => ({ ...task, done: shouldComplete }));
-      void enqueueSync(next);
-      return next;
-    });
+    setSyncStatus(
+      idToken ? "專注完成，正在傳送 LINE 恭喜通知…" : "專注完成，任務已同步更新！",
+    );
   };
   const login = async () => {
     if (!liff.isLoggedIn()) {
@@ -426,6 +402,7 @@ export default function Home() {
     if (token) {
       setIdToken(token);
       setLineName(liff.getDecodedIDToken()?.name ?? null);
+      void sync(tasks);
     }
   };
   const reminder = async () => {
@@ -452,11 +429,7 @@ export default function Home() {
   const saveWish = () => {
     const text = wish.trim();
     if (!text) return;
-    setWishes((current) => {
-      const next = [text, ...current].slice(0, 5);
-      void enqueueSync(tasks, idToken, next);
-      return next;
-    });
+    setWishes((current) => [text, ...current].slice(0, 5));
     setWish("");
   };
   const focusTime = `${String(Math.floor(focusSeconds / 60)).padStart(2, "0")}:${String(focusSeconds % 60).padStart(2, "0")}`;
@@ -517,32 +490,17 @@ export default function Home() {
         <div className="progress-track">
           <span style={{ width: `${progress}%` }} />
         </div>
-        <div className="task-overview" aria-label="今日任務摘要">
-          <span>已安排 <b>{plannedMinutes}</b> 分鐘</span>
-          <span>尚餘 <b>{remaining}</b> 分鐘</span>
-          <div>
-            <button className="task-primary-action" onClick={startFocus} disabled={pendingIndex < 0}>
-              {pendingIndex < 0 ? "今日已完成" : `專注下一項・${tasks[pendingIndex].minutes} 分`}
-            </button>
-            <button className="task-secondary-action" onClick={toggleAllTasks}>
-              {completed === tasks.length ? "重新開啟" : "全部完成"}
-            </button>
-          </div>
-        </div>
         <div className="tasks">
           {tasks.map((task, index) => (
-            <div
+            <button
               className={`task ${task.done ? "done" : ""}`}
+              onClick={() => toggleTask(index)}
               key={`${task.subject}-${index}`}
+              aria-pressed={task.done}
             >
-              <button
-                className={`check ${task.done ? "checked" : ""}`}
-                onClick={() => toggleTask(index)}
-                aria-label={`${task.done ? "取消完成" : "完成"}${task.subject}：${task.detail}`}
-                aria-pressed={task.done}
-              >
+              <span className={`check ${task.done ? "checked" : ""}`}>
                 {task.done ? "✓" : ""}
-              </button>
+              </span>
               <span className={`subject-dot ${task.color}`} />
               <span className="task-copy">
                 <b>{task.subject}</b>
@@ -552,10 +510,7 @@ export default function Home() {
                 {task.minutes}
                 <small>分</small>
               </span>
-              <button className="task-focus" onClick={() => startFocusAt(index)} disabled={task.done}>
-                {task.done ? "已完成" : "專注"}
-              </button>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -630,31 +585,9 @@ export default function Home() {
   const todayMinutes = tasks
     .filter((task) => task.done)
     .reduce((sum, task) => sum + task.minutes, 0);
-  const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
-  // Update the dashboard immediately from the task state. The server response
-  // remains the source of truth for previous days and reconciles after sync.
-  const syncedTodayMinutes = learningDays.find((day) => day.date === todayKey)?.minutes ?? 0;
-  const displayedWeeklyMinutes = Math.max(0, weeklyMinutes - syncedTodayMinutes + todayMinutes);
-  const displayedStreakDays = todayMinutes > 0 ? Math.max(1, streakDays) : 0;
-  const todayRecord: LearningRecord = {
-    date: todayKey,
-    minutes: todayMinutes,
-    tasks: tasks.map((task) => ({ subject: task.subject, detail: task.detail, minutes: task.minutes, done: task.done })),
-  };
-  const selectedRecord = (selectedLearningDate ?? todayKey) === todayKey
-    ? todayRecord
-    : learningRecords.find((record) => record.date === selectedLearningDate) ?? null;
-  const openLearningRecord = (date: string) => setSelectedLearningDate(date);
-  useEffect(() => {
-    if (!selectedLearningDate) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelectedLearningDate(null);
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [selectedLearningDate]);
   const calendarData = useMemo(() => {
     const records = new Map(learningDays.map((day) => [day.date, day.minutes]));
+    const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
     if (todayMinutes) records.set(todayKey, todayMinutes);
     const year = calendarMonth.getFullYear();
     const month = calendarMonth.getMonth();
@@ -667,7 +600,7 @@ export default function Home() {
       return { day, date, minutes: records.get(date) ?? 0, isToday: date === todayKey, isFuture: date > todayKey };
     });
     return { cells, monthLabel: new Intl.DateTimeFormat("zh-TW", { year: "numeric", month: "long" }).format(calendarMonth), activeDays: [...records.keys()].filter((date) => date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)).length };
-  }, [calendarMonth, learningDays, todayMinutes, todayKey]);
+  }, [calendarMonth, learningDays, todayMinutes]);
   const progressView = (
     <section className="journey">
       <p className="eyebrow">動態目標進度</p>
@@ -713,23 +646,10 @@ export default function Home() {
         </div>
         <div className="calendar-legend"><span><i className="legend-done" />完成學習</span><span><i className="legend-today" />今天</span><b>{calendarData.activeDays} 天已累積</b></div>
         <div className="calendar-weekdays">{["一", "二", "三", "四", "五", "六", "日"].map((day) => <span key={day}>{day}</span>)}</div>
-        <div className="calendar-grid">{calendarData.cells.map((cell, index) => cell ? <button type="button" key={cell.date} className={`calendar-day ${cell.minutes ? "has-learning" : ""} ${cell.isToday ? "is-today" : ""} ${cell.isFuture ? "is-future" : ""}`} onClick={() => openLearningRecord(cell.date)} aria-label={`查看 ${cell.date} 的學習紀錄`}><b>{cell.day}</b>{cell.minutes ? <small>{cell.minutes} 分</small> : <i>{cell.isToday ? "今天" : ""}</i>}</button> : <span key={`blank-${index}`} aria-hidden="true" />)}</div>
+        <div className="calendar-grid">{calendarData.cells.map((cell, index) => cell ? <div key={cell.date} className={`calendar-day ${cell.minutes ? "has-learning" : ""} ${cell.isToday ? "is-today" : ""} ${cell.isFuture ? "is-future" : ""}`}><b>{cell.day}</b>{cell.minutes ? <small>{cell.minutes} 分</small> : <i>{cell.isToday ? "今天" : ""}</i>}</div> : <span key={`blank-${index}`} aria-hidden="true" />)}</div>
         <p className="calendar-note">有色日期代表已完成學習；點亮每一天，讓努力留下足跡。</p>
       </section>
-       {selectedLearningDate && <div className="calendar-record-backdrop" role="presentation" onMouseDown={() => setSelectedLearningDate(null)}>
-       <section className="calendar-record" role="dialog" aria-modal="true" aria-labelledby="calendar-record-title" aria-live="polite" onMouseDown={(event) => event.stopPropagation()}>
-         <div className="calendar-record-heading">
-           <span id="calendar-record-title">當日學習紀錄</span>
-           <b>{selectedRecord?.date ?? selectedLearningDate ?? todayKey}</b>
-           <button className="calendar-record-close" onClick={() => setSelectedLearningDate(null)} aria-label="關閉當日學習紀錄">×</button>
-         </div>
-         {selectedRecord?.tasks.length ? <>
-           <div className="calendar-record-summary"><b>{selectedRecord.minutes} 分鐘</b><span>完成 {selectedRecord.tasks.filter((task) => task.done).length}/{selectedRecord.tasks.length} 項任務</span></div>
-           <ul>{selectedRecord.tasks.map((task, index) => <li key={`${task.subject}-${index}`} className={task.done ? "done" : "pending"}><i>{task.done ? "✓" : "○"}</i><div><b>{task.subject}</b><small>{task.detail}</small></div><span>{task.minutes} 分</span></li>)}</ul>
-         </> : <p>這一天尚未建立或同步學習紀錄。</p>}
-       </section>
-       </div>}
-       <div className="empty-panel">
+      <div className="empty-panel">
         <b>需要調整計畫嗎？</b>
         <p>
           考試日期、每日時間、弱科與目標都可以隨時重新設定，今天的任務會重新建立。
@@ -817,13 +737,13 @@ export default function Home() {
       icon: "🔥",
       title: "三日專注",
       detail: "連續學習 3 天",
-      unlocked: displayedStreakDays >= 3,
+      unlocked: streakDays >= 3,
     },
     {
       icon: "◷",
       title: "專注達人",
       detail: "本週完成 300 分鐘",
-      unlocked: displayedWeeklyMinutes >= 300,
+      unlocked: weeklyMinutes >= 300,
     },
     {
       icon: "✓",
@@ -851,7 +771,7 @@ export default function Home() {
         <div>
           <span>本週完成</span>
           <b>
-            {displayedWeeklyMinutes}
+            {weeklyMinutes}
             <small> 分鐘</small>
           </b>
           <p>把每一次專注，累積成看得見的進步。</p>
@@ -859,7 +779,7 @@ export default function Home() {
         <div className="streak-mark">
           <span>🔥</span>
           <b>
-            {displayedStreakDays}
+            {streakDays}
             <small> 天</small>
           </b>
           <p>連續學習</p>
@@ -974,7 +894,7 @@ export default function Home() {
         </div>
         <div>
           <b>
-            {displayedStreakDays}
+            {streakDays}
             <small> 天</small>
           </b>
           <span>連續學習</span>
@@ -1077,15 +997,14 @@ export default function Home() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ idToken, enabled: draftRemindersEnabled, morningTime: draftMorningTime, eveningTime: draftEveningTime }),
       });
-      const result = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(result.error ?? "通知偏好暫時無法儲存，請稍後再試。");
+      if (!response.ok) throw new Error("Save failed");
       setRemindersEnabled(draftRemindersEnabled);
       setMorningTime(draftMorningTime);
       setEveningTime(draftEveningTime);
       setEditingNotifications(false);
       setSyncStatus("通知偏好已儲存至 LINE 帳號");
-    } catch (error) {
-      setSyncStatus(error instanceof Error ? error.message : "通知偏好暫時無法儲存，請稍後再試。");
+    } catch {
+      setSyncStatus("通知偏好暫時無法儲存，請稍後再試");
     } finally {
       setSavingNotifications(false);
     }
@@ -1167,18 +1086,6 @@ export default function Home() {
         <b>帳號服務</b>
         <button
           onClick={() => {
-            location.href = "/coach";
-          }}
-        >
-          <span>✦</span>
-          <div>
-            <strong>AI 學習軍師</strong>
-            <small>依今天狀態取得可執行建議</small>
-          </div>
-          <em>›</em>
-        </button>
-        <button
-          onClick={() => {
             location.href = "/goal";
           }}
         >
@@ -1193,7 +1100,7 @@ export default function Home() {
           onClick={
             lineName
               ? () => {
-                  void enqueueSync(tasks);
+                  void sync(tasks);
                 }
               : login
           }
@@ -1235,15 +1142,6 @@ export default function Home() {
       {syncStatus && <small className="reminder-status">{syncStatus}</small>}
     </section>
   );
-  if (!hydrated)
-    return (
-      <main>
-        <section className="app-shell app-loading" aria-busy="true" aria-label="載入學習計畫">
-          <span className="brand-mark">⛩</span>
-          <p>正在載入今日學習計畫…</p>
-        </section>
-      </main>
-    );
   return (
     <main>
       <section className="app-shell">
@@ -1263,8 +1161,9 @@ export default function Home() {
         </header>
         {tab === "today" ? (
           <>
-            {today}
             {quickActions}
+            {today}
+            {retentionCard}
           </>
         ) : tab === "progress" ? (
           <>
