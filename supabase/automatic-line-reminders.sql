@@ -75,7 +75,7 @@ begin
       perform net.http_post(
         url := 'https://api.line.me/v2/bot/message/push',
         headers := jsonb_build_object(
-          'Content-Type', 'application/json; charset=utf-8',
+          'Content-Type', 'application/json',
           'Authorization', 'Bearer ' || access_token
         ),
         body := request_body
