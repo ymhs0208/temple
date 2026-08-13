@@ -1,4 +1,4 @@
-.quick-actions { margin-bottom: 18px; }
+.quick-actions { margin: 18px 0 0; }
 .quick-title { margin-bottom: 10px; }
 .quick-grid { gap: 12px; }
 .quick-grid button:nth-child(2) { margin-bottom: 3px; }

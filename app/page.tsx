@@ -1263,9 +1263,8 @@ export default function Home() {
         </header>
         {tab === "today" ? (
           <>
-            {quickActions}
             {today}
-            {retentionCard}
+            {quickActions}
           </>
         ) : tab === "progress" ? (
           <>
