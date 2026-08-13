@@ -631,6 +631,11 @@ export default function Home() {
     .filter((task) => task.done)
     .reduce((sum, task) => sum + task.minutes, 0);
   const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
+  // Update the dashboard immediately from the task state. The server response
+  // remains the source of truth for previous days and reconciles after sync.
+  const syncedTodayMinutes = learningDays.find((day) => day.date === todayKey)?.minutes ?? 0;
+  const displayedWeeklyMinutes = Math.max(0, weeklyMinutes - syncedTodayMinutes + todayMinutes);
+  const displayedStreakDays = todayMinutes > 0 ? Math.max(1, streakDays) : 0;
   const todayRecord: LearningRecord = {
     date: todayKey,
     minutes: todayMinutes,
@@ -812,13 +817,13 @@ export default function Home() {
       icon: "🔥",
       title: "三日專注",
       detail: "連續學習 3 天",
-      unlocked: streakDays >= 3,
+      unlocked: displayedStreakDays >= 3,
     },
     {
       icon: "◷",
       title: "專注達人",
       detail: "本週完成 300 分鐘",
-      unlocked: weeklyMinutes >= 300,
+      unlocked: displayedWeeklyMinutes >= 300,
     },
     {
       icon: "✓",
@@ -846,7 +851,7 @@ export default function Home() {
         <div>
           <span>本週完成</span>
           <b>
-            {weeklyMinutes}
+            {displayedWeeklyMinutes}
             <small> 分鐘</small>
           </b>
           <p>把每一次專注，累積成看得見的進步。</p>
@@ -854,7 +859,7 @@ export default function Home() {
         <div className="streak-mark">
           <span>🔥</span>
           <b>
-            {streakDays}
+            {displayedStreakDays}
             <small> 天</small>
           </b>
           <p>連續學習</p>
@@ -969,7 +974,7 @@ export default function Home() {
         </div>
         <div>
           <b>
-            {streakDays}
+            {displayedStreakDays}
             <small> 天</small>
           </b>
           <span>連續學習</span>
