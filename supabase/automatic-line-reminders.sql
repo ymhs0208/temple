@@ -95,6 +95,39 @@ select cron.schedule(
   $$select public.dispatch_line_reminders();$$
 );
 
+-- pg_net can corrupt JSON bodies when calling the LINE API directly on some
+-- Supabase versions. It now only wakes the website dispatcher; the dispatcher
+-- uses the runtime fetch implementation to send LINE's JSON payload.
+create or replace function public.dispatch_line_reminders()
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions, vault
+as $$
+declare
+  access_token text;
+begin
+  select decrypted_secret into access_token
+  from vault.decrypted_secrets
+  where name = 'line_messaging_access_token'
+  limit 1;
+
+  if access_token is null then
+    raise notice 'LINE access token has not been stored in Supabase Vault.';
+    return;
+  end if;
+
+  perform net.http_post(
+    url := 'https://score.cc.cd/api/reminders/dispatch',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || access_token
+    ),
+    body := '{}'::jsonb
+  );
+end;
+$$;
+
 -- Verify after setup (run these separately in the SQL editor when needed):
 -- select jobname, schedule, active from cron.job where jobname = 'line-reminders-every-minute';
 -- select name from vault.decrypted_secrets where name = 'line_messaging_access_token';
