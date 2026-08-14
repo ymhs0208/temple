@@ -1,100 +1,52 @@
-# vinext-starter
+# 全國會考落點分析
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+React + Vite 前端，資料與付款、LINE 會員驗證 API 使用 Supabase Edge Functions。
 
-## Prerequisites
+## Cloudflare Pages 部署
 
-- Node.js `>=22.13.0`
+在 Cloudflare Dashboard 建立 **Pages** 專案並連接此 GitHub repository，使用下列設定：
 
-## Quick Start
+| 設定 | 值 |
+| --- | --- |
+| Production branch | `main` |
+| Build command | `npm ci && npm run build` |
+| Build output directory | `dist` |
+| Node.js version | `24` |
 
-```bash
-npm install
-npm run dev
-npm run build
+在 Pages 的 **Environment variables** 設定：
+
+```text
+VITE_BASE_PATH=/
+VITE_SUPABASE_URL=https://<你的專案>.supabase.co
+VITE_SUPABASE_ANON_KEY=<Supabase publishable／anon key>
 ```
 
-This starter does not use `wrangler.jsonc`.
+`public/_headers` 會在 Pages 回應中加入 CSP、反嵌入與其他安全標頭。Pages 專案請在 Dashboard 啟用 SPA fallback；Workers Builds 已由 `wrangler.jsonc` 的靜態資產設定自動處理單頁路由，不需要 `_redirects`。
 
-## Included Shape
+## 上線前同步更新
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+以實際 Pages 網址（例如 `https://analyze.pages.dev` 或自訂網域）更新 Supabase Secrets：
 
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```text
+ALLOWED_ORIGINS=https://<你的 Pages 網址>
+SITE_URL=https://<你的 Pages 網址>
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+並到 LINE Developers Console：
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+1. 將 LINE Login callback URL 設為 `https://<你的 Supabase 專案>.supabase.co/functions/v1/line-login`。
+2. 將隱私權與服務條款網址改為新的 Pages 網址。
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+ECPay callback 仍維持 Supabase `ecpay-callback` Function；不需放入 Cloudflare Pages。
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+## Cloudflare Workers Builds 部署
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+若 Cloudflare 顯示的是 **Workers Builds**（不是 Pages），本專案已包含 `wrangler.jsonc`。設定如下：
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+| 設定 | 值 |
+| --- | --- |
+| Worker name | `analyze` |
+| Build command | `npm ci && npm run build` |
+| Deploy command | `npx wrangler deploy` |
 
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+Worker 會提供 `dist` 靜態資產、處理單頁路由回退，並在 HTTP 回應實際加入 CSP 與反嵌入安全標頭。
