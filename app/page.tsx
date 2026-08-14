@@ -354,14 +354,23 @@ export default function Home() {
       return next;
     });
   }, [ready, examModeActive, examDate, weak]);
-  const toggleTask = (index: number) =>
+  const toggleTask = (index: number) => {
+    const task = tasks[index];
+    if (!task) return;
+    const isCompleting = !task.done;
+    const completedCount = tasks.filter((item) => item.done).length + (isCompleting ? 1 : -1);
     setTasks((current) => {
-      const next = current.map((task, i) =>
-        i === index ? { ...task, done: !task.done } : task,
+      const next = current.map((item, i) =>
+        i === index ? { ...item, done: !item.done } : item,
       );
       void enqueueSync(next);
       return next;
     });
+    if (isCompleting) {
+      void sendCompletionNotice(task, completedCount, index);
+      setSyncStatus(idToken ? "科目完成，正在傳送 LINE 鼓勵…" : "科目完成，任務已同步更新！");
+    }
+  };
   const startFocus = () => {
     if (pendingIndex < 0) return;
     startFocusAt(pendingIndex);
@@ -396,6 +405,7 @@ export default function Home() {
   const sendCompletionNotice = async (
     task: Task,
     completedCount: number,
+    taskIndex: number,
   ) => {
     if (!idToken) return;
     try {
@@ -408,6 +418,7 @@ export default function Home() {
           minutes: task.minutes,
           completedCount,
           totalCount: tasks.length,
+          taskIndex,
         }),
       });
       if (response.ok) setSyncStatus("專注完成，LINE 恭喜通知已傳送！");
@@ -426,7 +437,7 @@ export default function Home() {
       void enqueueSync(next);
       return next;
     });
-    void sendCompletionNotice(completedTask, completedCount);
+    void sendCompletionNotice(completedTask, completedCount, focusIndex);
     closeFocus();
     setSyncStatus(
       idToken ? "專注完成，正在傳送 LINE 恭喜通知…" : "專注完成，任務已同步更新！",
@@ -438,11 +449,18 @@ export default function Home() {
       ? "確定要將今天所有任務標記為完成嗎？"
       : "確定要重新開啟今天所有任務嗎？";
     if (!window.confirm(confirmation)) return;
+    const wasAllComplete = completed === tasks.length;
     setTasks((current) => {
       const next = current.map((task) => ({ ...task, done: shouldComplete }));
       void enqueueSync(next);
       return next;
     });
+    if (shouldComplete && !wasAllComplete) {
+      const finalTaskIndex = tasks.reduce((lastPending, task, index) => !task.done ? index : lastPending, -1);
+      const finalTask = tasks[finalTaskIndex] ?? tasks[tasks.length - 1];
+      if (finalTask) void sendCompletionNotice(finalTask, tasks.length, finalTaskIndex);
+      setSyncStatus(idToken ? "今日任務完成，正在傳送 LINE 祝賀…" : "今日任務已全部同步更新！");
+    }
   };
   const login = async () => {
     if (!liff.isLoggedIn()) {
