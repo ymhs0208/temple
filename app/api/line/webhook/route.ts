@@ -64,7 +64,13 @@ function oneHourPlan(tasks: { subject: string; minutes: number; task_type: strin
 }
 
 function helpText() {
-  return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・我只有一小時\n・查看進度\n・給我一句鼓勵";
+  return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・我完成數學了\n・查看進度\n・我只有一小時\n・給我一句鼓勵";
+}
+
+function completionText(subject: string, minutes: number, completedCount: number, totalCount: number, displayName: string | null) {
+  const name = displayName ? `${displayName}，` : "";
+  if (completedCount === totalCount) return `🎉 ${name}${subject}也完成了！\n\n今天的 ${totalCount} 項任務已全部完成。現在可以好好休息，明天再繼續前進。`;
+  return `✅ ${name}${subject}完成了！\n今天進度 ${completedCount}/${totalCount}，還有 ${totalCount - completedCount} 項。一步一步來，你做得很好。`;
 }
 
 async function answer(event: LineEvent) {
@@ -76,6 +82,21 @@ async function answer(event: LineEvent) {
     return;
   }
   const { tasks, completed, plan } = context;
+  const isCompletionCommand = /(完成|讀完|寫完|做完|結束|打卡)/.test(command);
+  const matchingTask = isCompletionCommand ? tasks.find((task) => command.includes(task.subject)) : undefined;
+  if (matchingTask) {
+    if (completed.has(matchingTask.id)) {
+      await reply(event.replyToken, `「${matchingTask.subject}」今天已經標記完成囉！想查看整體進度，可以傳「進度」。`);
+      return;
+    }
+    const db = supabaseAdmin();
+    const { error } = await db.from("task_completions").insert({ task_id: matchingTask.id, user_id: context.user.id });
+    if (error) throw error;
+    const completedCount = completed.size + 1;
+    await db.from("energy").upsert({ user_id: context.user.id, current_energy: Math.min(100, 42 + completedCount * 10), prayer_planks: 10 + completedCount, updated_at: new Date().toISOString() });
+    await reply(event.replyToken, completionText(matchingTask.subject, matchingTask.minutes, completedCount, tasks.length, context.user.display_name));
+    return;
+  }
   if (command.includes("今天讀什麼") || command.includes("今日任務")) {
     await reply(event.replyToken, tasks.length ? `📚 今天推薦\n${taskLines(tasks, completed)}\n\n弱科優先：${plan.weak_subject}。先完成第一項就很棒！` : "今天還沒有任務。請先在文昌同行建立或調整你的學習計畫。");
     return;
