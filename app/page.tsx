@@ -393,8 +393,32 @@ export default function Home() {
     setFocusPaused(false);
     setFocusEnded(false);
   };
+  const sendCompletionNotice = async (
+    task: Task,
+    completedCount: number,
+  ) => {
+    if (!idToken) return;
+    try {
+      const response = await fetch("/api/notifications/completion", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          idToken,
+          subject: task.subject,
+          minutes: task.minutes,
+          completedCount,
+          totalCount: tasks.length,
+        }),
+      });
+      if (response.ok) setSyncStatus("專注完成，LINE 恭喜通知已傳送！");
+    } catch {
+      // LINE 通知失敗不影響原本的任務完成流程。
+    }
+  };
   const completeFocus = () => {
     if (focusIndex === null) return;
+    const completedTask = tasks[focusIndex];
+    const completedCount = tasks.filter((task) => task.done).length + 1;
     setTasks((current) => {
       const next = current.map((task, index) =>
         index === focusIndex ? { ...task, done: true } : task,
@@ -402,8 +426,11 @@ export default function Home() {
       void enqueueSync(next);
       return next;
     });
+    void sendCompletionNotice(completedTask, completedCount);
     closeFocus();
-    setSyncStatus("專注完成，任務已同步更新！");
+    setSyncStatus(
+      idToken ? "專注完成，正在傳送 LINE 恭喜通知…" : "專注完成，任務已同步更新！",
+    );
   };
   const toggleAllTasks = () => {
     const shouldComplete = completed !== tasks.length;
