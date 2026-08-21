@@ -3,6 +3,18 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { taipeiDate } from "@/lib/taipei-date";
 
 type IncomingTask = { subject: string; minutes: number; detail: string; done: boolean };
+type CompanionState = {
+  oracleTickets?: number; oraclePlanksSpent?: number; oracleResultId?: number | null;
+  dailyFortuneTask?: unknown; focusRewardMinutes?: number; wishReflections?: unknown;
+};
+
+function safeCompanionState(input: CompanionState | undefined) {
+  const number = (value: unknown, maximum = 100000) => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= maximum ? value : 0;
+  const oracleResultId = typeof input?.oracleResultId === "number" && Number.isInteger(input.oracleResultId) && input.oracleResultId >= 0 && input.oracleResultId <= 5 ? input.oracleResultId : null;
+  const dailyFortuneTask = input?.dailyFortuneTask && typeof input.dailyFortuneTask === "object" && !Array.isArray(input.dailyFortuneTask) ? input.dailyFortuneTask : {};
+  const wishReflections = Array.isArray(input?.wishReflections) ? input.wishReflections.slice(0, 20) : [];
+  return { oracle_tickets: number(input?.oracleTickets, 100), oracle_planks_spent: number(input?.oraclePlanksSpent, 100000), oracle_result_id: oracleResultId, daily_fortune_task: dailyFortuneTask, focus_reward_minutes: number(input?.focusRewardMinutes), wish_reflections: wishReflections, updated_at: new Date().toISOString() };
+}
 
 async function legacySync(
   db: ReturnType<typeof supabaseAdmin>,
@@ -34,7 +46,7 @@ async function legacySync(
 export async function POST(request: Request) {
   let stage = "request";
   try {
-    const body = (await request.json()) as { idToken?: string; hours?: number; weak?: string; goal?: string; challengeName?: string; wishes?: string[]; examDate?: string; tasks?: IncomingTask[] };
+    const body = (await request.json()) as { idToken?: string; hours?: number; weak?: string; goal?: string; challengeName?: string; wishes?: string[]; examDate?: string; tasks?: IncomingTask[]; companionState?: CompanionState };
     if (!body.idToken || !body.hours || !body.weak || !body.tasks?.length)
       return Response.json({ error: "Missing required progress data", code: "SYNC_REQUEST" }, { status: 400 });
     if (body.tasks.length > 5 || body.tasks.some((task) => !task.subject || !task.detail || task.minutes < 1 || task.minutes > 180))
@@ -58,6 +70,10 @@ export async function POST(request: Request) {
       stage = "legacy_sync";
       await legacySync(db, identity, { hours: body.hours, weak: body.weak, goal: body.goal, tasks: body.tasks }, examDate);
     }
+    const { data: user, error: userError } = await db.from("users").select("id").eq("line_user_id", identity.userId).single();
+    if (userError || !user) throw userError ?? new Error("User unavailable");
+    const { error: companionError } = await db.from("user_companion_states").upsert({ user_id: user.id, ...safeCompanionState(body.companionState) }, { onConflict: "user_id" });
+    if (companionError) throw companionError;
     return Response.json({ ok: true, displayName: identity.displayName });
   } catch (error) {
     console.error("progress sync failed", { stage, error });

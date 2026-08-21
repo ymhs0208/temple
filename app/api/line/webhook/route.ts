@@ -64,7 +64,7 @@ function oneHourPlan(tasks: { subject: string; minutes: number; task_type: strin
 }
 
 function helpText() {
-  return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・我只有一小時\n・查看進度\n・給我一句鼓勵";
+  return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・完成英文\n・完成數學\n・我只有一小時\n・查看進度\n・給我一句鼓勵";
 }
 
 async function answer(event: LineEvent) {
@@ -76,6 +76,23 @@ async function answer(event: LineEvent) {
     return;
   }
   const { tasks, completed, plan } = context;
+	const completionMatch = command.match(/^(?:我)?(?:已)?(?:完成|打卡)(.+)$/);
+	if (completionMatch) {
+		const requestedSubject = completionMatch[1].replace(/(任務|作業|了|啦)$/g, "");
+		const target = tasks.find((task) => !completed.has(task.id) && task.subject.replace(/\s+/g, "").includes(requestedSubject));
+		if (!target) {
+			await reply(event.replyToken, `找不到尚未完成的「${requestedSubject}」任務。\n\n傳「今天讀什麼」可查看目前任務。`);
+			return;
+		}
+		const db = supabaseAdmin();
+		const { error } = await db.from("task_completions").upsert({ task_id: target.id, user_id: context.user.id }, { onConflict: "task_id,user_id" });
+		if (error) throw error;
+		const completedCount = completed.size + 1;
+		const completedMinutes = tasks.filter((task) => completed.has(task.id) || task.id === target.id).reduce((sum, task) => sum + task.minutes, 0);
+		const nextTask = tasks.find((task) => !completed.has(task.id) && task.id !== target.id);
+		await reply(event.replyToken, `✅ 已完成 ${target.subject}・${target.minutes} 分鐘！\n\n📈 今日進度 ${completedCount}/${tasks.length} 項・累積 ${completedMinutes} 分鐘\n\n${nextTask ? `下一步：${nextTask.subject} ${nextTask.minutes} 分鐘` : "今天任務已圓滿完成，辛苦了！"}`);
+		return;
+	}
   if (command.includes("今天讀什麼") || command.includes("今日任務")) {
     await reply(event.replyToken, tasks.length ? `📚 今天推薦\n${taskLines(tasks, completed)}\n\n弱科優先：${plan.weak_subject}。先完成第一項就很棒！` : "今天還沒有任務。請先在文昌同行建立或調整你的學習計畫。");
     return;

@@ -1,4 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { taipeiDate } from "@/lib/taipei-date";
+import { buildReminderFlex } from "@/lib/line-reminder";
 
 type Preference = {
   user_id: string;
@@ -48,10 +50,18 @@ export async function POST(request: Request) {
 
       const { data: user, error: userError } = await db
         .from("users")
-        .select("line_user_id")
+        .select("id, line_user_id, display_name")
         .eq("id", preference.user_id)
         .maybeSingle();
       if (userError || !user?.line_user_id) continue;
+
+      const { data: plan } = await db.from("study_plans").select("id").eq("user_id", preference.user_id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (!plan) continue;
+      const { data: tasks } = await db.from("daily_tasks").select("id, subject, minutes, sort_order").eq("plan_id", plan.id).eq("task_date", taipeiDate()).order("sort_order");
+      if (!tasks?.length) continue;
+      const { data: completions } = await db.from("task_completions").select("task_id").eq("user_id", preference.user_id).in("task_id", tasks.map((task) => task.id));
+      const done = new Set((completions ?? []).map((item) => item.task_id));
+      const pending = tasks.filter((task) => !done.has(task.id));
 
       const { data: delivery, error: deliveryError } = await db
         .from("line_notification_deliveries")
@@ -60,13 +70,10 @@ export async function POST(request: Request) {
         .maybeSingle();
       if (deliveryError || !delivery) continue;
 
-      const text = kind === "morning"
-        ? "早安！今天也一起完成一小步學習吧。"
-        : "晚安前提醒：花 15 分鐘整理今天的學習，也是在前進。";
       const response = await fetch("https://api.line.me/v2/bot/message/push", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ to: user.line_user_id, messages: [{ type: "text", text }] }),
+        body: JSON.stringify({ to: user.line_user_id, messages: [buildReminderFlex({ kind, displayName: user.display_name, tasks, pending })] }),
       });
       if (response.ok) sent += 1;
       else await db.from("line_notification_deliveries").delete().eq("id", delivery.id);

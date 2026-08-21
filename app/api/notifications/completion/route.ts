@@ -1,66 +1,79 @@
 import { verifyLineIdToken } from "@/lib/line";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { taipeiDate } from "@/lib/taipei-date";
+
+type CompletionRequest = {
+  idToken?: string;
+  subject?: string;
+  minutes?: number;
+  completedCount?: number;
+  totalCount?: number;
+  taskIndex?: number;
+};
+
+function completionMessage(subject: string, minutes: number, completedCount: number, totalCount: number, displayName: string | null) {
+  const name = displayName ? `${displayName}，` : "";
+  if (completedCount >= totalCount) {
+    return `🎉 ${name}${subject}也完成了！\n\n今天安排的 ${totalCount} 項任務已全部完成。把這份完成感留給自己，現在可以安心休息了。`;
+  }
+  const remaining = totalCount - completedCount;
+  const encouragement = completedCount === 1
+    ? "有開始就很不容易，今天已經踏出第一步。"
+    : "穩穩完成一項又一項，你正在靠近自己的目標。";
+  return `✅ ${name}${subject}完成了！\n這次專注了 ${minutes} 分鐘，今日進度 ${completedCount}/${totalCount}，還剩 ${remaining} 項。\n\n${encouragement}`;
+}
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as {
-      idToken?: string;
-      subject?: string;
-      minutes?: number;
-      completedCount?: number;
-      totalCount?: number;
-    };
-    if (!body.idToken || !body.subject)
-      return Response.json({ error: "資料不完整" }, { status: 400 });
-
-    const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
-    if (!accessToken) throw new Error("LINE OA 尚未設定");
+    const body = (await request.json()) as CompletionRequest;
+    if (!body.idToken || !body.subject || !Number.isInteger(body.minutes) || !Number.isInteger(body.completedCount) || !Number.isInteger(body.totalCount) || !Number.isInteger(body.taskIndex))
+      return Response.json({ error: "Invalid completion data" }, { status: 400 });
 
     const identity = await verifyLineIdToken(body.idToken);
     const db = supabaseAdmin();
     const { data: user, error: userError } = await db
       .from("users")
-      .select("id")
+      .select("id, display_name, line_user_id")
       .eq("line_user_id", identity.userId)
       .maybeSingle();
     if (userError) throw userError;
-    if (!user)
-      return Response.json({ error: "請先建立學習計畫" }, { status: 404 });
+    if (!user?.line_user_id) return Response.json({ error: "No linked LINE account" }, { status: 404 });
 
-    const { data: preference, error: preferenceError } = await db
-      .from("user_preferences")
-      .select("notifications_enabled")
+    const { data: plan, error: planError } = await db
+      .from("study_plans")
+      .select("id")
       .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
-    if (preferenceError) throw preferenceError;
-    if (preference && !preference.notifications_enabled)
-      return Response.json({ ok: false, skipped: true, reason: "disabled" });
+    if (planError) throw planError;
+    if (!plan) return Response.json({ error: "No study plan" }, { status: 404 });
 
-    const completedCount = Math.max(1, Number(body.completedCount) || 1);
-    const totalCount = Math.max(completedCount, Number(body.totalCount) || completedCount);
-    const minutes = Math.max(0, Number(body.minutes) || 0);
-    const displayName = identity.displayName ?? "同學";
-    const text = `恭喜你，${displayName}！🎉\n\n今天完成了「${body.subject}」${minutes ? ` ${minutes} 分鐘` : ""}的專注任務。\n目前已完成 ${completedCount}/${totalCount} 項任務。\n\n每一次專注都算數，繼續穩穩前進！`;
+    const { data: tasks, error: taskError } = await db
+      .from("daily_tasks")
+      .select("subject, minutes")
+      .eq("plan_id", plan.id)
+      .eq("task_date", taipeiDate())
+      .order("sort_order");
+    if (taskError) throw taskError;
+    const storedTask = tasks?.[body.taskIndex];
+    if (!storedTask || storedTask.subject !== body.subject || storedTask.minutes !== body.minutes || body.totalCount !== tasks?.length || body.completedCount < 1 || body.completedCount > body.totalCount)
+      return Response.json({ error: "Completion does not match today's tasks" }, { status: 400 });
 
-    const push = await fetch("https://api.line.me/v2/bot/message/push", {
+    const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
+    if (!accessToken) throw new Error("LINE Messaging API is not configured");
+    const response = await fetch("https://api.line.me/v2/bot/message/push", {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${accessToken}`,
-      },
+      headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
-        to: identity.userId,
-        messages: [{ type: "text", text }],
+        to: user.line_user_id,
+        messages: [{ type: "text", text: completionMessage(body.subject, body.minutes, body.completedCount, body.totalCount, user.display_name) }],
       }),
     });
-    if (!push.ok) throw new Error("LINE OA 推播失敗");
-
+    if (!response.ok) throw new Error(`LINE push failed: ${response.status}`);
     return Response.json({ ok: true });
   } catch (error) {
-    console.error("completion notification failed", error);
-    return Response.json(
-      { error: "完成通知發送失敗，請確認已加 OA 好友。" },
-      { status: 500 },
-    );
+    console.error("LINE completion notification failed", error);
+    return Response.json({ error: "Unable to send completion notification" }, { status: 500 });
   }
 }

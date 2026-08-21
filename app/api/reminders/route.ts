@@ -1,6 +1,7 @@
 import { verifyLineIdToken } from "@/lib/line";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { taipeiDate } from "@/lib/taipei-date";
+import { buildReminderFlex } from "@/lib/line-reminder";
 
 export async function POST(request: Request) {
   try {
@@ -57,18 +58,6 @@ export async function POST(request: Request) {
       );
     const done = new Set(completions?.map((item) => item.task_id));
     const pending = tasks.filter((task) => !done.has(task.id));
-    const selected = body.kind === "morning" ? tasks : pending;
-    const lines = selected
-      .map(
-        (task, index) => `${index + 1}. ${task.subject} ${task.minutes} 分鐘`,
-      )
-      .join("\n");
-    const text =
-      body.kind === "morning"
-        ? `早安，${identity.displayName ?? "同學"}！\n距離會考還有 29 天。\n\n今天推薦：\n${lines}\n\n完成任務即可獲得祈福木牌。`
-        : pending.length
-          ? `晚上好，${identity.displayName ?? "同學"}！\n今天還有 ${pending.length} 個任務。\n\n${lines}\n\n先讀 15 分鐘也算前進。`
-          : "今天的任務已全數完成，辛苦了！明天也一起穩穩前進。";
     const push = await fetch("https://api.line.me/v2/bot/message/push", {
       method: "POST",
       headers: {
@@ -77,7 +66,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         to: identity.userId,
-        messages: [{ type: "text", text }],
+        messages: [buildReminderFlex({ kind: body.kind, displayName: identity.displayName, tasks, pending })],
       }),
     });
     if (!push.ok) throw new Error("LINE OA 推播失敗");
