@@ -79,7 +79,7 @@ export default function PrayerWall() {
     <main className="feature-page">
       <div className="feature-shell wall-shell">
         <button className="back-link" onClick={() => (location.href = "/")}>
-          ← 返回首頁
+          ← 返回
         </button>
         <section className="feature-hero wall-hero">
           <span className="feature-kicker">WENCHANG PRAYER WALL</span>
