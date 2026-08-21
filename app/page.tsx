@@ -109,7 +109,6 @@ export default function Home() {
 	const [focusPaused, setFocusPaused] = useState(false);
 	const [focusEnded, setFocusEnded] = useState(false);
 	const [hydrated, setHydrated] = useState(false);
-	const [forceMobile, setForceMobile] = useState(false); // 新增這行：控制強制手機版
 	const syncQueue = useRef(Promise.resolve(true));
 	useEffect(() => {
 		setHydrated(true);
@@ -1342,11 +1341,17 @@ export default function Home() {
 					<button onClick={saveWish}>留存</button>
 				</div>
 				{wishes.length > 0 && (
-					<ul>
+					<div className="ema-board">
 						{wishes.map((item, index) => (
-							<li key={`${item}-${index}`}>✦ {item}</li>
+							<div
+								className="ema-plaque"
+								key={`${item}-${index}`}
+							>
+								<div className="ema-string"></div>
+								<p>{item}</p>
+							</div>
 						))}
-					</ul>
+					</div>
 				)}
 				<button
 					className="wall-link"
@@ -1682,7 +1687,7 @@ export default function Home() {
 			</main>
 		);
 	return (
-		<main className={forceMobile ? "force-mobile-view" : ""}>
+		<main>
 			<section className="app-shell">
 				{/* 1. 把煙霧結構移到 app-shell 裡面，這樣煙霧才會在手機畫面內飄動 */}
 				<div className="incense-smoke-wrapper" aria-hidden="true">
@@ -1706,14 +1711,6 @@ export default function Home() {
 						<span>文昌同行</span>
 					</div>
 					<div className="account">
-						{/* 2. 切換按鈕放進這裡，它就會乖乖待在右上角了 */}
-						<button
-							className="view-toggle-btn"
-							onClick={() => setForceMobile(!forceMobile)}
-						>
-							{forceMobile ? "⛶ 滿版" : "📱 手機"}
-						</button>
-
 						<button className="line-login" onClick={login}>
 							{lineName ? `LINE・${lineName}` : "LINE 登入"}
 						</button>
