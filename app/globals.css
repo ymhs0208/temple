@@ -2554,3 +2554,88 @@ nav button.active {
 		transform: rotate(2deg);
 	}
 }
+
+/* =========================================
+   終極統一：全站電腦版完美手機置中 (430px)
+   (請將此段放在 globals.css 的「最底部」，確保覆蓋所有舊版設定)
+========================================= */
+@media (min-width: 768px) {
+	/* 1. 統一整個電腦螢幕的大背景為滿版彩色漸層 */
+	body {
+		background: linear-gradient(
+			150deg,
+			#e0c8ff 0%,
+			#bde0fe 50%,
+			#fef08a 100%
+		) !important;
+		background-attachment: fixed !important;
+		margin: 0;
+		padding: 0;
+		min-height: 100vh;
+	}
+
+	/* 移除各頁面原本的大背景，讓 body 的漸層可以透出來 */
+	main,
+	.feature-page {
+		background: transparent !important;
+		min-height: 100vh !important;
+	}
+
+	/* 2. 統一所有頁面的內容區塊 (主畫面 app-shell 與其他功能 feature-shell) */
+	.app-shell,
+	.feature-shell {
+		display: block !important;
+		width: 100% !important;
+		max-width: 430px !important; /* 嚴格鎖定精準手機寬度 */
+		margin: 4vh auto !important; /* 上下留空隙，畫面完美居中 */
+		min-height: 92vh !important; /* 模擬手機螢幕高度 */
+
+		/* 加上精緻的毛玻璃與擬真手機邊框 */
+		background: rgba(255, 255, 255, 0.35) !important; /* 微透白的玻璃底色 */
+		backdrop-filter: blur(20px) !important; /* 毛玻璃模糊效果 */
+		-webkit-backdrop-filter: blur(20px) !important;
+		border-radius: 40px !important; /* 手機大圓角 */
+		box-shadow:
+			0 25px 50px rgba(0, 0, 0, 0.12),
+			/* 深邃的立體陰影 */ 0 0 0 8px rgba(255, 255, 255, 0.6) !important; /* 擬真白邊框 */
+
+		/* 修正左右與底部的內距 */
+		padding: 40px 20px 110px !important;
+	}
+
+	/* 3. 導覽列精準對齊這支虛擬手機 */
+	nav {
+		position: fixed !important;
+		left: 50% !important;
+		transform: translateX(-50%) !important;
+		width: 390px !important; /* 對齊 430px 手機寬度 (扣掉邊界留白) */
+		bottom: calc(4vh + 20px) !important; /* 懸浮在底部 */
+		border-radius: 24px !important;
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+	}
+	/* 4. 抵銷原本的桌機排版，強制內部維持手機單欄與正確間距 */
+	.app-shell .tasks {
+		grid-template-columns: 1fr !important;
+	}
+	.app-shell .task {
+		align-items: center !important;
+		flex-wrap: nowrap !important;
+	}
+	.app-shell .task-copy {
+		min-width: 0 !important;
+	}
+	.app-shell .task-focus {
+		margin-left: 0 !important;
+	}
+
+	/* 5. 修復「任務總覽 (已安排/尚餘/按鈕)」的比例 */
+	.app-shell .task-overview {
+		grid-template-columns: 1fr 1fr !important;
+		gap: 5px 10px !important;
+	}
+	.app-shell .task-overview > div {
+		grid-column: 1 / -1 !important;
+		justify-content: flex-start !important;
+		margin-top: 3px !important;
+	}
+}
