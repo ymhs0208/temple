@@ -1064,6 +1064,11 @@ export default function Home() {
 				</b>
 				<span>小步累積，會比一次衝刺走得更遠。</span>
 			</div>
+			<button className="statistics-entry" onClick={() => { location.href = "/statistics"; }}>
+				<span>▦</span>
+				<div><b>讀書統計紀錄</b><small>查看專注時間、連續學習與每日足跡</small></div>
+				<i>›</i>
+			</button>
 			<section className="weakness-card" aria-label="錯題與弱點複習">
 				<div className="weakness-heading">
 					<div><span>錯題／弱點追蹤</span><b>把不熟的地方，練成下一次的底氣</b></div>
@@ -1274,6 +1279,15 @@ export default function Home() {
 				<span>從這裡快速開始</span>
 			</div>
 			<div className="quick-grid">
+				<button
+					onClick={() => {
+						location.href = "/statistics";
+					}}
+				>
+					<span className="quick-icon stats">▦</span>
+					<b>讀書統計</b>
+					<small>紀錄・連續學習</small>
+				</button>
 				<button
 					onClick={() => {
 						location.href = "/goal";
@@ -1540,14 +1554,14 @@ export default function Home() {
 						))}
 					</div>
 				)}
-				<section className="wish-review" aria-label="願望回顧">
+				{wishReflections.some((item) => daysSinceWish(item.createdAt) >= 7) && <section className="wish-review" aria-label="願望回顧">
 					<div className="wish-review-heading"><div><span>給未來的自己</span><b>願望回顧</b></div><i>⏳</i></div>
 					<p>把當初的心願留給時間。第 7 天與第 30 天，回來看看自己已走了多遠。</p>
-					{wishReflections.length === 0 ? <div className="wish-review-empty">寫下一個祈願後，這裡會替你安排兩次溫柔的回望。</div> : wishReflections.every((item) => daysSinceWish(item.createdAt) < 7) ? <div className="wish-review-empty">回顧時間尚未到，先專心走好今天的每一步。</div> : <div className="wish-review-list">{wishReflections.filter((item) => daysSinceWish(item.createdAt) >= 7).map((item) => {
+					<div className="wish-review-list">{wishReflections.filter((item) => daysSinceWish(item.createdAt) >= 7).map((item) => {
 						const elapsed = daysSinceWish(item.createdAt);
 						return <article key={item.id} className="wish-review-item"><strong>「{item.text}」</strong><div className="wish-review-milestones"><button className={item.reviewedAfter7Days ? "done" : ""} onClick={() => !item.reviewedAfter7Days && completeWishReview(item.id, 7)} disabled={item.reviewedAfter7Days}>{item.reviewedAfter7Days ? "第 7 天已回望 ✓" : "回顧第 7 天"}</button>{elapsed >= 30 && <button className={item.reviewedAfter30Days ? "done" : ""} onClick={() => !item.reviewedAfter30Days && completeWishReview(item.id, 30)} disabled={item.reviewedAfter30Days}>{item.reviewedAfter30Days ? "第 30 天已回望 ✓" : "回顧第 30 天"}</button>}</div></article>;
-					})}</div>}
-				</section>
+					})}</div>
+				</section>}
 				<button
 					className="wall-link"
 					onClick={() => {
@@ -1902,12 +1916,16 @@ export default function Home() {
 
 				<header className="topbar">
 					<div className="brand">
-						<span className="brand-mark">⛩</span>
-						<span>文昌同行</span>
+						<span className="brand-mark">文</span>
+						<div className="brand-copy">
+							<strong>文昌同行</strong>
+							<small>學習路上，與你同行</small>
+						</div>
 					</div>
 					<div className="account">
 						<button className="line-login" onClick={login}>
-							{lineName ? `LINE・${lineName}` : "LINE 登入"}
+							<span className="line-status-dot" aria-hidden="true" />
+							{lineName ? "LINE 已連結" : "LINE 登入"}
 						</button>
 						<button
 							className="avatar"
@@ -1923,11 +1941,7 @@ export default function Home() {
 						{quickActions}
 					</>
 				) : tab === "progress" ? (
-					<>
-						{progressView}
-						{retentionCard}
-						{shareCard}
-					</>
+					progressView
 				) : tab === "prayer" ? (
 					prayerView
 				) : (
