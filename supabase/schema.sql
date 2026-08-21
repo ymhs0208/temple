@@ -31,6 +31,17 @@ create table if not exists public.energy (
   prayer_planks integer not null default 0 check (prayer_planks >= 0),
   updated_at timestamptz not null default now()
 );
+-- LIFF 裝置上的祈福、靈籤與回顧狀態，依 LINE 身分保存以支援跨裝置還原。
+create table if not exists public.user_companion_states (
+  user_id uuid primary key references public.users(id) on delete cascade,
+  oracle_tickets integer not null default 0 check (oracle_tickets >= 0),
+  oracle_planks_spent integer not null default 0 check (oracle_planks_spent >= 0),
+  oracle_result_id integer check (oracle_result_id between 0 and 5),
+  daily_fortune_task jsonb not null default '{}'::jsonb,
+  focus_reward_minutes integer not null default 0 check (focus_reward_minutes >= 0),
+  wish_reflections jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
+);
 
 -- The browser never accesses these tables directly. The server verifies a LINE ID token,
 -- then uses the service-role key for the narrowly scoped sync endpoint.
@@ -39,6 +50,7 @@ alter table public.study_plans enable row level security;
 alter table public.daily_tasks enable row level security;
 alter table public.task_completions enable row level security;
 alter table public.energy enable row level security;
+alter table public.user_companion_states enable row level security;
 
 -- The server calls this function with the service-role key. It serializes a
 -- user's writes and commits the plan, tasks, completions, and energy together.

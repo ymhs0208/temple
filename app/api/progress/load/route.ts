@@ -24,10 +24,12 @@ export async function POST(request: Request) {
     if (completionError) throw completionError;
     const { data: energy, error: energyError } = await db.from("energy").select("current_energy, prayer_planks").eq("user_id", user.id).maybeSingle();
     if (energyError) throw energyError;
+    const { data: companionState, error: companionError } = await db.from("user_companion_states").select("oracle_tickets, oracle_planks_spent, oracle_result_id, daily_fortune_task, focus_reward_minutes, wish_reflections").eq("user_id", user.id).maybeSingle();
+    if (companionError) throw companionError;
     const { data: visits, error: visitsError } = await db.from("temple_visits").select("temple_code").eq("user_id", user.id).order("visited_at");
     if (visitsError) throw visitsError;
     const complete = new Set(completions?.map((row) => row.task_id));
-    return Response.json({ exists: true, plan: { challengeName: extendedPlan?.challenge_name, examDate: plan.exam_date, hours: Number(plan.daily_hours), weak: plan.weak_subject, goal: plan.goal, wishes: Array.isArray(extendedPlan?.wishes) ? extendedPlan.wishes : [] }, tasks: (rows ?? []).map((row, index) => ({ subject: row.subject, minutes: row.minutes, detail: row.task_type, done: complete.has(row.id), color: colors[index % colors.length] })), energy, visits: visits?.map((row) => row.temple_code) ?? [] });
+    return Response.json({ exists: true, plan: { challengeName: extendedPlan?.challenge_name, examDate: plan.exam_date, hours: Number(plan.daily_hours), weak: plan.weak_subject, goal: plan.goal, wishes: Array.isArray(extendedPlan?.wishes) ? extendedPlan.wishes : [] }, tasks: (rows ?? []).map((row, index) => ({ subject: row.subject, minutes: row.minutes, detail: row.task_type, done: complete.has(row.id), color: colors[index % colors.length] })), energy, companionState: companionState ? { oracleTickets: companionState.oracle_tickets, oraclePlanksSpent: companionState.oracle_planks_spent, oracleResultId: companionState.oracle_result_id, dailyFortuneTask: companionState.daily_fortune_task, focusRewardMinutes: companionState.focus_reward_minutes, wishReflections: companionState.wish_reflections } : null, visits: visits?.map((row) => row.temple_code) ?? [] });
   } catch (error) {
     console.error("progress load failed", error);
     return Response.json({ error: "Unable to load progress" }, { status: 500 });
