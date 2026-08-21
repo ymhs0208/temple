@@ -34,6 +34,13 @@ type DailyFortuneTask = {
 	date: string;
 	fortuneId: number;
 	done: boolean;
+	weakQuestions?: WeakQuestion[];
+};
+type WeakQuestion = {
+	id: string;
+	questionIndex: number;
+	misses: number;
+	lastWrongAt: string;
 };
 type WishReflection = {
 	id: string;
@@ -125,6 +132,9 @@ export default function Home() {
 	const [dailyFortuneTask, setDailyFortuneTask] = useState<DailyFortuneTask>(() => makeDailyFortuneTask());
 	const [selectedDailyAnswer, setSelectedDailyAnswer] = useState<string | null>(null);
 	const [dailyAnswerFeedback, setDailyAnswerFeedback] = useState("");
+	const [reviewingWeakId, setReviewingWeakId] = useState<string | null>(null);
+	const [selectedWeakAnswers, setSelectedWeakAnswers] = useState<Record<string, string>>({});
+	const [weakReviewFeedback, setWeakReviewFeedback] = useState<Record<string, string>>({});
 	const [idToken, setIdToken] = useState<string | null>(null);
 	const [lineName, setLineName] = useState<string | null>(null);
 	const [syncStatus, setSyncStatus] = useState("");
@@ -478,13 +488,43 @@ export default function Home() {
 	const energy = Math.min(100, 42 + completed * 10 + visits.length * 3);
 	const dailyFortune = fortunePoems[dailyFortuneTask.fortuneId] ?? fortunePoems[0];
 	const dailyCheckInQuestion = dailyCheckInQuestions[dailyFortuneTask.fortuneId % dailyCheckInQuestions.length];
+	const weakQuestions = dailyFortuneTask.weakQuestions ?? [];
 	const focusPlanks = Math.floor(focusRewardMinutes / 10);
 	const planks = 10 + completed + visits.length + (dailyFortuneTask.done ? 1 : 0) + focusPlanks;
 	const availablePlanks = Math.max(0, planks - oraclePlanksSpent);
+	const recordWeakQuestion = (questionIndex: number) => {
+		setDailyFortuneTask((current) => {
+			const weakQuestions = current.weakQuestions ?? [];
+			const existing = weakQuestions.find((item) => item.questionIndex === questionIndex);
+			return {
+				...current,
+				weakQuestions: existing
+					? weakQuestions.map((item) => item.questionIndex === questionIndex ? { ...item, misses: item.misses + 1, lastWrongAt: new Date().toISOString() } : item)
+					: [{ id: `weak-${Date.now()}-${questionIndex}`, questionIndex, misses: 1, lastWrongAt: new Date().toISOString() }, ...weakQuestions].slice(0, 12),
+			};
+		});
+	};
+	const submitWeakReview = (item: WeakQuestion) => {
+		const question = dailyCheckInQuestions[item.questionIndex];
+		const selected = selectedWeakAnswers[item.id];
+		if (!selected) {
+			setWeakReviewFeedback((current) => ({ ...current, [item.id]: "請先選擇一個答案。" }));
+			return;
+		}
+		if (selected !== question?.answer) {
+			setDailyFortuneTask((current) => ({ ...current, weakQuestions: (current.weakQuestions ?? []).map((entry) => entry.id === item.id ? { ...entry, misses: entry.misses + 1, lastWrongAt: new Date().toISOString() } : entry) }));
+			setWeakReviewFeedback((current) => ({ ...current, [item.id]: "再看一次題幹，你一定能找到線索。" }));
+			return;
+		}
+		setDailyFortuneTask((current) => ({ ...current, weakQuestions: (current.weakQuestions ?? []).filter((entry) => entry.id !== item.id) }));
+		setWeakReviewFeedback((current) => ({ ...current, [item.id]: "答對了！已從弱點清單移除。" }));
+		setReviewingWeakId(null);
+		setSyncStatus("弱點複習答對，已更新你的學習紀錄。");
+	};
 	const completeDailyCheckIn = () => {
 		if (dailyFortuneTask.done) return;
 		if (!selectedDailyAnswer) { setDailyAnswerFeedback("請先選擇一個答案。 "); return; }
-		if (selectedDailyAnswer !== dailyCheckInQuestion.answer) { setDailyAnswerFeedback("這題還差一點，再看看題幹後試一次。 "); return; }
+		if (selectedDailyAnswer !== dailyCheckInQuestion.answer) { recordWeakQuestion(dailyFortuneTask.fortuneId % dailyCheckInQuestions.length); setDailyAnswerFeedback("這題已加入弱點複習，稍後可以再挑戰一次。 "); return; }
 		setDailyFortuneTask((current) => ({ ...current, done: true }));
 		setDailyAnswerFeedback("答對了！今日簽到完成。 ");
 		setSyncStatus("今日簽到題答對，獲得 1 枚祈福木牌！");
@@ -1024,6 +1064,21 @@ export default function Home() {
 				</b>
 				<span>小步累積，會比一次衝刺走得更遠。</span>
 			</div>
+			<section className="weakness-card" aria-label="錯題與弱點複習">
+				<div className="weakness-heading">
+					<div><span>錯題／弱點追蹤</span><b>把不熟的地方，練成下一次的底氣</b></div>
+					<i>{weakQuestions.length}</i>
+				</div>
+				{weakQuestions.length === 0 ? <p className="weakness-empty">目前沒有待複習錯題；每日簽到題答錯時，會自動收在這裡。</p> : <div className="weakness-list">{weakQuestions.map((item) => {
+					const question = dailyCheckInQuestions[item.questionIndex];
+					if (!question) return null;
+					const isReviewing = reviewingWeakId === item.id;
+					return <article className="weakness-item" key={item.id}>
+						<div className="weakness-item-summary"><div><span>{question.subject}・累計錯誤 {item.misses} 次</span><b>{question.question}</b></div><button onClick={() => { setReviewingWeakId(isReviewing ? null : item.id); setWeakReviewFeedback((current) => ({ ...current, [item.id]: "" })); }}>{isReviewing ? "收起" : "再次作答"}</button></div>
+						{isReviewing && <div className="weakness-review"><div className="weakness-options" role="radiogroup" aria-label={`${question.subject} 弱點複習答案`}>{question.choices.map(([key, label]) => <button key={key} className={selectedWeakAnswers[item.id] === key ? "selected" : ""} onClick={() => { setSelectedWeakAnswers((current) => ({ ...current, [item.id]: key })); setWeakReviewFeedback((current) => ({ ...current, [item.id]: "" })); }} aria-pressed={selectedWeakAnswers[item.id] === key}><b>{key}</b><span>{label}</span></button>)}</div><button className="weakness-submit" onClick={() => submitWeakReview(item)}>確認複習答案</button>{weakReviewFeedback[item.id] && <p>{weakReviewFeedback[item.id]}</p>}</div>}
+					</article>;
+				})}</div>}
+			</section>
 			<section
 				className="learning-calendar"
 				aria-label="行事曆式學習進度"
@@ -1455,9 +1510,15 @@ export default function Home() {
 				{oracleStage === "result" && oracleResultId !== null && <div className="oracle-result"><div className="oracle-result-display"><div className="oracle-result-stick" aria-hidden="true"><b>{oracleResultId + 1}</b></div><div className="oracle-lot-paper"><div className="oracle-lot-heading"><span>WENCHANG LOT</span><b>第 {oracleResultId + 1} 籤</b></div><i className="oracle-seal">文昌</i><div className="oracle-lot-body"><strong className="oracle-luck">吉<br />籤</strong><div><h2>{fortunePoems[oracleResultId].title}</h2><p className="oracle-verse">{fortunePoems[oracleResultId].verse}</p><p className="oracle-interpret-label">【解曰】</p><p className="oracle-reading-copy">{fortunePoems[oracleResultId].reading}</p></div></div><small><span>誠心求籤</span><span>靜心解籤</span></small></div></div><div className="oracle-result-actions"><button onClick={drawAgain}>{oracleTickets > 0 ? "再求一籤" : "回到籤筒"}</button>{availablePlanks >= 3 && <button className="oracle-exchange-small" onClick={exchangeOracleTicket}>再兌換 1 次</button>}</div></div>}
 			</section>
 			<section className="wish-card">
-				<b>寫下你的祈願</b>
-				<p>它會保留在此裝置，也可發佈到匿名祈福牆。</p>
-				<div>
+				<div className="wish-card-heading">
+					<div>
+						<span>願望小記</span>
+						<b>寫下你的祈願</b>
+						<p>留在這裡，或分享一段匿名的祝福。</p>
+					</div>
+					<i aria-hidden="true">✦</i>
+				</div>
+				<div className="wish-composer">
 					<input
 						value={wish}
 						onChange={(event) => setWish(event.target.value)}
@@ -1480,11 +1541,11 @@ export default function Home() {
 					</div>
 				)}
 				<section className="wish-review" aria-label="願望回顧">
-					<div className="wish-review-heading"><div><span>WISH REFLECTION</span><b>願望回顧</b></div><i>⏳</i></div>
+					<div className="wish-review-heading"><div><span>給未來的自己</span><b>願望回顧</b></div><i>⏳</i></div>
 					<p>把當初的心願留給時間。第 7 天與第 30 天，回來看看自己已走了多遠。</p>
-					{wishReflections.length === 0 ? <div className="wish-review-empty">寫下一個祈願後，這裡會替你安排兩次溫柔的回望。</div> : <div className="wish-review-list">{wishReflections.map((item) => {
+					{wishReflections.length === 0 ? <div className="wish-review-empty">寫下一個祈願後，這裡會替你安排兩次溫柔的回望。</div> : wishReflections.every((item) => daysSinceWish(item.createdAt) < 7) ? <div className="wish-review-empty">回顧時間尚未到，先專心走好今天的每一步。</div> : <div className="wish-review-list">{wishReflections.filter((item) => daysSinceWish(item.createdAt) >= 7).map((item) => {
 						const elapsed = daysSinceWish(item.createdAt);
-						return <article key={item.id} className="wish-review-item"><strong>「{item.text}」</strong><div className="wish-review-milestones"><button className={item.reviewedAfter7Days ? "done" : ""} onClick={() => elapsed >= 7 && !item.reviewedAfter7Days && completeWishReview(item.id, 7)} disabled={elapsed < 7 || item.reviewedAfter7Days}>{item.reviewedAfter7Days ? "第 7 天已回望 ✓" : elapsed >= 7 ? "回顧第 7 天" : `第 7 天・${reviewDate(item.createdAt, 7)}`}</button><button className={item.reviewedAfter30Days ? "done" : ""} onClick={() => elapsed >= 30 && !item.reviewedAfter30Days && completeWishReview(item.id, 30)} disabled={elapsed < 30 || item.reviewedAfter30Days}>{item.reviewedAfter30Days ? "第 30 天已回望 ✓" : elapsed >= 30 ? "回顧第 30 天" : `第 30 天・${reviewDate(item.createdAt, 30)}`}</button></div></article>;
+						return <article key={item.id} className="wish-review-item"><strong>「{item.text}」</strong><div className="wish-review-milestones"><button className={item.reviewedAfter7Days ? "done" : ""} onClick={() => !item.reviewedAfter7Days && completeWishReview(item.id, 7)} disabled={item.reviewedAfter7Days}>{item.reviewedAfter7Days ? "第 7 天已回望 ✓" : "回顧第 7 天"}</button>{elapsed >= 30 && <button className={item.reviewedAfter30Days ? "done" : ""} onClick={() => !item.reviewedAfter30Days && completeWishReview(item.id, 30)} disabled={item.reviewedAfter30Days}>{item.reviewedAfter30Days ? "第 30 天已回望 ✓" : "回顧第 30 天"}</button>}</div></article>;
 					})}</div>}
 				</section>
 				<button
@@ -1898,18 +1959,20 @@ export default function Home() {
 						◌<span>我的</span>
 					</button>
 				</nav>
-				<a
-					className="line-official-banner"
-					href="https://lin.ee/nNsez9Q"
-					target="_blank"
-					rel="noreferrer"
-					aria-label="加入文昌同行 LINE 官方好友"
-				>
-					<img
-						src="/line-official-banner.png"
-						alt="加入文昌同行 LINE 官方好友"
-					/>
-				</a>
+				{tab === "today" && (
+					<a
+						className="line-official-banner"
+						href="https://lin.ee/nNsez9Q"
+						target="_blank"
+						rel="noreferrer"
+						aria-label="加入文昌同行 LINE 官方好友"
+					>
+						<img
+							src="/line-official-banner.png"
+							alt="加入文昌同行 LINE 官方好友"
+						/>
+					</a>
+				)}
 			</section>
 		</main>
 	);

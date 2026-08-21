@@ -1212,15 +1212,15 @@ nav button {
 	font-size: 12px;
 	line-height: 1.7;
 }
-.wish-card b {
+.wish-card > b {
 	font-size: 14px;
 }
-.wish-card p {
+.wish-card > p {
 	margin: 5px 0 11px;
 	color: #7d867d;
 	font-size: 11px;
 }
-.wish-card > div {
+.wish-card > div:not(.wish-card-heading) {
 	display: flex;
 	gap: 7px;
 }
@@ -3364,6 +3364,42 @@ button {
 	}
 }
 
+/* 桌面帳號頁：通知卡必須與三張帳號資訊卡使用同一列寬度。 */
+@media (min-width: 768px) {
+	.profile-page .account-list > .notification-preference {
+		grid-column: 1 / -1 !important;
+		justify-self: stretch !important;
+		align-self: stretch;
+		width: 100% !important;
+		max-width: none !important;
+		min-width: 0;
+		margin: 10px 0 0 !important;
+		padding: 22px 26px !important;
+		border: 1px solid #e6dfd1 !important;
+		border-top: 7px solid #f4f0e6 !important;
+		border-radius: 18px !important;
+	}
+	.profile-page .account-list > .notification-preference:not(:has(.notification-login)) {
+		display: grid !important;
+		grid-template-columns: minmax(0, 1fr) minmax(300px, .9fr);
+		column-gap: 28px;
+		align-items: center;
+	}
+	.profile-page .account-list > .notification-preference .notification-heading,
+	.profile-page .account-list > .notification-preference .notification-timezone,
+	.profile-page .account-list > .notification-preference .notification-test {
+		grid-column: 1 / -1;
+	}
+	.profile-page .account-list > .notification-preference .notification-summary {
+		grid-column: 2;
+		grid-row: 2;
+		margin: 0;
+	}
+	.profile-page .account-list > .notification-preference .notification-timezone {
+		margin-top: 16px;
+	}
+}
+
 /* 今日學習成果：淺色文昌分享卡 */
 .share-card {
 	position: relative;
@@ -3520,6 +3556,26 @@ main:has(.app-shell),
 .wish-review-milestones button { flex: 1; min-height: 29px; border: 1px solid #deca97; border-radius: 9px; background: #fff5d8; color: #8a6a30; font-size: 9px; font-weight: 700; cursor: pointer; }
 .wish-review-milestones button:disabled { border-color: #e8dfcc; background: #f6f3eb; color: #a79d8b; cursor: default; }
 .wish-review-milestones button.done { border-color: #b9d0af; background: #edf5e9; color: #57794e; }
+.weakness-card { margin: 16px 0; padding: 16px; border: 1px solid #e3cfaa; border-radius: 18px; background: linear-gradient(145deg, #fffdf7, #f9f0de); box-shadow: 0 8px 20px #76552a0a; }
+.weakness-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.weakness-heading span, .weakness-heading b { display: block; }.weakness-heading span { color: #a6752a; font-size: 10px; font-weight: 800; letter-spacing: .08em; }.weakness-heading b { margin-top: 4px; color: #4d3d28; font: 700 17px/1.45 Georgia, "Noto Serif TC", serif; }.weakness-heading i { display: grid; flex: 0 0 29px; width: 29px; height: 29px; place-content: center; border-radius: 50%; background: #ead18f; color: #805c25; font: 700 13px Georgia, serif; font-style: normal; }
+.weakness-empty { margin: 13px 0 0; padding: 11px; border: 1px dashed #decda9; border-radius: 11px; background: #fffdf8; color: #8b7a5c; font-size: 10px; line-height: 1.65; text-align: center; }
+.weakness-list { display: grid; gap: 9px; margin-top: 13px; }.weakness-item { padding: 11px; border: 1px solid #eadbbc; border-radius: 13px; background: #fffdf9; }.weakness-item-summary { display: flex; align-items: flex-start; gap: 10px; }.weakness-item-summary > div { flex: 1; min-width: 0; }.weakness-item-summary span, .weakness-item-summary b { display: block; }.weakness-item-summary span { color: #9b7a40; font-size: 9px; }.weakness-item-summary b { display: -webkit-box; overflow: hidden; margin-top: 4px; color: #5c492e; font-size: 11px; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }.weakness-item-summary > button { flex: 0 0 auto; border: 1px solid #d1b46d; border-radius: 9px; padding: 7px 9px; background: #fff5d7; color: #805e29; font-size: 10px; font-weight: 800; cursor: pointer; }
+.weakness-review { margin-top: 12px; padding-top: 11px; border-top: 1px solid #eee1c8; }.weakness-options { display: grid; gap: 6px; }.weakness-options button { display: flex; align-items: center; gap: 8px; width: 100%; border: 1px solid #e3d3ac; border-radius: 10px; padding: 8px 9px; background: #fffefa; color: #604d31; text-align: left; cursor: pointer; }.weakness-options button b { display: grid; flex: 0 0 20px; width: 20px; height: 20px; place-content: center; border-radius: 50%; background: #f1e2bc; color: #8a662c; font-size: 9px; }.weakness-options button span { font-size: 10px; line-height: 1.4; }.weakness-options button.selected { border-color: #b68839; background: #fff4d6; }.weakness-options button.selected b { background: #a8782e; color: #fffaf0; }.weakness-submit { width: 100%; margin-top: 9px; border: 0; border-radius: 10px; padding: 10px; background: #315f4c; color: #fffdf5; font-size: 10px; font-weight: 800; cursor: pointer; }.weakness-review > p { margin: 8px 2px 0; color: #9a5b41; font-size: 10px; }
+.wish-card { padding: 0; overflow: hidden; border-color: #e2cf9e; background: linear-gradient(145deg, #fffdf8, #fbf4e3); }
+.wish-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 18px 18px 13px; background: linear-gradient(100deg, #fff6d9, #fffdf6); border-bottom: 1px solid #eee0bc; }
+.wish-card-heading span, .wish-card-heading b { display: block; }
+.wish-card-heading span { color: #a67828; font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+.wish-card-heading b { margin-top: 3px; color: #4e3c24; font: 700 20px Georgia, "Noto Serif TC", serif; }
+.wish-card-heading p { margin: 5px 0 0; color: #8a7b5e; font-size: 11px; line-height: 1.55; }
+.wish-card-heading i { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: #f0d88e; color: #8b5c1e; font-size: 16px; font-style: normal; }
+.wish-composer { display: flex; gap: 8px; padding: 14px 18px 2px; }
+.wish-composer input { min-width: 0; flex: 1; }
+.wish-composer button { flex: 0 0 auto; min-height: 39px; }
+.wish-card .ema-board { margin: 14px 18px 2px; }
+.wish-card .wish-review { margin: 15px 18px 0; padding: 15px 0; }
+.wish-review-heading span { letter-spacing: .08em; }
+.wish-card .wall-link { width: calc(100% - 36px); margin: 0 18px 18px; }
 .camera-scan-button { width: 100%; margin-top: 10px; border: 1px dashed #c7a962; border-radius: 11px; padding: 10px; background: #fff9e9; color: #806332; font-size: 11px; font-weight: 800; cursor: pointer; }
 .qr-scanner { position: relative; overflow: hidden; display: grid; margin-top: 11px; border: 2px solid #d7b667; border-radius: 14px; background: #1e3029; aspect-ratio: 4 / 3; place-items: center; }
 .qr-scanner::after { position: absolute; inset: 13%; border: 2px solid #f4d37d; border-radius: 12px; content: ""; box-shadow: 0 0 0 999px rgb(17 38 31 / 24%); pointer-events: none; }
