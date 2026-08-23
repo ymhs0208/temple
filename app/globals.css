@@ -2,19 +2,18 @@
 @import "./spacing.css";
 
 :root {
-	--ink: #4a3b42; /* 帶暖紫調的深色字體，比純黑更可愛 */
-	--paper: #fdfcf8; /* 溫潤的香火紙色 */
-	--temple-red: #d8685c; /* Q版硃砂紅 (取代原本沉重的綠色) */
-	--gold: #d7a955; /* 傳統香火金 */
-	--muted: #a3959c;
+	--ink: #202723;
+	--paper: #f8f4ea;
+	--green: #173e32;
+	--gold: #d7a955;
+	--muted: #7d837b;
 }
 * {
 	box-sizing: border-box;
 }
 body {
 	margin: 0;
-	/* 電腦看的時候，外圍大背景是乾淨的淺灰白 */
-	background: #f8fafc;
+	background: #e7e3d7;
 	color: var(--ink);
 	font-family: Arial, "Noto Sans TC", sans-serif;
 }
@@ -23,24 +22,23 @@ button {
 }
 main {
 	min-height: 100vh;
-	display: block;
-	padding: 0;
-	background: transparent;
+	display: grid;
+	place-items: center;
+	padding: 24px;
+	background:
+		radial-gradient(circle at 20% 20%, #f5e7bb 0, transparent 25%),
+		radial-gradient(circle at 80% 80%, #b6d0bd 0, transparent 28%), #e7e3d7;
 }
 .app-shell {
 	position: relative;
 	overflow: hidden;
-	width: 100%;
-	margin: 0 auto; /* 新增這行，讓它在電腦螢幕置中 */
-	min-height: 100vh;
-	padding: clamp(18px, 5vw, 64px) clamp(14px, 7vw, 144px) 110px;
-	/* 手機板內部的可愛漸層：淺紫 -> 淺藍 -> 淺黃 (完全無綠色) */
-	background: linear-gradient(
-		150deg,
-		#e0c8ff 0%,
-		#bde0fe 50%,
-		#fef08a 100%
-	) !important;
+	width: min(100%, 430px);
+	min-height: 850px;
+	padding: 24px 20px 22px;
+	border: 1px solid #eee6d4;
+	border-radius: 30px;
+	background: var(--paper);
+	box-shadow: 0 28px 60px #253b3033;
 }
 .topbar,
 .section-heading,
@@ -52,22 +50,6 @@ nav {
 	display: flex;
 	align-items: center;
 }
-.app-loading {
-	display: grid;
-	min-height: 850px;
-	place-content: center;
-	gap: 12px;
-	color: #647267;
-	text-align: center;
-}
-.app-loading .brand-mark {
-	margin: auto;
-	font-size: 30px;
-}
-.app-loading p {
-	margin: 0;
-	font-size: 12px;
-}
 .topbar {
 	justify-content: space-between;
 	position: relative;
@@ -78,9 +60,9 @@ nav {
 	gap: 8px;
 	align-items: center;
 	font-size: 16px;
-	font-weight: 800;
+	font-weight: 700;
 	letter-spacing: 0.08em;
-	color: var(--temple-red);
+	color: var(--green);
 }
 .brand-mark {
 	color: var(--gold);
@@ -147,7 +129,7 @@ nav {
 }
 .countdown strong {
 	font-family: Georgia, serif;
-	color: var(--temple-red);
+	color: var(--green);
 	font-size: 40px;
 	line-height: 1;
 }
@@ -181,7 +163,7 @@ nav {
 	flex: 1;
 	gap: 9px;
 	padding: 12px 10px;
-	border-radius: 24px;
+	border-radius: 14px;
 	background: #fffdf7;
 	box-shadow: 0 3px 12px #382e1d0a;
 }
@@ -219,7 +201,7 @@ nav {
 	padding: 19px 15px 14px;
 	border: 1px solid #e9e1cf;
 	background: #fffdfa;
-	border-radius: 24px;
+	border-radius: 18px;
 }
 .section-heading {
 	justify-content: space-between;
@@ -241,7 +223,7 @@ nav {
 }
 .progress-track {
 	height: 6px;
-	margin: 17px 0 10px;
+	margin: 17px 0 13px;
 	border-radius: 8px;
 	overflow: hidden;
 	background: #eceae1;
@@ -253,49 +235,6 @@ nav {
 	background: linear-gradient(90deg, #c39547, #e3c777);
 	transition: width 0.25s;
 }
-.task-overview {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 5px 10px;
-	margin: 0 0 12px;
-	color: #7a8279;
-	font-size: 10px;
-}
-.task-overview b {
-	color: #425b4c;
-	font-family: Georgia, serif;
-	font-size: 13px;
-}
-.task-overview > div {
-	display: flex;
-	grid-column: 1 / -1;
-	gap: 7px;
-	margin-top: 3px;
-}
-.task-primary-action,
-.task-secondary-action,
-.task-focus {
-	border-radius: 9px;
-	padding: 8px 10px;
-	font-size: 10px;
-	font-weight: 700;
-	cursor: pointer;
-}
-.task-primary-action {
-	flex: 1;
-	border: 0;
-	background: #214d3d;
-	color: #fffdf7;
-}
-.task-primary-action:disabled {
-	background: #a5aaa2;
-	cursor: default;
-}
-.task-secondary-action {
-	border: 1px solid #dfd6c2;
-	background: #fffaf0;
-	color: #806832;
-}
 .tasks {
 	display: grid;
 	gap: 6px;
@@ -303,11 +242,12 @@ nav {
 .task {
 	width: 100%;
 	gap: 10px;
-	padding: 10px 7px;
+	padding: 11px 7px;
 	background: transparent;
 	border: 0;
 	text-align: left;
-	border-radius: 24px;
+	cursor: pointer;
+	border-radius: 10px;
 }
 .task:hover {
 	background: #faf6ed;
@@ -318,17 +258,14 @@ nav {
 	flex: none;
 	width: 21px;
 	height: 21px;
-	padding: 0;
 	border-radius: 7px;
 	border: 1.5px solid #c8c9bd;
-	background: #fff;
 	color: #fff;
 	font-size: 14px;
-	cursor: pointer;
 }
 .checked {
-	background: var(--temple-red);
-	border-color: var(--temple-red);
+	background: var(--green);
+	border-color: var(--green);
 }
 .subject-dot {
 	width: 5px;
@@ -346,7 +283,6 @@ nav {
 }
 .task-copy {
 	flex: 1;
-	min-width: 0;
 }
 .task-copy b,
 .task-copy small {
@@ -357,11 +293,8 @@ nav {
 }
 .task-copy small {
 	margin-top: 3px;
-	overflow: hidden;
 	font-size: 10px;
 	color: #858a82;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 .done .task-copy b,
 .done .task-copy small {
@@ -376,24 +309,12 @@ nav {
 	font-family: Arial, sans-serif;
 	font-size: 10px;
 }
-.task-focus {
-	flex: none;
-	border: 1px solid #c9dacb;
-	background: #f0f7ef;
-	color: #397053;
-}
-.task-focus:disabled {
-	border-color: #e1e2dc;
-	background: #f5f4f0;
-	color: #a1a59e;
-	cursor: default;
-}
 .reward {
 	gap: 8px;
 	margin-top: 9px;
 	padding: 10px;
 	background: #fff8e6;
-	border-radius: 24px;
+	border-radius: 10px;
 	color: #8d743e;
 }
 .reward span {
@@ -428,13 +349,13 @@ nav {
 	width: 100%;
 	border: 0;
 	padding: 16px;
-	border-radius: 999px;
-	background: var(--temple-red);
+	border-radius: 14px;
+	background: var(--green);
 	color: #fffdf7;
 	font-weight: 700;
 	letter-spacing: 0.04em;
 	cursor: pointer;
-	box-shadow: 0 8px 16px rgba(216, 104, 92, 0.25);
+	box-shadow: 0 8px 16px #173e3224;
 }
 .start-button span {
 	margin-right: 9px;
@@ -458,7 +379,7 @@ nav span {
 	font-size: 10px;
 }
 nav .active {
-	color: var(--temple-red);
+	color: var(--green);
 }
 .rose {
 	background: #c98177;
@@ -553,7 +474,7 @@ nav .active {
 }
 .journey-summary b {
 	display: block;
-	color: var(--temple-red);
+	color: var(--green);
 	font-family: Georgia, serif;
 	font-size: 24px;
 }
@@ -657,6 +578,13 @@ nav .active {
 		padding: 0;
 		display: block;
 		background: var(--paper);
+	}
+	.app-shell {
+		width: 100%;
+		min-height: 100vh;
+		border: 0;
+		border-radius: 0;
+		box-shadow: none;
 	}
 }
 .setup-backdrop {
@@ -1934,708 +1862,38 @@ nav button {
 	font-style: normal;
 	color: #b58b3b;
 }
-.line-official-banner {
-	display: block;
-	margin: 18px 0 86px;
-	border-radius: 18px;
-	overflow: hidden;
-	border: 1px solid #d9c79d;
-	background: #f8f1df;
-	box-shadow: 0 8px 24px #344b3a12;
-	transition:
-		transform 0.2s ease,
-		box-shadow 0.2s ease;
-}
-.line-official-banner:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 12px 28px #344b3a20;
-}
-.line-official-banner:focus-visible {
-	outline: 3px solid #4b9964;
-	outline-offset: 3px;
-}
-.line-official-banner img {
-	display: block;
-	width: 100%;
-	height: auto;
-	aspect-ratio: 16/9;
-	object-fit: cover;
-}
-@media (max-width: 520px) {
-	.line-official-banner {
-		margin: 14px 0 82px;
-		border-radius: 14px;
-	}
-	.line-official-banner img {
-		aspect-ratio: 16/9;
-	}
-}
 
 /* =========================================
-   香火鼎盛版：多股線香煙霧動態效果
-========================================= */
-
-.incense-smoke-wrapper {
-	position: absolute;
-	bottom: -10px;
-	left: 0;
-	right: 0;
-	height: 320px; /* 稍微拉高，讓煙霧有足夠空間擴散 */
-	pointer-events: none;
-	z-index: 1; /* 藏在卡片的下方、漸層背景的上方 */
-	display: flex;
-	justify-content: space-between;
-	padding: 0 6vw; /* 讓煙霧稍微往畫面中間靠一點 */
-}
-
-/* 左右煙霧群的容器 */
-.smoke-group {
-	position: relative;
-	width: 50px;
-	height: 100%;
-}
-
-.smoke {
-	position: absolute;
-	bottom: 0;
-	width: 14px;
-	height: 100%;
-	/* 稍微提高白色透明度，讓交疊時更明顯 */
-	background: linear-gradient(
-		to top,
-		rgba(255, 255, 255, 0.4) 0%,
-		rgba(255, 255, 255, 0.15) 60%,
-		transparent
-	);
-	border-radius: 100px;
-	filter: blur(4px);
-	transform-origin: bottom center;
-	animation: incense-sway 5s infinite ease-in-out alternate;
-}
-
-/* 錯開每一條煙霧的位置、動畫時間與延遲，產生層次交疊的厚實感 */
-.smoke-1 {
-	left: 0px;
-	animation-duration: 5s;
-	animation-delay: 0s;
-}
-.smoke-2 {
-	left: 12px;
-	animation-duration: 6.5s;
-	animation-delay: -1.5s;
-}
-.smoke-3 {
-	left: 24px;
-	animation-duration: 5.8s;
-	animation-delay: -3.2s;
-}
-
-.smoke-4 {
-	right: 0px;
-	animation-duration: 5.2s;
-	animation-delay: -0.5s;
-}
-.smoke-5 {
-	right: 12px;
-	animation-duration: 6.2s;
-	animation-delay: -2.1s;
-}
-.smoke-6 {
-	right: 24px;
-	animation-duration: 5.5s;
-	animation-delay: -4s;
-}
-
-/* 煙霧搖曳與擴散的動畫 */
-@keyframes incense-sway {
-	0% {
-		transform: translateY(0) translateX(0) scaleX(1);
-		opacity: 0.85;
-		filter: blur(3px);
-	}
-	25% {
-		transform: translateY(-25px) translateX(-15px) scaleX(1.8);
-		opacity: 0.95;
-	}
-	50% {
-		transform: translateY(-50px) translateX(12px) scaleX(2.8);
-		filter: blur(6px);
-	}
-	75% {
-		transform: translateY(-75px) translateX(-20px) scaleX(4.5);
-	}
-	100% {
-		transform: translateY(-100px) translateX(18px) scaleX(7);
-		opacity: 0;
-		filter: blur(14px);
-	}
-}
-/* =========================================
-   超進化：擬真液態琉璃特效 (Liquid Glass)
-   不改變原色，透過強烈高光、邊緣反光與形變產生水感
-========================================= */
-
-/* 1. 將原本的彈性曲線改為平滑過渡 */
+   1. 讓所有按鈕擁有「Q彈」的點擊物理回饋
+   ========================================= */
 button {
-	position: relative;
-	overflow: hidden;
 	transition:
-		transform 0.25s ease-out,
-		box-shadow 0.25s ease,
-		background 0.25s ease !important;
-}
-
-/* 2. 減輕點擊時的下壓與縮放幅度 */
-button:active {
-	transform: translateY(1px) scale(0.98) !important;
-	transition: transform 0.1s ease-out !important;
-}
-
-/* 2. 玻璃反光層：強烈高光與邊緣光 (Rim Light) */
-button::after {
-	content: "";
-	position: absolute;
-	inset: 0;
-	border-radius: inherit;
-	pointer-events: none;
-
-	/* 1.頂部銳利高光 2.底部深色立體陰影 3.一圈極細的白邊營造玻璃折射 */
-	box-shadow:
-		inset 0 2px 3px rgba(255, 255, 255, 0.95),
-		inset 0 -3px 6px rgba(0, 0, 0, 0.15),
-		inset 0 0 0 1px rgba(255, 255, 255, 0.4);
-
-	/* 頂部有強烈白光，中間透空，底部微暗 */
-	background: linear-gradient(
-		180deg,
-		rgba(255, 255, 255, 0.5) 0%,
-		rgba(255, 255, 255, 0.05) 35%,
-		rgba(0, 0, 0, 0.05) 100%
-	);
-	transition: all 0.3s ease;
-}
-
-/* 3. Hover (懸停)：微幅上浮即可，避免干擾 */
-button:hover {
-	transform: translateY(-1px);
-}
-button:hover::after {
-	box-shadow:
-		inset 0 0 0 1px rgba(255, 255, 255, 0.25),
-		inset 0 6px 16px rgba(255, 255, 255, 0.25),
-		inset 0 -2px 6px rgba(0, 0, 0, 0.08);
-	background: linear-gradient(
-		180deg,
-		rgba(255, 255, 255, 0.35) 0%,
-		rgba(255, 255, 255, 0.05) 60%,
-		rgba(0, 0, 0, 0.04) 100%
-	);
-}
-
-/* 4. Active (點擊瞬間)：拔除縮小效果，時間調超短，只留 1px 的物理下壓感 */
-button:active {
-	transform: translateY(1px) !important;
-	transition: all 0.05s linear !important; /* 把 Q 彈的時間差拿掉，變成瞬間觸發 */
-}
-button:active::after {
-	box-shadow:
-		inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-		inset 0 4px 12px rgba(0, 0, 0, 0.15),
-		inset 0 -1px 2px rgba(255, 255, 255, 0.2);
-	background: linear-gradient(
-		180deg,
-		rgba(0, 0, 0, 0.08) 0%,
-		rgba(255, 255, 255, 0.02) 100%
-	);
-}
-
-/* 4. Active (點擊瞬間)：強力水感擠壓與內部凹陷 */
-button:active {
-	transform: translateY(3px) scale(0.92) !important;
-	transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-button:active::after {
-	/* 點下時產生深邃的內陰影，模擬水球被壓扁 */
-	box-shadow:
-		inset 0 4px 10px rgba(0, 0, 0, 0.3),
-		inset 0 -1px 2px rgba(255, 255, 255, 0.4),
-		inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-	background: linear-gradient(
-		180deg,
-		rgba(0, 0, 0, 0.15) 0%,
-		rgba(255, 255, 255, 0.05) 100%
-	);
-}
-
-/* 5. 作用中 / 打勾狀態：保持下陷的琥珀感 */
-button.checked,
-button.active {
-	transform: scale(0.96);
-}
-button.checked::after,
-button.active::after {
-	box-shadow:
-		inset 0 3px 8px rgba(0, 0, 0, 0.2),
-		inset 0 -1px 2px rgba(255, 255, 255, 0.4),
-		inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-	background: linear-gradient(
-		180deg,
-		rgba(0, 0, 0, 0.1) 0%,
-		rgba(255, 255, 255, 0.1) 100%
-	);
-}
-
-/* 6. Disabled (停用)：失去水感與光澤 (霧面結冰感) */
-button:disabled {
-	transform: none !important;
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-button:disabled::after {
-	opacity: 0.3;
-	box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4);
-}
-
-/* =========================================
-   超進化：擬真液態琉璃特效 (Liquid Glass)
-   不改變原色，透過強烈高光、邊緣反光與形變產生水感
-========================================= */
-
-/* 1. 給予所有按鈕穩定的點擊過渡 */
-button {
-	position: relative;
-	overflow: hidden;
-	transition:
-		transform 0.15s ease-out,
-		box-shadow 0.2s ease,
-		background 0.2s ease !important;
-}
-
-/* 2. 柔和通透的玻璃反光層：移除生硬的頂部白線，改用大範圍柔光與極細邊緣光 */
-button::after {
-	content: "";
-	position: absolute;
-	inset: 0;
-	border-radius: inherit;
-	pointer-events: none;
-
-	/* 
-    1. 極細的半透明白邊 (勾勒玻璃輪廓)
-    2. 大範圍的柔和頂部漫射光 (不再死硬聚集在上緣)
-    3. 底部非常微弱的暗角 
-  */
-	box-shadow:
-		inset 0 0 0 1px rgba(255, 255, 255, 0.15),
-		inset 0 4px 12px rgba(255, 255, 255, 0.15),
-		inset 0 -2px 4px rgba(0, 0, 0, 0.05);
-
-	/* 漸層過渡拉長，讓光澤均勻散佈到按鈕中央 */
-	background: linear-gradient(
-		180deg,
-		rgba(255, 255, 255, 0.25) 0%,
-		rgba(255, 255, 255, 0.02) 50%,
-		rgba(0, 0, 0, 0.02) 100%
-	);
-	transition: all 0.3s ease;
-}
-
-/* 3. Hover (懸停)：整體均勻提亮，像光線照入玻璃內部 */
-button:hover::after {
-	box-shadow:
-		inset 0 0 0 1px rgba(255, 255, 255, 0.25),
-		inset 0 6px 16px rgba(255, 255, 255, 0.25),
-		inset 0 -2px 6px rgba(0, 0, 0, 0.08);
-	background: linear-gradient(
-		180deg,
-		rgba(255, 255, 255, 0.35) 0%,
-		rgba(255, 255, 255, 0.05) 60%,
-		rgba(0, 0, 0, 0.04) 100%
-	);
-}
-
-/* 4. Active (點擊瞬間)：拔除縮小效果，只保留 1px 的物理下壓感 */
-button:active {
-	transform: translateY(1px) !important;
-	transition: transform 0.05s ease-out !important;
-}
-button:active::after {
-	box-shadow:
-		inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-		inset 0 4px 12px rgba(0, 0, 0, 0.15),
-		inset 0 -1px 2px rgba(255, 255, 255, 0.2);
-	background: linear-gradient(
-		180deg,
-		rgba(0, 0, 0, 0.08) 0%,
-		rgba(255, 255, 255, 0.02) 100%
-	);
-}
-
-/* 5. 作用中 / 打勾狀態：保持下陷的通透感 */
-button.checked,
-button.active {
-	transform: scale(0.96);
-}
-button.checked::after,
-button.active::after {
-	box-shadow:
-		inset 0 0 0 1px rgba(255, 255, 255, 0.15),
-		inset 0 3px 8px rgba(0, 0, 0, 0.12),
-		inset 0 -1px 2px rgba(255, 255, 255, 0.2);
-	background: linear-gradient(
-		180deg,
-		rgba(0, 0, 0, 0.05) 0%,
-		rgba(255, 255, 255, 0.05) 100%
-	);
-}
-
-/* 6. Disabled (停用)：失去水感與光澤 */
-button:disabled {
-	transform: none !important;
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-button:disabled::after {
-	opacity: 0.3;
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-	background: transparent;
-}
-
-/* =========================================
-   強制手機版切換按鈕 (右上角)
-   增強發光感與毛玻璃通透度
-========================================= */
-
-.view-toggle-btn {
-	/* 加上背景模糊，營造 iOS 毛玻璃底座 */
-	background: rgba(216, 104, 92, 0.75); /* 稍微調高透明度讓背景透出來 */
-	backdrop-filter: saturate(150%) blur(12px);
-	-webkit-backdrop-filter: saturate(150%) blur(12px);
-	color: #fff;
-	border: none; /* 移除死板的實體邊框，完全交給 ::after 的玻璃邊緣光 */
-	padding: 8px 14px;
-	border-radius: 999px;
-	font-size: 11px;
-	font-weight: 800;
+		transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		opacity 0.15s ease !important;
 	cursor: pointer;
-	white-space: nowrap;
-	/* 增加雙層發光陰影，讓它像立體按鈕一樣浮出來 */
-	box-shadow:
-		0 6px 16px rgba(216, 104, 92, 0.4),
-		0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.view-toggle-btn:hover {
-	background: rgba(198, 90, 79, 0.85);
-	box-shadow:
-		0 8px 20px rgba(216, 104, 92, 0.5),
-		0 4px 8px rgba(0, 0, 0, 0.15);
+/* 點擊的瞬間微幅內縮並稍微變透明 */
+button:active {
+	transform: scale(0.92) !important;
+	opacity: 0.8;
 }
 
-/* =========================================
-   智慧隱藏：切換按鈕只在摺疊機、平板與桌機顯示
-========================================= */
-
-/* 當螢幕寬度小於或等於 500px (真正的直式手機尺寸) 時，直接隱藏這顆按鈕 */
-@media (max-width: 500px) {
-	.view-toggle-btn {
-		display: none !important;
-	}
-}
-
-/* --- 電腦版主畫面置中（精準手機寬度 430px） --- */
-@media (min-width: 768px) {
-	main {
-		/* 維持滿版漸層背景 */
-		background: linear-gradient(
-			150deg,
-			#e0c8ff 0%,
-			#bde0fe 50%,
-			#fef08a 100%
-		) !important;
-		padding: 0 !important;
-		min-height: 100vh;
-	}
-	.app-shell {
-		/* 將最大寬度強制鎖定在 430px (最標準的手機寬度) */
-		max-width: 430px !important;
-		margin: 0 auto !important; /* 畫面水平置中 */
-
-		background: transparent !important;
-		box-shadow: none !important;
-		border-radius: 0 !important;
-		min-height: 100vh !important;
-
-		/* 左右 padding 稍微縮小，對齊手機版的視覺比例 */
-		padding: 40px 14px 110px !important;
-	}
-	nav {
-		/* 底部導覽列維持置中 */
-		position: fixed !important;
-		left: 50% !important;
-		transform: translateX(-50%) !important;
-
-		/* 導覽列也縮小到對應的手機寬度 */
-		width: min(100% - 32px, 400px) !important;
-		bottom: 30px !important;
-	}
-}
-/* =========================================
-   強制手機板型佈局 (覆蓋所有 RWD 展開設定)
-========================================= */
-
-/* 強制手機板型佈局 (加入微透毛玻璃效果) */
-.force-mobile-view {
-	max-width: 430px !important;
-	margin: 2vh auto !important; /* 上下留一點空間 */
-	background: transparent !important;
-	/* 加上一圈白邊與陰影，做出立體手機殼的感覺 */
-	box-shadow:
-		0 0 50px rgba(0, 0, 0, 0.1),
-		0 0 0 8px rgba(255, 255, 255, 0.8);
-	position: relative;
-	min-height: 96vh !important;
-	border-radius: 40px !important; /* 手機外框大圓角 */
-	overflow: hidden;
-}
-
-.force-mobile-view .app-shell {
-	border-radius: 32px !important; /* 內部螢幕圓角 */
-	padding: clamp(18px, 5vw, 40px) 14px 110px !important;
-}
-
-.force-mobile-view .tasks,
-.force-mobile-view .journey-summary,
-.force-mobile-view .badge-grid {
-	grid-template-columns: 1fr !important;
-}
-
-.force-mobile-view .task {
-	min-height: auto !important;
-	align-items: center !important;
-}
-
-.force-mobile-view .task-overview {
-	grid-template-columns: 1fr 1fr !important;
-}
-
-.force-mobile-view .task-overview > div {
-	grid-column: 1 / -1 !important;
-	justify-content: flex-start !important;
-}
-
-.force-mobile-view nav {
-	position: fixed !important;
-	left: 50% !important;
-	transform: translateX(-50%) !important;
-	width: min(100%, 430px) !important;
-	bottom: 0 !important;
-	border-radius: 0 !important;
-	border: 0 !important;
-	border-top: 1px solid #e8e0d0 !important;
-	padding: 11px 14px 20px !important;
+/* 如果按鈕被 disabled (例如還沒解鎖的碎片)，就不要有互動效果 */
+button:disabled {
+	transform: scale(1) !important;
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 /* =========================================
-   修復：特定元件不適用玻璃高光
-========================================= */
-
-nav button::after,
-.back-link::after {
-	display: none !important;
+   2. 隱藏橫向滑動的醜醜捲軸 (保留滑動功能)
+   ========================================= */
+.temple-route::-webkit-scrollbar {
+	display: none; /* 隱藏 Chrome, Safari, Opera 的捲軸 */
 }
 
-nav button {
-	background: transparent !important;
-	box-shadow: none !important;
-	border-radius: 16px !important;
-	padding: 8px 16px !important;
-	min-width: 64px !important;
-	transition: all 0.2s ease !important;
-}
-
-nav button:hover {
-	transform: translateY(-1px) !important; /* 減小上浮 */
-	background: rgba(0, 0, 0, 0.03) !important;
-}
-
-nav button:active {
-	/* 完全拔除 scale 縮小，只留下極微小的下壓 */
-	transform: translateY(1px) !important;
-}
-
-nav button.active {
-	background: rgba(216, 104, 92, 0.1) !important;
-	color: var(--temple-red) !important;
-	transform: translateY(0) scale(1) !important;
-}
-
-.back-link {
-	display: inline-flex !important;
-	align-items: center;
-	justify-content: center;
-	gap: 6px;
-	background: #ffffff !important;
-	color: var(--temple-red) !important;
-	border: 2px solid #fde047 !important;
-	border-radius: 999px !important;
-	padding: 8px 18px !important;
-	font-size: 13px !important;
-	font-weight: 800 !important;
-	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06) !important;
-	transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-	margin-bottom: 20px !important;
-}
-
-.back-link:hover {
-	transform: translateY(-1px) !important; /* 減小上浮 */
-	box-shadow: 0 4px 10px rgba(216, 104, 92, 0.12) !important;
-	background: #fffdf5 !important;
-}
-
-.back-link:active {
-	/* 完全拔除 scale 縮小，只留下極微小的下壓與陰影變化 */
-	transform: translateY(1px) !important;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-}
-
-/* 祈福木牌牆容器 */
-.ema-board {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-	gap: 16px;
-	margin-top: 18px;
-}
-
-/* 單個祈福木牌設計 */
-.ema-plaque {
-	position: relative;
-	background: linear-gradient(135deg, #fef08a, #fde047); /* 溫暖的淺黃色調 */
-	border: 1px solid #dca54c;
-	border-radius: 4px 4px 12px 12px;
-	padding: 24px 12px 14px;
-	text-align: center;
-	color: #5c4825;
-	box-shadow: 0 6px 12px rgba(220, 165, 76, 0.15);
-	min-height: 90px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	animation: plaque-sway 3s infinite ease-in-out alternate;
-}
-
-/* 木牌上的文字 */
-.ema-plaque p {
-	margin: 0;
-	font-size: 13px;
-	font-weight: 700;
-	line-height: 1.4;
-	word-break: break-all;
-}
-
-/* 木牌頂部的硃砂紅繫線 */
-.ema-string {
-	position: absolute;
-	top: -12px;
-	left: 50%;
-	transform: translateX(-50%);
-	width: 24px;
-	height: 14px;
-	border: 2px solid var(--temple-red);
-	border-bottom: none;
-	border-radius: 12px 12px 0 0;
-}
-
-/* 加入微風吹拂的動態感 */
-@keyframes plaque-sway {
-	0% {
-		transform: rotate(-2deg);
-	}
-	100% {
-		transform: rotate(2deg);
-	}
-}
-
-/* =========================================
-   終極統一：全站電腦版完美手機置中 (430px)
-   (請將此段放在 globals.css 的「最底部」，確保覆蓋所有舊版設定)
-========================================= */
-@media (min-width: 768px) {
-	/* 1. 統一整個電腦螢幕的大背景為滿版彩色漸層 */
-	body {
-		background: linear-gradient(
-			150deg,
-			#e0c8ff 0%,
-			#bde0fe 50%,
-			#fef08a 100%
-		) !important;
-		background-attachment: fixed !important;
-		margin: 0;
-		padding: 0;
-		min-height: 100vh;
-	}
-
-	/* 移除各頁面原本的大背景，讓 body 的漸層可以透出來 */
-	main,
-	.feature-page {
-		background: transparent !important;
-		min-height: 100vh !important;
-	}
-
-	/* 2. 統一所有頁面的內容區塊 (主畫面 app-shell 與其他功能 feature-shell) */
-	.app-shell,
-	.feature-shell {
-		display: block !important;
-		width: 100% !important;
-		max-width: 430px !important; /* 嚴格鎖定精準手機寬度 */
-		margin: 4vh auto !important; /* 上下留空隙，畫面完美居中 */
-		min-height: 92vh !important; /* 模擬手機螢幕高度 */
-
-		/* 加上精緻的毛玻璃與擬真手機邊框 */
-		background: rgba(255, 255, 255, 0.35) !important; /* 微透白的玻璃底色 */
-		backdrop-filter: blur(20px) !important; /* 毛玻璃模糊效果 */
-		-webkit-backdrop-filter: blur(20px) !important;
-		border-radius: 40px !important; /* 手機大圓角 */
-		box-shadow:
-			0 25px 50px rgba(0, 0, 0, 0.12),
-			/* 深邃的立體陰影 */ 0 0 0 8px rgba(255, 255, 255, 0.6) !important; /* 擬真白邊框 */
-
-		/* 修正左右與底部的內距 */
-		padding: 40px 20px 110px !important;
-	}
-
-	/* 3. 導覽列精準對齊這支虛擬手機 */
-	nav {
-		position: fixed !important;
-		left: 50% !important;
-		transform: translateX(-50%) !important;
-		width: 390px !important; /* 對齊 430px 手機寬度 (扣掉邊界留白) */
-		bottom: calc(4vh + 20px) !important; /* 懸浮在底部 */
-		border-radius: 24px !important;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
-	}
-	/* 4. 抵銷原本的桌機排版，強制內部維持手機單欄與正確間距 */
-	.app-shell .tasks {
-		grid-template-columns: 1fr !important;
-	}
-	.app-shell .task {
-		align-items: center !important;
-		flex-wrap: nowrap !important;
-	}
-	.app-shell .task-copy {
-		min-width: 0 !important;
-	}
-	.app-shell .task-focus {
-		margin-left: 0 !important;
-	}
-
-	/* 5. 修復「任務總覽 (已安排/尚餘/按鈕)」的比例 */
-	.app-shell .task-overview {
-		grid-template-columns: 1fr 1fr !important;
-		gap: 5px 10px !important;
-	}
-	.app-shell .task-overview > div {
-		grid-column: 1 / -1 !important;
-		justify-content: flex-start !important;
-		margin-top: 3px !important;
-	}
+.temple-route {
+	-ms-overflow-style: none; /* 隱藏 IE and Edge 的捲軸 */
+	scrollbar-width: none; /* 隱藏 Firefox 的捲軸 */
 }
