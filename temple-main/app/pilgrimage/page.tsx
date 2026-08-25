@@ -110,9 +110,19 @@ export default function Pilgrimage() {
 	const [notice, setNotice] = useState("");
 	const [idToken, setIdToken] = useState<string | null>(null);
 	const [selectedMatsuId, setSelectedMatsuId] = useState<string | null>(null);
-	// 🌟 修改這裡：將 false 改為 true，一進入頁面就開啟相機
-	const [scannerOpen, setScannerOpen] = useState(true);
+
+	// 🌟 修改：將 true 改為 false，避免一進入頁面就強制開啟相機
+	const [scannerOpen, setScannerOpen] = useState(false);
+
 	const [quizState, setQuizState] = useState<QuizState>("IDLE");
+
+	// 🌟 新增：用於控制測驗錯誤的提示訊息
+	const [quizError, setQuizError] = useState("");
+	// 🌟 新增：用於控制解鎖碎片後的獎勵回饋彈窗
+	const [showRewardModal, setShowRewardModal] = useState(false);
+	const [rewardMatsu, setRewardMatsu] = useState<(typeof matsus)[0] | null>(
+		null,
+	);
 
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const streamRef = useRef<MediaStream | null>(null);
@@ -237,6 +247,10 @@ export default function Pilgrimage() {
 		setVisits(nextVisits);
 		setSelectedMatsuId(newlyUnlockedMatsu.id);
 
+		// 🌟 新增：設定解鎖的獎勵內容，並開啟回饋彈窗
+		setRewardMatsu(newlyUnlockedMatsu);
+		setShowRewardModal(true);
+
 		const plan = JSON.parse(localStorage.getItem("matsu-1917-mvp") ?? "{}");
 		localStorage.setItem(
 			"matsu-1917-mvp",
@@ -262,6 +276,19 @@ export default function Pilgrimage() {
 
 	return (
 		<main className="feature-page">
+			{/* 🌟 新增：給相機掃描線使用的 CSS 動畫 */}
+			<style>{`
+                @keyframes scanline {
+                    0% { top: 0%; opacity: 0; }
+                    10% { opacity: 1; }
+                    90% { opacity: 1; }
+                    100% { top: 100%; opacity: 0; }
+                }
+                .animate-scan {
+                    animation: scanline 2.5s linear infinite;
+                }
+            `}</style>
+
 			<div className="feature-shell pilgrimage-shell">
 				<button
 					className="back-link"
@@ -336,16 +363,58 @@ export default function Pilgrimage() {
 							解鎖碎片
 						</button>
 					</div>
+
+					{/* 🌟 提示：這裡依然保留按鈕，因為我們將預設狀態改為 false，使用者點擊才會開啟 */}
 					<button
 						className="camera-scan-button"
 						onClick={() => setScannerOpen((current) => !current)}
 					>
 						{scannerOpen ? "關閉相機" : "📸 開啟相機尋找碎片"}
 					</button>
+
 					{scannerOpen && (
-						<div className="qr-scanner">
-							<video ref={videoRef} muted playsInline />
-							<span>將 QR Code 對準框線</span>
+						/* 🌟 修改：加入相對定位 (relative) 和圓角，並加上掃描線條 */
+						<div
+							className="qr-scanner"
+							style={{
+								position: "relative",
+								overflow: "hidden",
+								borderRadius: "12px",
+								border: "2px solid #93c5fd",
+							}}
+						>
+							<video
+								ref={videoRef}
+								muted
+								playsInline
+								style={{ width: "100%", display: "block" }}
+							/>
+
+							{/* 🌟 新增：掃描線動畫元素 */}
+							<div
+								className="animate-scan"
+								style={{
+									position: "absolute",
+									left: 0,
+									width: "100%",
+									height: "3px",
+									backgroundColor: "#3b82f6",
+									boxShadow: "0 0 8px 2px #93c5fd",
+								}}
+							/>
+
+							<span
+								style={{
+									position: "absolute",
+									bottom: "12px",
+									width: "100%",
+									textAlign: "center",
+									color: "white",
+									textShadow: "0px 1px 4px rgba(0,0,0,0.8)",
+								}}
+							>
+								將 QR Code 對準框線
+							</span>
 						</div>
 					)}
 					{notice && <p className="unlock-notice">{notice}</p>}
@@ -444,7 +513,10 @@ export default function Pilgrimage() {
 									1917 年的七媽會大門已為您開啟。
 								</p>
 								<button
-									onClick={() => setQuizState("PLAYING")}
+									onClick={() => {
+										setQuizState("PLAYING");
+										setQuizError(""); // 🌟 重置錯誤狀態
+									}}
 									style={{
 										backgroundColor: "#f59e0b",
 										color: "#fff",
@@ -486,8 +558,13 @@ export default function Pilgrimage() {
 										gap: "8px",
 									}}
 								>
+									{/* 🌟 修改：將 alert 換成 setErrorMsg */}
 									<button
-										onClick={() => alert("再想想看喔！")}
+										onClick={() =>
+											setQuizError(
+												"答案不對喔！當年高鐵還沒出現呢！",
+											)
+										}
 										style={{
 											padding: "8px",
 											border: "1px solid #93c5fd",
@@ -497,7 +574,10 @@ export default function Pilgrimage() {
 										A. 高鐵通車
 									</button>
 									<button
-										onClick={() => setQuizState("PASSED")}
+										onClick={() => {
+											setQuizState("PASSED");
+											setQuizError(""); // 答對時清除錯誤
+										}}
 										style={{
 											padding: "8px",
 											border: "1px solid #93c5fd",
@@ -508,7 +588,11 @@ export default function Pilgrimage() {
 										B. 縱貫鐵路台中段通車
 									</button>
 									<button
-										onClick={() => alert("再想想看喔！")}
+										onClick={() =>
+											setQuizError(
+												"再想想看！捷運是很近代才有的建設喔！",
+											)
+										}
 										style={{
 											padding: "8px",
 											border: "1px solid #93c5fd",
@@ -518,6 +602,23 @@ export default function Pilgrimage() {
 										C. 台中捷運通車
 									</button>
 								</div>
+
+								{/* 🌟 新增：在此處顯示錯誤提示 */}
+								{quizError && (
+									<div
+										style={{
+											marginTop: "16px",
+											padding: "12px",
+											backgroundColor: "#fee2e2",
+											color: "#e11d48",
+											borderRadius: "8px",
+											fontWeight: "bold",
+											fontSize: "0.9rem",
+										}}
+									>
+										{quizError}
+									</div>
+								)}
 							</div>
 						)}
 
@@ -555,6 +656,114 @@ export default function Pilgrimage() {
 					QR07。測試時請隨意輸入此範圍內的代碼，即可體驗循序解鎖的效果。
 				</p>
 			</div>
+
+			{/* 🌟 新增：過關解鎖時跳出的獎勵與知識 Modal */}
+			{showRewardModal && rewardMatsu && (
+				<div
+					style={{
+						position: "fixed",
+						inset: 0,
+						backgroundColor: "rgba(0,0,0,0.6)",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						zIndex: 50,
+						padding: "16px",
+					}}
+				>
+					<div
+						style={{
+							backgroundColor: "#fff",
+							padding: "24px",
+							borderRadius: "24px",
+							width: "100%",
+							maxWidth: "340px",
+							textAlign: "center",
+							border: "4px solid #fde68a",
+							boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+							animation: "popIn 0.3s ease-out forwards",
+						}}
+					>
+						<style>{`
+                            @keyframes popIn {
+                                0% { opacity: 0; transform: scale(0.9); }
+                                100% { opacity: 1; transform: scale(1); }
+                            }
+                        `}</style>
+						<h2
+							style={{
+								fontSize: "1.5rem",
+								fontWeight: "bold",
+								color: "#b45309",
+								marginBottom: "16px",
+							}}
+						>
+							🎉 恭喜解鎖！
+						</h2>
+						<div
+							style={{
+								fontSize: "3rem",
+								width: "80px",
+								height: "80px",
+								lineHeight: "80px",
+								margin: "0 auto 12px",
+								backgroundColor: "#fef3c7",
+								borderRadius: "50%",
+								color: "#d97706",
+							}}
+						>
+							{rewardMatsu.badge}
+						</div>
+						<h3
+							style={{
+								fontSize: "1.25rem",
+								fontWeight: "bold",
+								color: "#4b5563",
+								marginBottom: "12px",
+							}}
+						>
+							{rewardMatsu.name}
+						</h3>
+						<div
+							style={{
+								backgroundColor: "#f0fdf4",
+								padding: "16px",
+								borderRadius: "16px",
+								color: "#166534",
+								marginBottom: "24px",
+								fontSize: "0.95rem",
+								textAlign: "left",
+							}}
+						>
+							<b
+								style={{
+									display: "block",
+									marginBottom: "4px",
+								}}
+							>
+								💡 歷史小知識：
+							</b>
+							{rewardMatsu.story}
+						</div>
+						<button
+							onClick={() => setShowRewardModal(false)}
+							style={{
+								backgroundColor: "#f59e0b",
+								color: "white",
+								padding: "12px 32px",
+								borderRadius: "999px",
+								fontWeight: "bold",
+								border: "none",
+								fontSize: "1rem",
+								cursor: "pointer",
+								width: "100%",
+							}}
+						>
+							收下並繼續探索
+						</button>
+					</div>
+				</div>
+			)}
 		</main>
 	);
 }

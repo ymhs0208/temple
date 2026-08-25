@@ -5,7 +5,7 @@ import liff from "@line/liff";
 
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
 
-// 定義 7 尊媽祖的故事順序 (結合宮廟莊重感與 Q 版活潑的專屬配色)
+// 定義 7 尊媽祖的故事順序 (固定依照此順序解鎖)
 const matsus = [
 	{
 		id: "story_1",
@@ -14,9 +14,7 @@ const matsus = [
 		badge: "萬",
 		story: "萬春宮身為 1917 年七媽會的主辦方之一，見證了這場百年難得一見的宗教盛事。",
 		insight: "歷史碎片 1/7：萬春宮的香火延續至今。",
-		themeColor: "#fca5a5", // 溫暖宮廟紅
-		fullStory:
-			"【第一章：百年前的盛典起點】\n1917年（大正6年），為了慶祝台中火車站及縱貫鐵路全線通車，當時的台中區長與萬春宮聯合發起了一場盛大的祭典，準備祈求風調雨順，這便是一切故事的起點。",
+		color: "rose",
 	},
 	{
 		id: "story_2",
@@ -25,9 +23,7 @@ const matsus = [
 		badge: "樂",
 		story: "旱溪媽祖以慈悲庇佑地方，當年也一同駐駕於台中市區，賜福黎民。",
 		insight: "歷史碎片 2/7：收集到旱溪媽的祝福。",
-		themeColor: "#fde047", // 香火金黃
-		fullStory:
-			"【第二章：在地力量的凝聚】\n身為台中的重要信仰中心，旱溪媽祖率先響應了萬春宮的邀請，共同參與籌備。當時的台中市區開始張燈結綵，眾人齊心合力搭建起宏偉的祭壇，迎接這場即將到來的盛事。",
+		color: "vermilion",
 	},
 	{
 		id: "story_3",
@@ -36,9 +32,7 @@ const matsus = [
 		badge: "奉",
 		story: "搭乘火車遠道而來的新港媽，為當年的台中帶來了無比的熱鬧與安定。",
 		insight: "歷史碎片 3/7：感受鐵道與信仰的結合。",
-		themeColor: "#93c5fd", // 晴空淺藍
-		fullStory:
-			"【第三章：鐵道傳遞的邀請】\n為了讓盛會更加隆重，主辦方透過剛通車的鐵路，向外縣市發出邀請。新港奉天宮媽祖搭乘火車遠道而來，開啟了跨縣市的宗教交流，也展現了現代交通帶來的便利。",
+		color: "gold",
 	},
 	{
 		id: "story_4",
@@ -47,9 +41,7 @@ const matsus = [
 		badge: "朝",
 		story: "北港朝天宮的香火鼎盛，當年參與七媽會更是轟動全台。",
 		insight: "歷史碎片 4/7：重溫百年前的萬人空巷。",
-		themeColor: "#c4b5fd", // 祥瑞淺紫
-		fullStory:
-			"【第四章：萬人空巷的轟動】\n北港朝天宮媽祖的到來更是轟動全台！成千上萬的信眾湧入台中，甚至讓總督府鐵道部必須加開「七媽會特別列車」來疏運旅客，當時的台中市區可說是萬人空巷。",
+		color: "jade",
 	},
 	{
 		id: "story_5",
@@ -58,9 +50,7 @@ const matsus = [
 		badge: "南",
 		story: "彰化南瑤宮媽祖也是七媽會的重要貴賓，共同守護中部子民。",
 		insight: "歷史碎片 5/7：信仰跨越了縣市的界線。",
-		themeColor: "#fef08a", // 溫潤鵝黃
-		fullStory:
-			"【第五章：中台灣信仰的連結】\n彰化南瑤宮媽祖也受邀北上台中。中台灣的信仰圈在這一刻緊密連結在一起，熱情的香客們沿途設立香案、虔誠膜拜，將整個中部的宗教氣氛推向高潮。",
+		color: "violet",
 	},
 	{
 		id: "story_6",
@@ -69,9 +59,7 @@ const matsus = [
 		badge: "天",
 		story: "鹿港天后宮歷史悠久，當年其陣頭與儀仗為七媽會增添了無數光彩。",
 		insight: "歷史碎片 6/7：傳統陣頭的百年記憶。",
-		themeColor: "#bfdbfe", // 淡雅粉藍
-		fullStory:
-			"【第六章：傳統文化的光彩】\n鹿港天后宮的陣頭與儀仗浩浩蕩蕩抵達台中。他們帶來了海線深厚的傳統民俗文化與精緻的陣頭表演，為這場盛會增添了無比絢麗的色彩與無窮的活力。",
+		color: "blue",
 	},
 	{
 		id: "story_7",
@@ -80,12 +68,11 @@ const matsus = [
 		badge: "元",
 		story: "海線的梧棲媽祖也受邀來到山線，促成了山海媽祖齊聚一堂的佳話。",
 		insight: "歷史碎片 7/7：山海會聚的奇蹟。",
-		themeColor: "#e9d5ff", // 寧靜淡紫
-		fullStory:
-			"【第七章：山海會聚的奇蹟】\n最後，梧棲朝元宮媽祖壓軸登場，完美達成了「山線與海線媽祖齊聚一堂」的歷史奇蹟。七尊媽祖共同駐駕台中四十天，這場傳頌百年的「七媽會」，成為了台灣宗教史上最輝煌的一頁。",
+		color: "cyan",
 	},
 ];
 
+// 預先設定好分佈在各地的 7 個實體 QR Code 代碼
 const validPhysicalQRCodes = [
 	"QR01",
 	"QR02",
@@ -104,7 +91,6 @@ type BarcodeDetectorConstructor = new (options?: {
 }) => BarcodeDetectorInstance;
 type ScannerWindow = Window &
 	typeof globalThis & { BarcodeDetector?: BarcodeDetectorConstructor };
-
 function qrCodeFromValue(value: string) {
 	try {
 		return (
@@ -124,9 +110,18 @@ export default function Pilgrimage() {
 	const [notice, setNotice] = useState("");
 	const [idToken, setIdToken] = useState<string | null>(null);
 	const [selectedMatsuId, setSelectedMatsuId] = useState<string | null>(null);
-	const [scannerOpen, setScannerOpen] = useState(true);
+
+	// ✅ 進入頁面不強制開啟相機
+	const [scannerOpen, setScannerOpen] = useState(false);
+
 	const [quizState, setQuizState] = useState<QuizState>("IDLE");
-	const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
+
+	// ✅ 測驗錯誤提示與過關彈窗狀態
+	const [quizError, setQuizError] = useState("");
+	const [showRewardModal, setShowRewardModal] = useState(false);
+	const [rewardMatsu, setRewardMatsu] = useState<(typeof matsus)[0] | null>(
+		null,
+	);
 
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const streamRef = useRef<MediaStream | null>(null);
@@ -139,11 +134,6 @@ export default function Pilgrimage() {
 		unlockedMatsus[unlockedCount - 1] ??
 		matsus[0];
 	const isAllCollected = unlockedCount === matsus.length;
-
-	const selectedMatsuIndex = matsus.findIndex(
-		(m) => m.id === selectedMatsu.id,
-	);
-	const isSelectedMatsuUnlocked = selectedMatsuIndex < unlockedCount;
 
 	useEffect(() => {
 		try {
@@ -256,6 +246,10 @@ export default function Pilgrimage() {
 		setVisits(nextVisits);
 		setSelectedMatsuId(newlyUnlockedMatsu.id);
 
+		// ✅ 解鎖成功時，開啟過關知識彈窗
+		setRewardMatsu(newlyUnlockedMatsu);
+		setShowRewardModal(true);
+
 		const plan = JSON.parse(localStorage.getItem("matsu-1917-mvp") ?? "{}");
 		localStorage.setItem(
 			"matsu-1917-mvp",
@@ -281,15 +275,6 @@ export default function Pilgrimage() {
 
 	return (
 		<main className="feature-page">
-			{/* 🌟 注入 Q彈動畫的 keyframes */}
-			<style>{`
-        @keyframes popIn {
-          0% { transform: scale(0.85); opacity: 0; }
-          50% { transform: scale(1.05); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
-
 			<div className="feature-shell pilgrimage-shell">
 				<button
 					className="back-link"
@@ -341,6 +326,7 @@ export default function Pilgrimage() {
 					</div>
 				</section>
 
+				{/* ✅ DOM 完全保留原始結構，不加上任何額外標籤或 inline-style 干擾 */}
 				<section className="scan-card">
 					<div className="card-title">
 						<span>🔍</span>
@@ -364,37 +350,91 @@ export default function Pilgrimage() {
 							解鎖碎片
 						</button>
 					</div>
+
 					<button
-						className="camera-scan-button"
 						onClick={() => setScannerOpen((current) => !current)}
 						style={{
 							width: "100%",
-							padding: "12px",
+							padding: "14px",
 							marginTop: "16px",
 							backgroundColor: scannerOpen
-								? "#fee2e2"
-								: "#e0f2fe",
-							color: scannerOpen ? "#991b1b" : "#0369a1",
-							border: scannerOpen
-								? "2px solid #fca5a5"
-								: "2px solid #7dd3fc",
+								? "#fef3c7"
+								: "#ddd6fe", // 淺黃色 / 淺紫色
+							color: scannerOpen ? "#b45309" : "#5b21b6",
+							border: "none",
 							borderRadius: "16px",
+							fontSize: "1.05rem",
 							fontWeight: "bold",
-							display: "flex",
-							justifyContent: "center",
-							alignItems: "center",
-							fontSize: "1rem",
+							cursor: "pointer",
+							boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
+							transition: "all 0.2s ease",
 						}}
 					>
-						{scannerOpen ? "✖ 關閉相機" : "📸 開啟相機尋找碎片"}
+						{scannerOpen ? "關閉相機" : "📸 開啟相機尋找碎片"}
 					</button>
+
 					{scannerOpen && (
-						<div className="qr-scanner">
-							<video ref={videoRef} muted playsInline />
-							<span>將 QR Code 對準框線</span>
+						<div
+							style={{
+								position: "relative",
+								overflow: "hidden",
+								borderRadius: "16px",
+								border: "3px solid #bfdbfe",
+								marginTop: "16px",
+								backgroundColor: "#000",
+							}}
+						>
+							<video
+								ref={videoRef}
+								muted
+								playsInline
+								style={{ width: "100%", display: "block" }}
+							/>
+							{/* 掃描線動畫元素 */}
+							<div
+								className="animate-scan"
+								style={{
+									position: "absolute",
+									left: 0,
+									width: "100%",
+									height: "4px",
+									backgroundColor: "#60a5fa",
+									boxShadow: "0 0 12px 4px #bfdbfe",
+									pointerEvents: "none",
+								}}
+							/>
+							<span
+								style={{
+									position: "absolute",
+									bottom: "16px",
+									width: "100%",
+									textAlign: "center",
+									color: "white",
+									textShadow: "0px 2px 4px rgba(0,0,0,0.8)",
+									fontWeight: "bold",
+									letterSpacing: "1px",
+								}}
+							>
+								請將 QR Code 對準畫面
+							</span>
 						</div>
 					)}
-					{notice && <p className="unlock-notice">{notice}</p>}
+					{notice && (
+						<p
+							style={{
+								marginTop: "12px",
+								color: "#e11d48",
+								fontWeight: "bold",
+								fontSize: "0.9rem",
+								textAlign: "center",
+								backgroundColor: "#fee2e2",
+								padding: "8px",
+								borderRadius: "8px",
+							}}
+						>
+							{notice}
+						</p>
+					)}
 				</section>
 
 				<section
@@ -402,82 +442,138 @@ export default function Pilgrimage() {
 					aria-label="碎片地圖"
 					style={{
 						display: "grid",
-						gridTemplateColumns: "repeat(4, 1fr)",
-						gap: "10px",
-						width: "100%",
-						padding: "8px 0",
+						gridTemplateColumns: "repeat(12, 1fr)", // 切成 12 欄網格
+						gap: "8px", // 縮小間距以容納更多方塊
+						marginTop: "24px",
+						marginBottom: "24px",
 					}}
 				>
 					{matsus.map((matsu, index) => {
 						const isStoryUnlocked = index < unlockedCount;
-						const isSelected = selectedMatsu.id === matsu.id;
+
+						// 🌟 核心排版邏輯：前 3 個佔 4 欄 (上排)，後 4 個佔 3 欄 (下排)
+						const gridColumnSpan = index < 3 ? "span 4" : "span 3";
+
+						// 活潑可愛的 Q 版專屬配色
+						const bgColors = [
+							"#ffe4e6",
+							"#ffedd5",
+							"#fef9c3",
+							"#e0e7ff",
+							"#e0f2fe",
+							"#ede9fe",
+							"#fae8ff",
+						];
+						const textColors = [
+							"#be123c",
+							"#c2410c",
+							"#a16207",
+							"#3b82f6",
+							"#0369a1",
+							"#6d28d9",
+							"#a21caf",
+						];
 
 						return (
 							<button
 								key={matsu.id}
-								className={`temple-stop ${isStoryUnlocked ? "unlocked" : "locked"} ${isSelected ? "selected" : ""}`}
 								onClick={() =>
 									isStoryUnlocked &&
 									setSelectedMatsuId(matsu.id)
 								}
 								disabled={!isStoryUnlocked}
 								style={{
-									width: "100%",
-									margin: 0,
-									padding: "12px 4px",
+									gridColumn: gridColumnSpan,
 									display: "flex",
 									flexDirection: "column",
 									alignItems: "center",
-									borderRadius: "16px",
-									border: isSelected
-										? "2px solid #6b7280"
-										: "2px solid transparent",
+									justifyContent: "center",
+									padding: "10px 4px", // 縮小左右內距
 									backgroundColor: isStoryUnlocked
-										? matsu.themeColor // 🌟 使用新的粉嫩色彩設定
-										: "rgba(0,0,0,0.05)",
-									boxShadow: isStoryUnlocked
-										? "0 2px 6px rgba(0,0,0,0.1)"
-										: "none",
-									overflow: "hidden",
+										? bgColors[index]
+										: "#f3f4f6",
+									border: `2px solid ${isStoryUnlocked ? bgColors[index] : "#e5e7eb"}`,
+									borderRadius: "16px", // 縮小一點圓角比例
+									opacity: isStoryUnlocked ? 1 : 0.7,
+									cursor: isStoryUnlocked
+										? "pointer"
+										: "not-allowed",
+									boxShadow:
+										selectedMatsuId === matsu.id
+											? "inset 0 4px 6px rgba(0,0,0,0.1)"
+											: "0 2px 4px rgba(0,0,0,0.05)",
+									transform:
+										selectedMatsuId === matsu.id
+											? "scale(0.94)"
+											: "scale(1)",
 									transition: "all 0.2s ease",
-									color: "#1f2937", // 確保文字顏色在淺色背景上是深色的
 								}}
 							>
 								<span
 									style={{
-										fontSize: "1.4rem",
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										width: "36px", // 縮小圓形徽章
+										height: "36px",
+										borderRadius: "50%",
+										backgroundColor: isStoryUnlocked
+											? "#ffffff"
+											: "#d1d5db",
+										color: isStoryUnlocked
+											? textColors[index]
+											: "#9ca3af",
+										fontSize: "1.1rem",
+										fontWeight: "bold",
 										marginBottom: "6px",
-										opacity: isStoryUnlocked ? 1 : 0.6,
+										boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
 									}}
 								>
-									{isStoryUnlocked ? matsu.badge : "🔒"}
+									{isStoryUnlocked ? matsu.badge : "?"}
 								</span>
 								<div
 									style={{
 										textAlign: "center",
-										wordBreak: "break-word",
-										opacity: isStoryUnlocked ? 1 : 0.6,
+										width: "100%",
 									}}
 								>
 									<small
 										style={{
-											fontSize: "0.65rem",
 											display: "block",
-											opacity: 0.9,
+											color: isStoryUnlocked
+												? textColors[index]
+												: "#6b7280",
+											marginBottom: "2px",
+											fontSize: "0.65rem",
+											fontWeight: "bold",
 										}}
 									>
 										碎片 {index + 1}
 									</small>
 									<b
 										style={{
-											fontSize: "0.8rem",
+											color: isStoryUnlocked
+												? textColors[index]
+												: "#9ca3af",
+											fontSize: "0.75rem", // 縮小字體以適應一行 4 個
+											lineHeight: "1.3",
 											display: "block",
-											marginTop: "2px",
 										}}
 									>
-										{isStoryUnlocked
-											? matsu.name.split("・")[0]
-											: "待尋找"}
+										{/* 將「台中媽・萬春宮」自動斷行，保持排版整齊 */}
+										{isStoryUnlocked ? (
+											<>
+												{matsu.name.split("・")[0]}
+												<br />
+												{matsu.name.split("・")[1]}
+											</>
+										) : (
+											<>
+												尚待
+												<br />
+												尋找
+											</>
+										)}
 									</b>
 								</div>
 							</button>
@@ -486,34 +582,8 @@ export default function Pilgrimage() {
 				</section>
 
 				<section
-					className="culture-card temple-story"
-					style={{
-						position: "relative",
-						backgroundColor: selectedMatsu.themeColor, // 🌟 大卡片也套用相同的粉嫩色彩
-						color: "#1f2937",
-					}}
+					className={`culture-card temple-story ${selectedMatsu.color}`}
 				>
-					<button
-						onClick={() => setIsStoryModalOpen(true)}
-						style={{
-							position: "absolute",
-							top: "16px",
-							right: "16px",
-							backgroundColor: "rgba(255, 255, 255, 0.7)",
-							border: "1px solid rgba(0,0,0,0.1)",
-							borderRadius: "999px",
-							padding: "6px 12px",
-							fontSize: "0.75rem",
-							fontWeight: "bold",
-							color: "#4b5563",
-							display: "flex",
-							alignItems: "center",
-							gap: "4px",
-						}}
-					>
-						📖 詳細說明
-					</button>
-
 					<div className="culture-symbol">
 						{unlockedCount > 0 ? selectedMatsu.badge : "?"}
 					</div>
@@ -575,7 +645,10 @@ export default function Pilgrimage() {
 									1917 年的七媽會大門已為您開啟。
 								</p>
 								<button
-									onClick={() => setQuizState("PLAYING")}
+									onClick={() => {
+										setQuizState("PLAYING");
+										setQuizError("");
+									}}
 									style={{
 										backgroundColor: "#f59e0b",
 										color: "#fff",
@@ -610,6 +683,7 @@ export default function Pilgrimage() {
 									請問 1917
 									年的七媽會，主要是慶祝台中車站與哪條鐵路的通車？
 								</p>
+
 								<div
 									style={{
 										display: "flex",
@@ -617,8 +691,13 @@ export default function Pilgrimage() {
 										gap: "8px",
 									}}
 								>
+									{/* ✅ 使用原本按鈕邊框，替換 onClick 邏輯 */}
 									<button
-										onClick={() => alert("再想想看喔！")}
+										onClick={() =>
+											setQuizError(
+												"再想想看喔！當年高鐵還沒出現呢！",
+											)
+										}
 										style={{
 											padding: "8px",
 											border: "1px solid #93c5fd",
@@ -627,8 +706,12 @@ export default function Pilgrimage() {
 									>
 										A. 高鐵通車
 									</button>
+
 									<button
-										onClick={() => setQuizState("PASSED")}
+										onClick={() => {
+											setQuizState("PASSED");
+											setQuizError("");
+										}}
 										style={{
 											padding: "8px",
 											border: "1px solid #93c5fd",
@@ -638,8 +721,13 @@ export default function Pilgrimage() {
 									>
 										B. 縱貫鐵路台中段通車
 									</button>
+
 									<button
-										onClick={() => alert("再想想看喔！")}
+										onClick={() =>
+											setQuizError(
+												"再想想看喔！捷運是很近代才有的建設！",
+											)
+										}
 										style={{
 											padding: "8px",
 											border: "1px solid #93c5fd",
@@ -649,25 +737,63 @@ export default function Pilgrimage() {
 										C. 台中捷運通車
 									</button>
 								</div>
+
+								{/* ✅ 錯誤提示框 */}
+								{quizError && (
+									<div
+										style={{
+											marginTop: "16px",
+											padding: "12px",
+											backgroundColor: "#fee2e2",
+											color: "#e11d48",
+											borderRadius: "8px",
+											fontWeight: "bold",
+											fontSize: "0.95rem",
+										}}
+									>
+										💡 {quizError}
+									</div>
+								)}
 							</div>
 						)}
 
 						{quizState === "PASSED" && (
-							<div className="text-center w-full">
+							<div
+								className="text-center w-full"
+								style={{
+									animation: "popIn 0.5s ease-out forwards",
+								}}
+							>
 								<h2
 									style={{
 										color: "#6b21a8",
-										fontSize: "1.25rem",
+										fontSize: "1.4rem", // 稍微放大標題
 										fontWeight: "bold",
-										marginBottom: "8px",
+										marginBottom: "12px",
 									}}
 								>
 									🎉 解鎖隱藏故事！
 								</h2>
+
+								{/* 🌟 放入你生成的精美圖片 */}
+								<img
+									src="/matsu-completed.png"
+									alt="七媽大團圓"
+									style={{
+										width: "100%",
+										maxWidth: "200px",
+										margin: "0 auto 16px",
+										borderRadius: "16px",
+										boxShadow:
+											"0 4px 12px rgba(107, 33, 168, 0.15)",
+									}}
+								/>
+
 								<p
 									style={{
 										color: "#7e22ce",
 										marginBottom: "16px",
+										lineHeight: "1.6",
 									}}
 								>
 									原來當年七媽會期間，台中市區湧入了超過平時人口數倍的信眾！萬春宮身為地主，不僅準備了豐盛的祭典，更讓各地香客感受到了台中濃濃的人情味。
@@ -675,13 +801,18 @@ export default function Pilgrimage() {
 									<br />
 									感謝您參與這場百年的時空旅行！
 								</p>
-								<span style={{ fontSize: "2rem" }}>💮</span>
 							</div>
 						)}
 					</section>
 				)}
 
-				{isStoryModalOpen && (
+				<p className="feature-note">
+					展示用代碼：QR01 ～
+					QR07。測試時請隨意輸入此範圍內的代碼，即可體驗循序解鎖的效果。
+				</p>
+
+				{/* ✅ 絕對安全的彈出視窗：放在最底層且脫離文件流，絕不干擾 Grid 或 Flex */}
+				{showRewardModal && rewardMatsu && (
 					<div
 						style={{
 							position: "fixed",
@@ -689,75 +820,106 @@ export default function Pilgrimage() {
 							left: 0,
 							right: 0,
 							bottom: 0,
-							backgroundColor: "rgba(0, 0, 0, 0.6)",
-							zIndex: 9999,
+							backgroundColor: "rgba(0,0,0,0.5)",
 							display: "flex",
-							justifyContent: "center",
 							alignItems: "center",
+							justifyContent: "center",
+							zIndex: 9999,
 							padding: "20px",
 						}}
 					>
 						<div
 							style={{
-								backgroundColor: "#fffcf8",
-								borderRadius: "24px",
+								backgroundColor: "#fff",
 								padding: "24px",
-								maxWidth: "400px",
+								borderRadius: "24px",
 								width: "100%",
-								boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-								animation:
-									"popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards", // 🌟 套用 Q 彈放大動畫
+								maxWidth: "340px",
+								textAlign: "center",
+								border: "4px solid #fde68a",
+								boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
 							}}
 						>
+							<h2
+								style={{
+									fontSize: "1.4rem",
+									fontWeight: "bold",
+									color: "#b45309",
+									marginBottom: "16px",
+								}}
+							>
+								✨ 恭喜解鎖！
+							</h2>
+							<div
+								style={{
+									fontSize: "2.5rem",
+									width: "72px",
+									height: "72px",
+									lineHeight: "72px",
+									margin: "0 auto 12px",
+									backgroundColor: "#fef3c7",
+									borderRadius: "50%",
+									color: "#d97706",
+									border: "2px solid #fde68a",
+								}}
+							>
+								{rewardMatsu.badge}
+							</div>
 							<h3
 								style={{
 									fontSize: "1.25rem",
 									fontWeight: "bold",
-									color: "#92400e",
+									color: "#374151",
 									marginBottom: "12px",
-									borderBottom: "2px dashed #fcd34d",
-									paddingBottom: "8px",
 								}}
 							>
-								📖 百年記憶：碎片 {selectedMatsuIndex + 1}
+								{rewardMatsu.name}
 							</h3>
 
 							<div
 								style={{
-									lineHeight: "1.7",
-									color: "#52525b",
+									backgroundColor: "#e0f2fe",
+									padding: "16px",
+									borderRadius: "16px",
+									color: "#1e3a8a",
 									marginBottom: "24px",
-									whiteSpace: "pre-wrap",
 									fontSize: "0.95rem",
+									textAlign: "left",
+									lineHeight: "1.6",
 								}}
 							>
-								{isSelectedMatsuUnlocked
-									? selectedMatsu.fullStory
-									: "🔒 請先尋獲此歷史碎片，才能解鎖這段詳細故事喔！"}
+								<b
+									style={{
+										display: "block",
+										marginBottom: "6px",
+									}}
+								>
+									💡 歷史碎片：
+								</b>
+								{rewardMatsu.story}
 							</div>
 
 							<button
-								onClick={() => setIsStoryModalOpen(false)}
+								onClick={() => setShowRewardModal(false)}
 								style={{
-									width: "100%",
-									padding: "12px",
 									backgroundColor: "#f59e0b",
-									color: "#fff",
-									borderRadius: "16px",
+									color: "white",
+									padding: "12px 32px",
+									borderRadius: "999px",
 									fontWeight: "bold",
+									border: "none",
 									fontSize: "1rem",
+									cursor: "pointer",
+									width: "100%",
+									boxShadow:
+										"0 4px 6px rgba(245, 158, 11, 0.25)",
 								}}
 							>
-								我明白了
+								收下並繼續探索
 							</button>
 						</div>
 					</div>
 				)}
-
-				<p className="feature-note">
-					展示用代碼：QR01 ～
-					QR07。測試時請隨意輸入此範圍內的代碼，即可體驗循序解鎖的效果。
-				</p>
 			</div>
 		</main>
 	);
