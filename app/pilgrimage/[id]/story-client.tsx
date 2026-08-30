@@ -1,17 +1,49 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import liff from "@line/liff";
 import { pilgrimageCodes, pilgrimageStops } from "@/lib/pilgrimage-data";
+
+const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
+
+const mergeVisits = (...lists: unknown[]) =>
+	[...new Set(lists.flatMap((list) => Array.isArray(list) ? list : []).map((code) => String(code).trim().toUpperCase()))]
+		.filter((code) => pilgrimageCodes.includes(code));
 
 export default function PilgrimageStoryClient({ stopId }: { stopId: string }) {
 	const [visits, setVisits] = useState<string[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
 	const stopIndex = pilgrimageStops.findIndex((item) => item.id === stopId);
 	const stop = pilgrimageStops[stopIndex];
 	const unlocked = stopIndex >= 0 && visits.includes(pilgrimageCodes[stopIndex]);
 	const nextStop = useMemo(() => pilgrimageStops[stopIndex + 1], [stopIndex]);
 
 	useEffect(() => {
-		try { setVisits(JSON.parse(localStorage.getItem("matsu-1917-mvp") ?? "{}").matsuVisits ?? []); } catch {}
+		let active = true;
+		let localVisits: string[] = [];
+		try {
+			localVisits = mergeVisits(JSON.parse(localStorage.getItem("matsu-1917-mvp") ?? "{}").matsuVisits);
+			setVisits(localVisits);
+		} catch {}
+
+		liff.init({ liffId: LIFF_ID })
+			.then(async () => {
+				if (!liff.isLoggedIn()) return;
+				const idToken = liff.getIDToken();
+				if (!idToken) return;
+				const response = await fetch("/api/visits", { headers: { "x-line-id-token": idToken } });
+				if (!response.ok) return;
+				const data = await response.json();
+				if (!active) return;
+				const merged = mergeVisits(localVisits, data.visits);
+				setVisits(merged);
+				const saved = JSON.parse(localStorage.getItem("matsu-1917-mvp") ?? "{}");
+				localStorage.setItem("matsu-1917-mvp", JSON.stringify({ ...saved, matsuVisits: merged }));
+			})
+			.catch(() => undefined)
+			.finally(() => { if (active) setIsLoading(false); });
+
+		return () => { active = false; };
 	}, []);
 
 	const navigate = () => {
@@ -25,6 +57,7 @@ export default function PilgrimageStoryClient({ stopId }: { stopId: string }) {
 	};
 
 	if (!stop) return <main className="story-page"><section className="story-shell story-empty"><span>404</span><h1>找不到這塊歷史碎片</h1><button onClick={() => { location.href = "/pilgrimage"; }}>返回巡禮地圖</button></section></main>;
+	if (isLoading) return <main className="story-page"><section className="story-shell story-empty"><span>✦</span><p>正在確認巡禮進度</p><h1>載入歷史碎片中…</h1></section></main>;
 	if (!unlocked) return <main className="story-page"><section className="story-shell story-locked"><span>✦</span><p>第 {stopIndex + 1} 塊歷史碎片</p><h1>這段故事尚未解鎖</h1><small>請先依巡禮順序完成前一站掃碼，再回來閱讀 {stop.name} 的故事。</small><button onClick={() => { location.href = "/pilgrimage"; }}>回到巡禮地圖</button></section></main>;
 
 	return <main className={`story-page story-${stop.color}`}><section className="story-shell">

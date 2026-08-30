@@ -255,7 +255,9 @@ export default function Pilgrimage() {
 				response.ok ? response.json() : Promise.reject(),
 			)
 			.then((data) => {
-				if (Array.isArray(data.visits)) setVisits(data.visits);
+				if (Array.isArray(data.visits)) {
+					setVisits((current) => [...new Set([...current, ...data.visits])]);
+				}
 				if (data.pilgrimageState?.certificate) setCertificate(data.pilgrimageState.certificate as PilgrimageCertificate);
 				if (data.pilgrimageState?.quizCompleted || data.pilgrimageState?.certificate) setHasCompletedQuiz(true);
 			})
