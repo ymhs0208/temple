@@ -134,4 +134,6 @@ create table if not exists public.temple_visits (
   id uuid primary key default gen_random_uuid(), user_id uuid not null references public.users(id) on delete cascade,
   temple_code text not null, visited_at timestamptz not null default now(), unique(user_id, temple_code)
 );
+
+alter table public.user_companion_states add column if not exists pilgrimage_state jsonb not null default '{}'::jsonb;
 alter table public.temple_visits enable row level security;
