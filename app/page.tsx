@@ -1994,15 +1994,10 @@ export default function Home() {
 						</div>
 					</div>
 					<div className="account">
-						<button className="line-login" onClick={login}>
+						<button className="account-capsule" onClick={lineName ? () => setTab("profile") : login}>
 							<span className="line-status-dot" aria-hidden="true" />
-							{lineName ? "LINE 已連結" : "LINE 登入"}
-						</button>
-						<button
-							className="avatar"
-							onClick={() => setTab("profile")}
-						>
-							{lineName?.slice(0, 1) ?? "我"}
+							<span>{lineName ? `${lineName}・我的` : "LINE 登入"}</span>
+							<i aria-hidden="true">{lineName?.slice(0, 1) ?? "我"}</i>
 						</button>
 					</div>
 				</header>
