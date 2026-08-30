@@ -3661,4 +3661,6 @@ main:has(.app-shell),
 		backdrop-filter: blur(16px);
 	}
 	.app-shell > nav button { min-width: 0; flex: 1; padding: 8px 4px; }
+	.app-shell > nav button i { display: none; }
+	.app-shell > nav button span { font-size: 12px; }
 }
