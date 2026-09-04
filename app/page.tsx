@@ -30,6 +30,14 @@ type LearningRecord = {
 	}[];
 };
 type Tab = "today" | "progress" | "prayer" | "profile";
+const tabPaths: Record<Tab, string> = {
+	today: "/today",
+	progress: "/progress",
+	prayer: "/prayer",
+	profile: "/profile",
+};
+const tabFromPath = (pathname: string): Tab =>
+	(Object.entries(tabPaths).find(([, path]) => path === pathname)?.[0] as Tab | undefined) ?? "today";
 type FocusSession = {
 	taskIndex: number;
 	remainingSeconds: number;
@@ -259,8 +267,8 @@ const addTaipeiDays = (date: string, days: number) => {
 	return next.toISOString().slice(0, 10);
 };
 
-export default function Home() {
-	const [tab, setTab] = useState<Tab>("today");
+export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
+	const [tab, setTab] = useState<Tab>(initialTab);
 	const [tasks, setTasks] = useState<Task[]>(defaultTasks);
 	const [deferredTasks, setDeferredTasks] = useState<DeferredTask[]>([]);
 	const [adjustingTaskIndex, setAdjustingTaskIndex] = useState<number | null>(
@@ -338,6 +346,16 @@ export default function Home() {
 	>(null);
 	const [hydrated, setHydrated] = useState(false);
 	const syncQueue = useRef(Promise.resolve(true));
+	const navigateToTab = (nextTab: Tab) => {
+		setTab(nextTab);
+		if (window.location.pathname !== tabPaths[nextTab])
+			window.history.pushState(null, "", tabPaths[nextTab]);
+	};
+	useEffect(() => {
+		const syncTabFromUrl = () => setTab(tabFromPath(window.location.pathname));
+		window.addEventListener("popstate", syncTabFromUrl);
+		return () => window.removeEventListener("popstate", syncTabFromUrl);
+	}, []);
 	useEffect(() => {
 		setHydrated(true);
 	}, []);
@@ -3021,7 +3039,7 @@ export default function Home() {
 					<div className="account">
 						<button
 							className="account-capsule"
-							onClick={lineName ? () => setTab("profile") : login}
+							onClick={lineName ? () => navigateToTab("profile") : login}
 						>
 							<span
 								className="line-status-dot"
@@ -3039,28 +3057,28 @@ export default function Home() {
 				<nav aria-label="主要導覽">
 					<button
 						className={tab === "today" ? "active" : ""}
-						onClick={() => setTab("today")}
+						onClick={() => navigateToTab("today")}
 					>
 						<i aria-hidden="true">⌂</i>
 						<span>今日</span>
 					</button>
 					<button
 						className={tab === "progress" ? "active" : ""}
-						onClick={() => setTab("progress")}
+						onClick={() => navigateToTab("progress")}
 					>
 						<i aria-hidden="true">▥</i>
 						<span>進度</span>
 					</button>
 					<button
 						className={tab === "prayer" ? "active" : ""}
-						onClick={() => setTab("prayer")}
+						onClick={() => navigateToTab("prayer")}
 					>
 						<i aria-hidden="true">✿</i>
 						<span>祈福</span>
 					</button>
 					<button
 						className={tab === "profile" ? "active" : ""}
-						onClick={() => setTab("profile")}
+						onClick={() => navigateToTab("profile")}
 					>
 						<i aria-hidden="true">◌</i>
 						<span>我的</span>
