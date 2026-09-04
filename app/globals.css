@@ -5153,6 +5153,73 @@ main:has(.app-shell),
 .daily-fortune-feedback.correct {
 	color: #51764c;
 }
+.daily-small-step {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-top: 13px;
+	border: 1px solid #d7c17f;
+	border-radius: 15px;
+	padding: 11px;
+	background: linear-gradient(135deg, #fffdf5, #f8efd5);
+}
+.daily-small-step-copy {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: 9px;
+}
+.daily-small-step-copy > i {
+	display: grid;
+	flex: 0 0 32px;
+	width: 32px;
+	height: 32px;
+	place-items: center;
+	border-radius: 50%;
+	background: #a77631;
+	color: #fff7dc;
+	font: 700 15px Georgia, "Noto Serif TC", serif;
+	font-style: normal;
+}
+.daily-small-step span,
+.daily-small-step b,
+.daily-small-step small {
+	display: block;
+}
+.daily-small-step span { color: #9c7b3c; font-size: 8px; font-weight: 800; }
+.daily-small-step b {
+	margin-top: 3px;
+	overflow: hidden;
+	color: #554526;
+	font-size: 11px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.daily-small-step small {
+	margin-top: 2px;
+	color: #88795c;
+	font-size: 8px;
+	line-height: 1.4;
+}
+.daily-small-step > button {
+	flex: 0 0 auto;
+	border: 0;
+	border-radius: 10px;
+	padding: 8px 10px;
+	background: #315f4c;
+	color: #fffdf4;
+	font-size: 9px;
+	font-weight: 800;
+	cursor: pointer;
+}
+.daily-small-step.is-done {
+	border-color: #b9d0ae;
+	background: #f1f7ec;
+}
+.daily-small-step.is-done .daily-small-step-copy > i { background: #6d936c; }
+.daily-small-step.is-done span { color: #60805b; }
+.daily-small-step.is-done b { color: #486443; }
 .checkin-milestones {
 	margin-top: 14px;
 	border: 1px solid #e2d1a4;
@@ -7543,6 +7610,20 @@ main:has(.app-shell),
 	margin-top: 3px;
 	color: #5b4828;
 	font-size: 14px;
+}
+.checkin-ceremony-step {
+	margin-top: 12px;
+	border-top: 1px solid #e8dbb9;
+	padding-top: 12px;
+	animation: ceremony-rise 0.4s 0.78s both;
+}
+.checkin-ceremony-step span,
+.checkin-ceremony-step b { display: block; }
+.checkin-ceremony-step span { color: #9c7a3b; font-size: 9px; font-weight: 800; }
+.checkin-ceremony-step b {
+	margin-top: 4px;
+	color: #4e643f;
+	font: 700 14px "Noto Serif TC", serif;
 }
 .checkin-ceremony-date {
 	margin: 17px 0 15px;

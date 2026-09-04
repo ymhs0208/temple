@@ -42,6 +42,7 @@ type DailyFortuneTask = {
 	date: string;
 	fortuneId: number;
 	done: boolean;
+	smallStepDone?: boolean;
 	weakQuestions?: WeakQuestion[];
 };
 type WeakQuestion = {
@@ -232,6 +233,12 @@ const checkInMilestones = [
 	{ days: 7, plaque: "穩", title: "七日守志", detail: "解鎖墨綠木牌" },
 	{ days: 14, plaque: "進", title: "半月精進", detail: "解鎖朱砂木牌" },
 	{ days: 30, plaque: "願", title: "願成文昌殿", detail: "解鎖專屬祈願場景" },
+] as const;
+const dailySmallSteps = [
+	{ minutes: 5, title: "複習 5 個英文單字", detail: "把今天最常卡住的字重新讀一遍。" },
+	{ minutes: 10, title: "訂正 1 題錯題", detail: "寫下錯因與正確解題線索。" },
+	{ minutes: 10, title: "整理一個核心觀念", detail: "用自己的話寫成三行重點。" },
+	{ minutes: 15, title: "完成一段專注練習", detail: "挑一小節內容，暫時遠離通知。" },
 ] as const;
 
 const consecutiveCheckInDays = (dates: string[], today = taipeiDate()) => {
@@ -745,6 +752,8 @@ export default function Home() {
 		];
 	const dailyClassic =
 		dailyClassics[dailyFortuneTask.fortuneId % dailyClassics.length];
+	const dailySmallStep =
+		dailySmallSteps[dailyFortuneTask.fortuneId % dailySmallSteps.length];
 	const effectiveCheckInDates = useMemo(() => {
 		const dates = new Set(dailyCheckInDates);
 		if (dailyFortuneTask.done && dailyFortuneTask.date === taipeiDate())
@@ -914,6 +923,10 @@ export default function Home() {
 		setDailyCheckInDialogOpen(false);
 		setCheckInCeremonyOpen(true);
 		setSyncStatus("今日簽到題答對，獲得 1 枚祈福木牌！");
+	};
+	const completeDailySmallStep = () => {
+		setDailyFortuneTask((current) => ({ ...current, smallStepDone: true }));
+		setSyncStatus("今日一小步完成，這份專注正在累積。 ");
 	};
 	const exchangeOracleTicket = () => {
 		if (availablePlanks < 3) return;
@@ -2222,6 +2235,24 @@ export default function Home() {
 						{dailyAnswerFeedback}
 					</p>
 				)}
+				{dailyFortuneTask.done && (
+					<section
+						className={`daily-small-step ${dailyFortuneTask.smallStepDone ? "is-done" : ""}`}
+						aria-label="簽到後的今日一小步"
+					>
+						<div className="daily-small-step-copy">
+							<i aria-hidden="true">{dailyFortuneTask.smallStepDone ? "✓" : "一"}</i>
+							<div>
+								<span>簽到後的今日一小步・{dailySmallStep.minutes} 分鐘</span>
+								<b>{dailyFortuneTask.smallStepDone ? "今日一小步已完成" : dailySmallStep.title}</b>
+								<small>{dailyFortuneTask.smallStepDone ? "把微小的完成，留給明天的自己。" : dailySmallStep.detail}</small>
+							</div>
+						</div>
+						{!dailyFortuneTask.smallStepDone && (
+							<button onClick={completeDailySmallStep}>完成這一步</button>
+						)}
+					</section>
+				)}
 				<section className="checkin-milestones" aria-label="連續簽到里程碑">
 					<div className="checkin-milestones-heading">
 						<div>
@@ -2352,6 +2383,10 @@ export default function Home() {
 								<span>今日獲得</span>
 								<b>祈福木牌 × 1</b>
 							</div>
+						</div>
+						<div className="checkin-ceremony-step">
+							<span>接著做一小步・{dailySmallStep.minutes} 分鐘</span>
+							<b>{dailySmallStep.title}</b>
 						</div>
 						<p className="checkin-ceremony-date">願你把這份專注，帶進今天的每一段學習。</p>
 						<button onClick={() => setCheckInCeremonyOpen(false)} autoFocus>
