@@ -8166,13 +8166,17 @@ main:has(.app-shell),
 /* 電腦版把「現在要做什麼」收成單一閱讀欄，避免主動作橫跨整個內容面。 */
 @media (min-width: 768px) {
 	.today-command-card {
-		width: min(100%, 620px);
+		width: auto;
+		max-width: 836px;
 		margin-right: auto;
 		margin-left: auto;
 		padding: 18px 20px;
 	}
 	.today-command-card b { font-size: 16px; }
 	.today-command-card button { padding: 12px 16px; }
+}
+@media (min-width: 1200px) {
+	.today-command-card { max-width: 940px; }
 }
 @media (max-width: 500px) {
 	.hero { padding-top: 30px; padding-bottom: 23px; }
