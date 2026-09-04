@@ -8128,6 +8128,109 @@ main:has(.app-shell),
 	}
 }
 
+/* 每週關懷摘要：只呈現可安心分享的彙總學習趨勢。 */
+.profile-page .weekly-care-card {
+	margin: 2px 0 0;
+	padding: 17px !important;
+	border: 1px solid #dbe5d7;
+	border-top: 7px solid #e8f0df;
+	border-radius: 18px;
+	background: linear-gradient(135deg, #fffef9, #f4f8ef);
+	box-shadow: 0 8px 22px #2435220c;
+}
+.profile-page .weekly-care-card > div:first-child {
+	display: grid;
+	gap: 5px;
+	padding: 0;
+	border: 0;
+}
+.profile-page .weekly-care-card > div:first-child span {
+	color: #52735d;
+	font-size: 12px;
+	font-weight: 800;
+}
+.profile-page .weekly-care-card > div:first-child b {
+	color: #294b3d;
+	font-size: 15px;
+	text-align: left;
+}
+.profile-page .weekly-care-card > div:first-child small,
+.weekly-care-note {
+	color: #718177;
+	font-size: 11px;
+	line-height: 1.55;
+}
+.profile-page .care-audience {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 7px;
+	margin-top: 14px;
+	padding: 0;
+	border: 0;
+}
+.profile-page .care-audience button {
+	min-height: 36px;
+	padding: 8px;
+	border: 1px solid #dbe3d8;
+	border-radius: 10px;
+	background: #fffefb;
+	color: #68776d;
+	font: inherit;
+	font-size: 12px;
+	font-weight: 700;
+	cursor: pointer;
+}
+.profile-page .care-audience button.selected {
+	border-color: #46795c;
+	background: #e7f1e7;
+	color: #2f6947;
+}
+.profile-page .weekly-care-send {
+	width: 100%;
+	min-height: 43px;
+	margin-top: 12px;
+	border: 0;
+	border-radius: 12px;
+	background: #315e49;
+	color: #fffdf6;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 800;
+	cursor: pointer;
+}
+.profile-page .weekly-care-note {
+	display: block;
+	margin-top: 9px;
+}
+@media (min-width: 768px) {
+	.profile-page .account-list > .weekly-care-card {
+		grid-column: 1 / -1;
+		width: 100%;
+		max-width: none;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(300px, 0.82fr);
+		column-gap: 26px;
+		align-items: center;
+	}
+	.profile-page .weekly-care-card > div:first-child {
+		grid-column: 1;
+		grid-row: 1 / span 2;
+	}
+	.profile-page .weekly-care-card .care-audience {
+		grid-column: 2;
+		grid-row: 1;
+		margin-top: 0;
+	}
+	.profile-page .weekly-care-card .weekly-care-send {
+		grid-column: 2;
+		grid-row: 2;
+	}
+	.profile-page .weekly-care-card .weekly-care-note {
+		grid-column: 1 / -1;
+		margin-bottom: 0;
+	}
+}
+
 /* 收斂四個主捷徑，讓導覽保持輕巧、不搶走頁面內容。 */
 @media (min-width: 501px) {
 	.app-shell { padding-bottom: 92px !important; }

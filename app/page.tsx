@@ -360,6 +360,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [eveningTime, setEveningTime] = useState("20:30");
 	const [editingNotifications, setEditingNotifications] = useState(false);
 	const [savingNotifications, setSavingNotifications] = useState(false);
+	const [careSummaryAudience, setCareSummaryAudience] = useState<"self" | "teacher" | "parent">("self");
 	const [draftRemindersEnabled, setDraftRemindersEnabled] = useState(true);
 	const [draftMorningTime, setDraftMorningTime] = useState("08:00");
 	const [draftEveningTime, setDraftEveningTime] = useState("20:30");
@@ -1357,6 +1358,23 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			);
 		} catch {
 			setSyncStatus("提醒傳送失敗，請稍後再試");
+		}
+	};
+	const sendWeeklyCareSummary = async () => {
+		if (!idToken) {
+			await login();
+			return;
+		}
+		setSyncStatus("正在整理本週關懷摘要…");
+		try {
+			const response = await fetch("/api/weekly-summary", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ idToken, audience: careSummaryAudience }),
+			});
+			setSyncStatus(response.ok ? "本週關懷摘要已推播至你的 LINE OA" : "摘要推播失敗，請確認已加官方帳號好友");
+		} catch {
+			setSyncStatus("摘要推播失敗，請稍後再試");
 		}
 	};
 	const saveWish = () => {
@@ -2980,6 +2998,14 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							<span>›</span>
 						</button>
 					)}
+				</section>
+				<section className="weekly-care-card" aria-label="每週關懷摘要">
+					<div><span>每週關懷摘要</span><b>只看學習趨勢，不顯示題目內容</b><small>包含完成率、專注時間與最需要加強的科目。</small></div>
+					<div className="care-audience" role="radiogroup" aria-label="摘要版本">
+						{(["self", "teacher", "parent"] as const).map((audience) => <button key={audience} className={careSummaryAudience === audience ? "selected" : ""} onClick={() => setCareSummaryAudience(audience)} aria-pressed={careSummaryAudience === audience}>{audience === "self" ? "本人版" : audience === "teacher" ? "教師版" : "家長版"}</button>)}
+					</div>
+					<button className="weekly-care-send" onClick={sendWeeklyCareSummary}>{lineName ? "推播本週摘要到 LINE OA" : "登入 LINE 後推播摘要"}</button>
+					<small className="weekly-care-note">教師／家長版會先推播至你的 LINE，可自行分享給已取得同意的對象。</small>
 				</section>
 			</div>
 			<section className="service-section">
