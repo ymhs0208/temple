@@ -8730,6 +8730,89 @@ main:has(.app-shell),
 	}
 }
 
+/* 全裝置排版基準：主內容與卡片使用同一條對齊線。 */
+.app-shell > .hero,
+.app-shell > .today-command-card,
+.app-shell > .progress-card,
+.app-shell > .focus-panel,
+.app-shell > .encouragement,
+.app-shell > .quick-actions,
+.app-shell > .retention-card,
+.app-shell > .share-card,
+.app-shell > .journey {
+	width: 100%;
+}
+@media (max-width: 767px) {
+	.app-shell > .hero { padding: 30px 1px 24px; }
+	.app-shell > .journey { padding-top: 8px; }
+	.today-command-card {
+		align-items: flex-start;
+		gap: 12px;
+	}
+	.today-command-card b {
+		overflow: visible;
+		white-space: normal;
+	}
+	.today-command-card button {
+		min-height: 44px;
+		padding: 10px 12px;
+	}
+	.progress-card { border-radius: 18px; }
+	.profile-page .account-list,
+	.profile-page .notification-preference,
+	.profile-page .weekly-care-card { border-radius: 16px; }
+}
+@media (min-width: 768px) {
+	.app-shell > .hero,
+	.app-shell > .today-command-card,
+	.app-shell > .progress-card,
+	.app-shell > .focus-panel,
+	.app-shell > .encouragement,
+	.app-shell > .quick-actions,
+	.app-shell > .retention-card,
+	.app-shell > .share-card,
+	.app-shell > .journey {
+		width: min(100%, 836px) !important;
+		max-width: 836px !important;
+		margin-right: auto !important;
+		margin-left: auto !important;
+	}
+	.app-shell > .journey > .daily-fortune-task,
+	.app-shell > .journey > .cultural-reward-card,
+	.app-shell > .journey > .oracle-card,
+	.app-shell > .journey > .wish-card,
+	.app-shell > .journey > .weakness-card,
+	.app-shell > .journey > .learning-calendar,
+	.app-shell > .journey > .countdown-plan-card,
+	.app-shell > .journey > .milestone-card,
+	.app-shell > .journey > .profile-identity,
+	.app-shell > .journey > .account-list,
+	.app-shell > .journey > .service-section,
+	.app-shell > .journey > .privacy-card {
+		width: 100% !important;
+		max-width: none !important;
+	}
+	.progress-card { padding: 23px 24px; }
+	.today-command-card { min-height: 96px; }
+	.today-task-list .tasks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+	.today-task-list .task { height: 100%; align-items: center; }
+}
+@media (min-width: 1200px) {
+	.app-shell > .hero,
+	.app-shell > .today-command-card,
+	.app-shell > .progress-card,
+	.app-shell > .focus-panel,
+	.app-shell > .encouragement,
+	.app-shell > .quick-actions,
+	.app-shell > .retention-card,
+	.app-shell > .share-card,
+	.app-shell > .journey {
+		width: min(100%, 940px) !important;
+		max-width: 940px !important;
+	}
+	.today-task-list .tasks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 /* 全新頁首：以文昌墨綠殿簷搭配金印，讓品牌與登入入口成為清楚的起點。 */
 .app-shell > .topbar {
 	position: relative;
