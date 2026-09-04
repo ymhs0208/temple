@@ -8436,3 +8436,24 @@ main:has(.app-shell),
 		transform: translateX(-50%) translateY(calc(100% + 24px)) !important;
 	}
 }
+
+/* 電腦版頁首沿用內容欄的完整寬度，不再為右側裝飾保留大片空白。 */
+@media (min-width: 768px) {
+	.app-shell .hero {
+		padding-right: 5px;
+		padding-left: 5px;
+	}
+	.app-shell .hero h1,
+	.app-shell .hero .countdown,
+	.app-shell .hero .eyebrow {
+		max-width: none;
+	}
+	.app-shell .hero .orb-one {
+		right: -38px;
+		opacity: 0.34;
+	}
+	.app-shell .hero .orb-two {
+		right: 76px;
+		opacity: 0.3;
+	}
+}
