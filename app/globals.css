@@ -8202,6 +8202,63 @@ main:has(.app-shell),
 	display: block;
 	margin-top: 9px;
 }
+.profile-page .care-scope {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 12px;
+	padding: 0;
+	border: 0;
+}
+.profile-page .care-scope span {
+	padding: 5px 7px;
+	border-radius: 8px;
+	background: #edf4e9;
+	color: #52705b;
+	font-size: 10px;
+	font-weight: 700;
+}
+.profile-page .care-scope span:last-child { background: #f7eee6; color: #93644f; }
+.profile-page .weekly-care-preview,
+.profile-page .care-copy {
+	width: 100%;
+	min-height: 38px;
+	margin-top: 10px;
+	border: 1px solid #bfd2bf;
+	border-radius: 11px;
+	background: #fffef9;
+	color: #35634a;
+	font: inherit;
+	font-size: 12px;
+	font-weight: 800;
+	cursor: pointer;
+}
+.profile-page .weekly-care-preview:disabled { opacity: .65; cursor: wait; }
+.profile-page .care-summary-preview {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 7px;
+	margin-top: 11px;
+	padding: 11px;
+	border: 1px solid #d9e6d6;
+	border-radius: 12px;
+	background: #f6faf2;
+}
+.profile-page .care-summary-preview > div { display: grid; gap: 3px; min-width: 0; }
+.profile-page .care-summary-preview span { color: #77877a; font-size: 9px; }
+.profile-page .care-summary-preview b { overflow: hidden; color: #345b47; font-size: 13px; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.profile-page .care-summary-preview p { grid-column: 1 / -1; margin: 3px 0 0; color: #627668; font-size: 11px; line-height: 1.55; }
+.profile-page .care-consent {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	margin-top: 11px;
+	color: #5c6f61;
+	font-size: 11px;
+	line-height: 1.5;
+}
+.profile-page .care-consent input { margin: 2px 0 0; accent-color: #3d7655; }
+.profile-page .care-copy { margin-top: 8px; border-color: #e3cf9f; color: #856225; }
 @media (min-width: 768px) {
 	.profile-page .account-list > .weekly-care-card {
 		grid-column: 1 / -1;
@@ -8229,6 +8286,12 @@ main:has(.app-shell),
 		grid-column: 1 / -1;
 		margin-bottom: 0;
 	}
+	.profile-page .weekly-care-card .care-scope { grid-column: 1; grid-row: 2; align-self: start; margin-top: 14px; }
+	.profile-page .weekly-care-card .weekly-care-preview { grid-column: 2; grid-row: 2; align-self: end; }
+	.profile-page .weekly-care-card .care-summary-preview,
+	.profile-page .weekly-care-card .care-consent { grid-column: 1 / -1; }
+	.profile-page .weekly-care-card .weekly-care-send { grid-column: 2; grid-row: auto; }
+	.profile-page .weekly-care-card .care-copy { grid-column: 1; grid-row: auto; }
 }
 
 /* 智慧宮廟：將文化意象連結到完成的學習行為，而非抽選或兌換。 */

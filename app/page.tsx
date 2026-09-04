@@ -36,6 +36,14 @@ const tabPaths: Record<Tab, string> = {
 	prayer: "/prayer",
 	profile: "/profile",
 };
+type WeeklyCareSummary = {
+	rate: number;
+	minutes: number;
+	weakSubject: string;
+	heading: string;
+	support: string;
+	text: string;
+};
 const tabFromPath = (pathname: string): Tab =>
 	(Object.entries(tabPaths).find(([, path]) => path === pathname)?.[0] as Tab | undefined) ?? "today";
 type FocusSession = {
@@ -368,6 +376,9 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [editingNotifications, setEditingNotifications] = useState(false);
 	const [savingNotifications, setSavingNotifications] = useState(false);
 	const [careSummaryAudience, setCareSummaryAudience] = useState<"self" | "teacher" | "parent">("self");
+	const [weeklyCareSummary, setWeeklyCareSummary] = useState<WeeklyCareSummary | null>(null);
+	const [weeklyCareLoading, setWeeklyCareLoading] = useState(false);
+	const [careShareConsent, setCareShareConsent] = useState(false);
 	const [draftRemindersEnabled, setDraftRemindersEnabled] = useState(true);
 	const [draftMorningTime, setDraftMorningTime] = useState("08:00");
 	const [draftEveningTime, setDraftEveningTime] = useState("20:30");
@@ -1375,16 +1386,54 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			await login();
 			return;
 		}
+		if (careSummaryAudience !== "self" && !careShareConsent) {
+			setSyncStatus("請先確認教師或家長已同意接收此彙總摘要。");
+			return;
+		}
 		setSyncStatus("正在整理本週關懷摘要…");
 		try {
 			const response = await fetch("/api/weekly-summary", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ idToken, audience: careSummaryAudience }),
+				body: JSON.stringify({ idToken, audience: careSummaryAudience, action: "send" }),
 			});
-			setSyncStatus(response.ok ? "本週關懷摘要已推播至你的 LINE OA" : "摘要推播失敗，請確認已加官方帳號好友");
+			const data = (await response.json()) as WeeklyCareSummary & { error?: string };
+			if (response.ok) {
+				setWeeklyCareSummary(data);
+				setSyncStatus("本週關懷摘要已推播至你的 LINE OA");
+			} else setSyncStatus(data.error ?? "摘要推播失敗，請確認已加官方帳號好友");
 		} catch {
 			setSyncStatus("摘要推播失敗，請稍後再試");
+		}
+	};
+	const previewWeeklyCareSummary = async () => {
+		if (!idToken) {
+			await login();
+			return;
+		}
+		setWeeklyCareLoading(true);
+		try {
+			const response = await fetch("/api/weekly-summary", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ idToken, audience: careSummaryAudience, action: "preview" }),
+			});
+			const data = (await response.json()) as WeeklyCareSummary & { error?: string };
+			if (!response.ok) throw new Error(data.error);
+			setWeeklyCareSummary(data);
+		} catch {
+			setSyncStatus("目前無法載入摘要預覽，請稍後再試。");
+		} finally {
+			setWeeklyCareLoading(false);
+		}
+	};
+	const copyWeeklyCareSummary = async () => {
+		if (!weeklyCareSummary) return;
+		try {
+			await navigator.clipboard.writeText(weeklyCareSummary.text);
+			setSyncStatus("摘要文字已複製，可分享給已同意的教師或家長。");
+		} catch {
+			setSyncStatus("無法複製摘要，請稍後再試。");
 		}
 	};
 	const saveWish = () => {
@@ -3039,12 +3088,20 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					)}
 				</section>
 				<section className="weekly-care-card" aria-label="每週關懷摘要">
-					<div><span>每週關懷摘要</span><b>只看學習趨勢，不顯示題目內容</b><small>包含完成率、專注時間與最需要加強的科目。</small></div>
+					<div><span>每週關懷摘要</span><b>只看學習趨勢，不顯示題目內容</b><small>只整理完成率、完整專注時間與最需要加強的科目；題目、答案與作答紀錄一律排除。</small></div>
 					<div className="care-audience" role="radiogroup" aria-label="摘要版本">
-						{(["self", "teacher", "parent"] as const).map((audience) => <button key={audience} className={careSummaryAudience === audience ? "selected" : ""} onClick={() => setCareSummaryAudience(audience)} aria-pressed={careSummaryAudience === audience}>{audience === "self" ? "本人版" : audience === "teacher" ? "教師版" : "家長版"}</button>)}
+						{(["self", "teacher", "parent"] as const).map((audience) => <button key={audience} className={careSummaryAudience === audience ? "selected" : ""} onClick={() => { setCareSummaryAudience(audience); setWeeklyCareSummary(null); }} aria-pressed={careSummaryAudience === audience}>{audience === "self" ? "本人版" : audience === "teacher" ? "教師版" : "家長版"}</button>)}
 					</div>
+					<div className="care-scope" aria-label="摘要資料範圍"><span>✓ 完成率</span><span>✓ 專注時間</span><span>✓ 弱科趨勢</span><span>× 題目內容</span></div>
+					<button className="weekly-care-preview" onClick={previewWeeklyCareSummary} disabled={weeklyCareLoading}>{weeklyCareLoading ? "正在更新預覽…" : "查看本週摘要預覽"}</button>
+					{weeklyCareSummary && <section className="care-summary-preview" aria-live="polite">
+						<div><span>本週完成率</span><b>{weeklyCareSummary.rate}%</b></div><div><span>完整專注</span><b>{weeklyCareSummary.minutes} 分</b></div><div><span>需要加強</span><b>{weeklyCareSummary.weakSubject}</b></div>
+						<p>{weeklyCareSummary.support}</p>
+					</section>}
+					{careSummaryAudience !== "self" && <label className="care-consent"><input type="checkbox" checked={careShareConsent} onChange={(event) => setCareShareConsent(event.target.checked)} />我已取得教師／家長同意，且只會分享此彙總資訊。</label>}
 					<button className="weekly-care-send" onClick={sendWeeklyCareSummary}>{lineName ? "推播本週摘要到 LINE OA" : "登入 LINE 後推播摘要"}</button>
-					<small className="weekly-care-note">教師／家長版會先推播至你的 LINE，可自行分享給已取得同意的對象。</small>
+					{weeklyCareSummary && careSummaryAudience !== "self" && <button className="care-copy" onClick={copyWeeklyCareSummary}>複製安全分享文字</button>}
+					<small className="weekly-care-note">教師／家長版會先推播至你的 LINE；目前不直接傳送給第三人，須由你在取得同意後自行分享。</small>
 				</section>
 			</div>
 			<section className="service-section">
