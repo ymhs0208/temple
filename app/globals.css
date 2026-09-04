@@ -8456,4 +8456,10 @@ main:has(.app-shell),
 		right: 76px;
 		opacity: 0.3;
 	}
+	.app-shell .hero .exam-mode-card {
+		width: calc(100% + 10px);
+		max-width: none;
+		margin-left: -5px;
+		margin-right: -5px;
+	}
 }
