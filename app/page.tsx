@@ -2078,9 +2078,8 @@ export default function Home() {
 				<br />
 				<em>也為自己留下一句話。</em>
 			</h1>
-			{/* ✨ 在 is-complete 後面加上 animate-pop 讓卡片彈出 */}
 			<section
-				className={`daily-fortune-task ${dailyFortuneTask.done ? "is-complete animate-pop" : ""}`}
+				className={`daily-fortune-task ${dailyFortuneTask.done ? "is-complete" : ""}`}
 				aria-label="每日籤詩任務"
 			>
 				<div className="daily-fortune-task-heading">
