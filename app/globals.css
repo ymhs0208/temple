@@ -8503,3 +8503,88 @@ main:has(.app-shell),
 		box-shadow: none !important;
 	}
 }
+
+/* 全新頁首：以文昌墨綠殿簷搭配金印，讓品牌與登入入口成為清楚的起點。 */
+.app-shell > .topbar {
+	position: relative;
+	width: 100% !important;
+	max-width: none !important;
+	margin: 0 0 28px !important;
+	padding: 0 !important;
+	overflow: hidden;
+	border: 0 !important;
+	border-bottom: 2px solid #d5ad54 !important;
+	border-radius: 0 !important;
+	background: linear-gradient(105deg, #173f36 0%, #295c4d 58%, #3b6d57 100%) !important;
+	box-shadow: 0 6px 18px rgb(30 65 53 / 14%) !important;
+}
+.app-shell > .topbar::before {
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(90deg, transparent 0 69%, rgb(255 231 160 / 8%) 69% 70%, transparent 70% 100%),
+		radial-gradient(circle at 84% 18%, rgb(255 231 160 / 22%), transparent 18%);
+	content: "";
+	pointer-events: none;
+}
+.topbar-inner {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	width: min(100%, 836px);
+	margin: 0 auto;
+	padding: 14px 0;
+}
+.app-shell > .topbar .brand { gap: 10px; }
+.app-shell > .topbar .brand-mark {
+	width: 43px;
+	height: 43px;
+	flex-basis: 43px;
+	border: 1px solid #f4d77f;
+	border-radius: 50%;
+	background: linear-gradient(145deg, #f4d26d, #b7782d);
+	box-shadow: inset 0 1px #fff6be, 0 3px 8px rgb(7 32 27 / 28%);
+	color: #fff9dd !important;
+	font-size: 21px !important;
+}
+.app-shell > .topbar .brand-copy strong { color: #fff8dd; font-size: 20px; letter-spacing: 0.13em; }
+.app-shell > .topbar .brand-copy small { color: #eacb79; font-size: 10px; letter-spacing: 0.12em; }
+.app-shell > .topbar .account-capsule {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	min-height: 36px;
+	border: 1px solid rgb(249 229 169 / 65%);
+	border-radius: 999px;
+	padding: 5px 6px 5px 10px;
+	background: rgb(255 253 242 / 13%);
+	color: #fff9e6;
+	font-size: 11px;
+	font-weight: 800;
+	box-shadow: none;
+	backdrop-filter: blur(8px);
+}
+.app-shell > .topbar .account-capsule i {
+	display: grid;
+	width: 27px;
+	height: 27px;
+	place-items: center;
+	border-radius: 50%;
+	background: #d29a54;
+	color: #fff9e5;
+	font-style: normal;
+}
+.app-shell > .topbar .line-status-dot { width: 7px; height: 7px; background: #8ed49a; box-shadow: 0 0 0 3px rgb(142 212 154 / 17%); }
+@media (min-width: 1200px) {
+	.topbar-inner { width: min(100%, 940px); }
+}
+@media (max-width: 767px) {
+	.app-shell > .topbar { margin-bottom: 22px !important; }
+	.topbar-inner { padding: 12px 14px; }
+	.app-shell > .topbar .brand-mark { width: 39px; height: 39px; flex-basis: 39px; font-size: 19px !important; }
+	.app-shell > .topbar .brand-copy strong { font-size: 18px; }
+	.app-shell > .topbar .brand-copy small { font-size: 8px; }
+}

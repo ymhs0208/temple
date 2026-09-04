@@ -3093,29 +3093,31 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				</div>
 
 				<header className="topbar">
-					<div className="brand">
-						<span className="brand-mark">文</span>
-						<div className="brand-copy">
-							<strong>文昌同行</strong>
-							<small>學習路上，與你同行</small>
+					<div className="topbar-inner">
+						<div className="brand">
+							<span className="brand-mark">文</span>
+							<div className="brand-copy">
+								<strong>文昌同行</strong>
+								<small>學習路上，與你同行</small>
+							</div>
 						</div>
-					</div>
-					<div className="account">
-						<button
-							className="account-capsule"
-							onClick={lineName ? () => navigateToTab("profile") : login}
-						>
-							<span
-								className="line-status-dot"
-								aria-hidden="true"
-							/>
-							<span>
-								{lineName ? `${lineName}・我的` : "LINE 登入"}
-							</span>
-							<i aria-hidden="true">
-								{lineName?.slice(0, 1) ?? "我"}
-							</i>
-						</button>
+						<div className="account">
+							<button
+								className="account-capsule"
+								onClick={lineName ? () => navigateToTab("profile") : login}
+							>
+								<span
+									className="line-status-dot"
+									aria-hidden="true"
+								/>
+								<span>
+									{lineName ? `${lineName}・我的` : "LINE 登入"}
+								</span>
+								<i aria-hidden="true">
+									{lineName?.slice(0, 1) ?? "我"}
+								</i>
+							</button>
+						</div>
 					</div>
 				</header>
 				<nav className={`primary-nav ${navVisible ? "is-visible" : "is-hidden"}`} aria-label="主要導覽">
