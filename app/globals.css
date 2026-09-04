@@ -8490,3 +8490,16 @@ main:has(.app-shell),
 		border-top-right-radius: 0 !important;
 	}
 }
+
+/* 所有裝置的頁首都採用同一套直角、內容對齊的桌面樣式。 */
+@media (max-width: 767px) {
+	.app-shell > .topbar {
+		width: 100% !important;
+		max-width: none !important;
+		margin: 0 0 26px !important;
+		padding: 13px 0 !important;
+		border-radius: 0 !important;
+		background: transparent !important;
+		box-shadow: none !important;
+	}
+}
