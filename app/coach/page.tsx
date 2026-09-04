@@ -17,6 +17,9 @@ type SavedPlan = {
   goal?: string;
   hours?: number;
   weak?: string;
+  focusRewardMinutes?: number;
+  dailyFortuneTask?: { done?: boolean };
+  weakQuestions?: Array<{ nextReviewDate?: string }>;
 };
 
 const defaultTasks: Task[] = [
@@ -44,6 +47,7 @@ export default function CoachPage() {
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [source, setSource] = useState<"ai" | "plan" | null>(null);
 
   useEffect(() => {
     try {
@@ -58,6 +62,11 @@ export default function CoachPage() {
   }, [plan.examDate]);
   const tasks = plan.tasks?.length ? plan.tasks : defaultTasks;
   const remaining = tasks.filter((task) => !task.done);
+  const completedTasks = tasks.filter((task) => task.done);
+  const completedMinutes = completedTasks.reduce((sum, task) => sum + task.minutes, 0);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
+  const weakQuestions = plan.weakQuestions ?? [];
+  const dueWeakQuestions = weakQuestions.filter((item) => (item.nextReviewDate ?? "") <= today);
 
   const askCoach = async (nextMessage = message) => {
     const question = nextMessage.trim();
@@ -66,6 +75,7 @@ export default function CoachPage() {
     setLoading(true);
     setError("");
     setAnswer("");
+		setSource(null);
     try {
       const response = await fetch("/api/coach", {
         method: "POST",
@@ -78,12 +88,17 @@ export default function CoachPage() {
             dailyHours: plan.hours,
             goal: plan.goal,
             tasks,
+				weakQuestionCount: weakQuestions.length,
+				dueWeakQuestionCount: dueWeakQuestions.length,
+				focusMinutes: plan.focusRewardMinutes ?? completedMinutes,
+				checkInDone: Boolean(plan.dailyFortuneTask?.done),
           },
         }),
       });
-      const data = (await response.json()) as { answer?: string; error?: string };
+      const data = (await response.json()) as { answer?: string; error?: string; source?: "ai" | "plan" };
       if (!response.ok || !data.answer) throw new Error(data.error || "目前無法取得建議");
       setAnswer(data.answer);
+			setSource(data.source ?? "ai");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "目前無法取得建議");
     } finally {
@@ -108,8 +123,16 @@ export default function CoachPage() {
           <span>今日可用 <b>{plan.hours ?? 2} 小時</b></span>
         </section>
 
+				<section className="coach-evidence" aria-label="教練使用的今日資料">
+					<div><span>已完成</span><b>{completedTasks.length} 項・{completedMinutes} 分</b></div>
+					<div><span>待回流錯題</span><b>{dueWeakQuestions.length} 題</b></div>
+					<div><span>弱點題庫</span><b>{weakQuestions.length} 題</b></div>
+					<p>教練只根據這些真實進度、考試倒數與弱科安排下一步。</p>
+				</section>
+
         <section className="coach-card">
-          <div className="card-title"><span>✦</span><div><b>今天想請軍師幫什麼？</b><small>軍師會參考目前的目標與任務，不會自動變更你的計畫。</small></div></div>
+					<div className="card-title"><span>✦</span><div><b>今天的下一步怎麼排？</b><small>教練會綜合倒數、弱科、錯題與已完成內容；不會自動變更你的計畫。</small></div></div>
+					<button className="coach-auto-plan" onClick={() => void askCoach("請根據我今天的真實進度，給我最優先的下一步安排。")} disabled={loading}>依今天資料產出下一步 <span>→</span></button>
           <div className="coach-prompts">
             {prompts.map((prompt) => <button key={prompt} onClick={() => void askCoach(prompt)} disabled={loading}>{prompt}</button>)}
           </div>
@@ -124,7 +147,7 @@ export default function CoachPage() {
         </section>
 
         {(loading || answer || error) && <section className="coach-answer" aria-live="polite">
-          <span>{loading ? "✦ AI 正在整理你的學習情境" : error ? "請稍後再試" : "✦ 軍師的建議"}</span>
+					<span>{loading ? "✦ AI 正在整理你的學習情境" : error ? "請稍後再試" : source === "plan" ? "✦ 今日資料策略" : "✦ AI 教練建議"}</span>
           {loading ? <div className="coach-loading"><i /><i /><i /></div> : error ? <p className="coach-error">{error}</p> : <p>{answer}</p>}
         </section>}
         <p className="feature-note">AI 建議只用於學習規劃與鼓勵；最適合你的節奏，仍由你自己決定。</p>

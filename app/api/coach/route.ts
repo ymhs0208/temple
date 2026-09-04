@@ -1,108 +1,62 @@
-type CoachTask = {
-  subject?: string;
-  minutes?: number;
-  detail?: string;
-  done?: boolean;
-};
-
+type CoachTask = { subject?: string; minutes?: number; detail?: string; done?: boolean };
 type CoachRequest = {
   message?: string;
   context?: {
-    daysLeft?: number;
-    weakSubject?: string;
-    dailyHours?: number;
-    goal?: string;
-    tasks?: CoachTask[];
+    daysLeft?: number; weakSubject?: string; dailyHours?: number; goal?: string; tasks?: CoachTask[];
+    weakQuestionCount?: number; dueWeakQuestionCount?: number; focusMinutes?: number; checkInDone?: boolean;
   };
 };
+type GeminiPayload = { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+const clean = (value: unknown, limit: number) => typeof value === "string" ? value.trim().slice(0, limit) : "";
 
-type GeminiPayload = {
-  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+const buildFallbackPlan = (profile: {
+  daysLeft: number; weakSubject: string; tasks: Array<{ subject: string; minutes: number; detail: string; done: boolean }>;
+  weakQuestionCount: number; dueWeakQuestionCount: number; focusMinutes: number; checkInDone: boolean;
+}) => {
+  const pending = profile.tasks.filter((task) => !task.done);
+  const nextTask = pending.find((task) => task.subject === profile.weakSubject) ?? pending[0];
+  const completedMinutes = profile.tasks.filter((task) => task.done).reduce((sum, task) => sum + task.minutes, 0);
+  const urgency = profile.daysLeft <= 7 ? "考前時間有限，今天以校正弱點與穩住節奏為先。" : profile.daysLeft <= 21 ? "倒數已進入弱科加強期，先處理最會影響後續練習的卡點。" : "目前仍適合把弱點拆小並穩定累積。";
+  const review = profile.dueWeakQuestionCount > 0
+    ? `先訂正 ${profile.dueWeakQuestionCount} 題今天到期的回流錯題，寫下錯因與正確線索。`
+    : profile.weakQuestionCount > 0
+      ? `目前有 ${profile.weakQuestionCount} 題弱點等待後續回流，先用 ${profile.weakSubject} 的核心觀念做預防複習。`
+      : "目前沒有到期回流錯題，可把時間放在下一個未完成任務。";
+  const action = nextTask
+    ? `現在就開始：先設 ${Math.min(15, Math.max(10, nextTask.minutes))} 分鐘計時，處理「${nextTask.subject}・${nextTask.detail || "重點複習"}」。`
+    : "現在就開始：花 5 分鐘整理今天最有效的一個方法，然後停止複習、準備休息。";
+  return `優先任務：${profile.dueWeakQuestionCount > 0 ? "回流錯題" : nextTask ? nextTask.subject : "今日回顧"}\n原因：${urgency}\n\n建議安排：\n1. ${review}\n2. ${nextTask ? `接著完成「${nextTask.subject}」${Math.min(nextTask.minutes, 45)} 分鐘；只做一個清楚的小目標。` : "今天的主要任務已完成，維持休息節奏。"}\n3. 最後用 5 分鐘寫下明天先做哪一科。\n\n今天已完成：${profile.tasks.filter((task) => task.done).length} 項、${completedMinutes} 分鐘完整專注${profile.checkInDone ? "，學習紀錄已留存" : ""}。\n\n${action}`;
 };
-
-const clean = (value: unknown, limit: number) =>
-  typeof value === "string" ? value.trim().slice(0, limit) : "";
 
 export async function POST(request: Request) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return Response.json(
-      { error: "AI 學習軍師尚未完成服務設定，請稍後再試。" },
-      { status: 503 },
-    );
-  }
-
   let body: CoachRequest;
-  try {
-    body = (await request.json()) as CoachRequest;
-  } catch {
-    return Response.json({ error: "請重新輸入你的問題。" }, { status: 400 });
-  }
-
-  const message = clean(body.message, 500);
-  if (!message) {
-    return Response.json({ error: "請先告訴軍師你現在需要什麼幫助。" }, { status: 400 });
-  }
-
+  try { body = (await request.json()) as CoachRequest; } catch { return Response.json({ error: "請重新輸入你的問題。" }, { status: 400 }); }
+  const message = clean(body.message, 500) || "請根據我的今天學習資料，安排下一步。";
   const context = body.context ?? {};
-  const tasks = Array.isArray(context.tasks)
-    ? context.tasks.slice(0, 8).map((task) => ({
-        subject: clean(task.subject, 30) || "未命名科目",
-        minutes: Math.max(0, Math.min(360, Number(task.minutes) || 0)),
-        detail: clean(task.detail, 80),
-        done: Boolean(task.done),
-      }))
-    : [];
+  const tasks = Array.isArray(context.tasks) ? context.tasks.slice(0, 8).map((task) => ({
+    subject: clean(task.subject, 30) || "未命名科目", minutes: Math.max(0, Math.min(360, Number(task.minutes) || 0)), detail: clean(task.detail, 80), done: Boolean(task.done),
+  })) : [];
   const profile = {
-    daysLeft: Math.max(0, Math.min(3650, Number(context.daysLeft) || 0)),
-    weakSubject: clean(context.weakSubject, 30) || "未設定",
-    dailyHours: Math.max(0.25, Math.min(16, Number(context.dailyHours) || 2)),
-    goal: clean(context.goal, 160) || "穩定完成每日學習任務",
-    tasks,
+    daysLeft: Math.max(0, Math.min(3650, Number(context.daysLeft) || 0)), weakSubject: clean(context.weakSubject, 30) || "未設定",
+    dailyHours: Math.max(0.25, Math.min(16, Number(context.dailyHours) || 2)), goal: clean(context.goal, 160) || "穩定完成每日學習任務", tasks,
+    weakQuestionCount: Math.max(0, Math.min(99, Number(context.weakQuestionCount) || 0)), dueWeakQuestionCount: Math.max(0, Math.min(99, Number(context.dueWeakQuestionCount) || 0)),
+    focusMinutes: Math.max(0, Math.min(1440, Number(context.focusMinutes) || 0)), checkInDone: Boolean(context.checkInDone),
   };
-
+  const fallback = buildFallbackPlan(profile);
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return Response.json({ answer: fallback, source: "plan" });
   const input = JSON.stringify({ userRequest: message, learningProfile: profile });
   try {
-    const upstream = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-      {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: `你是『文昌同行』的 AI 學習軍師。以繁體中文回答，語氣溫和、務實、具體。只依據輸入的學習資料提出建議，不要捏造成績或承諾考試結果。給出一個可立即開始的下一步，並以條列列出短時段安排。若使用者焦慮，先肯定感受，再提供不超過 15 分鐘的起步行動。建議僅限學習規劃與鼓勵，不進行醫療、心理診斷或預言。不要嘗試修改任何資料或宣稱已修改計畫。\n\n${input}` }] }],
-        generationConfig: { maxOutputTokens: 500, temperature: 0.55 },
-      }),
-      },
-    );
-    if (!upstream.ok) {
-      const detail = await upstream.text();
-      console.error("Coach API failed", upstream.status, detail.slice(0, 500));
-      return Response.json(
-        {
-          error:
-            upstream.status === 401 || upstream.status === 403
-              ? "AI 軍師的服務金鑰尚未取得使用權限。"
-              : "AI 軍師暫時忙碌，請稍後再試。",
-        },
-        { status: upstream.status },
-      );
-    }
+    const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent", {
+      method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({ contents: [{ parts: [{ text: `你是「文昌同行」AI 學習教練。以繁體中文、具體而簡潔地回答；只依據輸入資料，不要捏造成績或承諾結果。必須依序包含「優先任務」、「原因」、「建議安排」（2～3 個帶分鐘數的動作）與「現在就開始」。請明確使用考試倒數、弱科、待回流錯題、今天已完成任務這四種資訊；若其中一項沒有資料，要直接說明。不要只給鼓勵、不要醫療或心理診斷、不要宣稱已修改計畫。\n\n${input}` }] }], generationConfig: { maxOutputTokens: 500, temperature: 0.45 } }),
+    });
+    if (!upstream.ok) return Response.json({ answer: fallback, source: "plan" });
     const payload = (await upstream.json()) as GeminiPayload;
-    const answer = (payload.candidates ?? [])
-      .flatMap((candidate) => candidate.content?.parts ?? [])
-      .map((part) => part.text ?? "")
-      .join("\n")
-      .trim();
-    if (!answer) throw new Error("Empty AI response");
-    return Response.json({ answer });
+    const answer = (payload.candidates ?? []).flatMap((candidate) => candidate.content?.parts ?? []).map((part) => part.text ?? "").join("\n").trim();
+    return Response.json({ answer: answer || fallback, source: answer ? "ai" : "plan" });
   } catch (error) {
     console.error("Coach request failed", error);
-    return Response.json(
-      { error: "AI 軍師暫時無法回覆，請稍後再試。" },
-      { status: 502 },
-    );
+    return Response.json({ answer: fallback, source: "plan" });
   }
 }
