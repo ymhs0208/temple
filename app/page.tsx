@@ -124,6 +124,35 @@ const defaultTasks: Task[] = [
 		color: "violet",
 	},
 ];
+type CountdownPhase = {
+	id: "steady" | "strengthen" | "sprint" | "exam";
+	title: string;
+	label: string;
+	detail: string;
+	factor: number;
+	weakRatio: number;
+	pastRatio: number;
+};
+const getCountdownPhase = (daysLeft: number): CountdownPhase => {
+	if (daysLeft <= 0)
+		return { id: "exam", title: "應試日整理", label: "應試日", detail: "只回顧關鍵題型與考場策略，保留穩定感。", factor: 0.35, weakRatio: 0.45, pastRatio: 0.35 };
+	if (daysLeft <= 7)
+		return { id: "sprint", title: "考前衝刺", label: "7 日衝刺", detail: "縮短總量、提高弱科比例，保留睡眠與考場節奏。", factor: 0.65, weakRatio: 0.55, pastRatio: 0.3 };
+	if (daysLeft <= 21)
+		return { id: "strengthen", title: "弱科加強", label: "21 日加強", detail: "弱科放在第一項，搭配歷屆題校正解題節奏。", factor: 0.85, weakRatio: 0.5, pastRatio: 0.32 };
+	return { id: "steady", title: "穩定累積", label: "長線準備", detail: "先穩定完成，再逐步提高弱科與歷屆題的比重。", factor: 1, weakRatio: 0.45, pastRatio: 0.32 };
+};
+const buildCountdownTasks = (weak: string, hours: number, phase: CountdownPhase): Task[] => {
+	const total = Math.max(45, Math.round((Math.max(1, hours) * 60 * phase.factor) / 5) * 5);
+	const weakMinutes = Math.max(15, Math.round((total * phase.weakRatio) / 5) * 5);
+	const pastMinutes = Math.max(15, Math.round((total * phase.pastRatio) / 5) * 5);
+	const reviewMinutes = Math.max(10, total - weakMinutes - pastMinutes);
+	return [
+		{ subject: weak, minutes: weakMinutes, detail: "弱點加強・先釐清最常卡住的觀念", done: false, color: "amber" },
+		{ subject: "歷屆題", minutes: pastMinutes, detail: "限時演練・記下錯因與解題步驟", done: false, color: "jade" },
+		{ subject: "重點整理", minutes: reviewMinutes, detail: "回顧核心觀念・整理明日要複習的線索", done: false, color: "violet" },
+	];
+};
 const fortunePoems = [
 	{
 		title: "第一籤・春風得意",
@@ -773,7 +802,15 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				86400000,
 		),
 	);
-	const examModeActive = daysLeft <= 7;
+	const countdownPhase = getCountdownPhase(daysLeft);
+	const countdownTasks = useMemo(
+		() => buildCountdownTasks(weak, hours, countdownPhase),
+		[weak, hours, countdownPhase],
+	);
+	const countdownTotalMinutes = countdownTasks.reduce(
+		(total, task) => total + task.minutes,
+		0,
+	);
 	const completed = tasks.filter((t) => t.done).length;
 	const progress = tasks.length
 		? Math.round((completed / tasks.length) * 100)
@@ -1132,34 +1169,32 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			skipped: current.skipped + 1,
 		}));
 	};
+	const applyCountdownPlan = () => {
+		if (completed > 0) {
+			setSyncStatus("今天已有完成任務；倒數計畫會在明天自動重新安排。");
+			return;
+		}
+		const next = buildCountdownTasks(weak, hours, countdownPhase);
+		setTasks(next);
+		localStorage.setItem(
+			`wenchang-countdown-plan-${examDate}-${taipeiDate()}`,
+			countdownPhase.id,
+		);
+		void enqueueSync(next);
+		setSyncStatus(`已套用「${countdownPhase.title}」的今日任務安排。`);
+	};
 	useEffect(() => {
-		if (!ready || !examModeActive) return;
+		if (!ready || completed > 0) return;
 		const todayKey = new Intl.DateTimeFormat("en-CA", {
 			timeZone: "Asia/Taipei",
 		}).format(new Date());
-		const modeKey = `wenchang-exam-mode-${examDate}-${todayKey}`;
+		const modeKey = `wenchang-countdown-plan-${examDate}-${todayKey}`;
 		if (localStorage.getItem(modeKey)) return;
-		setTasks((current) => {
-			const next = current.map((task) => {
-				const factor = task.subject === weak ? 0.8 : 0.6;
-				const minutes = Math.max(
-					15,
-					Math.round((task.minutes * factor) / 5) * 5,
-				);
-				return {
-					...task,
-					minutes,
-					detail:
-						task.subject === weak
-							? "考前弱科重點複習"
-							: "考前重點整理・保留體力",
-				};
-			});
-			localStorage.setItem(modeKey, "applied");
-			void enqueueSync(next);
-			return next;
-		});
-	}, [ready, examModeActive, examDate, weak]);
+		const next = buildCountdownTasks(weak, hours, countdownPhase);
+		localStorage.setItem(modeKey, countdownPhase.id);
+		setTasks(next);
+		void enqueueSync(next);
+	}, [ready, completed, examDate, weak, hours, countdownPhase]);
 	const openFocusModePicker = (index: number) => {
 		const task = tasks[index];
 		if (!task || task.done) return;
@@ -1356,22 +1391,20 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				<div className="countdown">
 					<span>{pendingIndex >= 0 ? `${tasks[pendingIndex].detail}・${tasks[pendingIndex].minutes} 分鐘` : `今日 ${completed}/${tasks.length} 項任務已完成`}</span>
 				</div>
-				{examModeActive && (
-					<section className="exam-mode-card">
+				<section className={`exam-mode-card countdown-${countdownPhase.id}`}>
 						<div className="exam-mode-heading">
 							<span>✦</span>
 							<div>
-								<small>EXAM MODE</small>
-								<b>考前衝刺模式・剩 {daysLeft} 天</b>
+								<small>EXAM COUNTDOWN PLAN</small>
+								<b>{countdownPhase.title}・剩 {daysLeft} 天</b>
 							</div>
 						</div>
 						<p>
-							今天已自動降低任務量，優先保留{" "}
-							<strong>{weak}</strong>{" "}
-							的重點複習；穩定完成，也要保留睡眠。
+							{countdownPhase.detail} 今日共 {countdownTotalMinutes} 分鐘，先完成{" "}
+							<strong>{weak}</strong> 的弱點加強，再做歷屆題與重點整理。
 						</p>
 						<div className="exam-mode-footer">
-							<span>🌙 今晚 22:30 前準備休息</span>
+							<span>弱科 {Math.round(countdownPhase.weakRatio * 100)}%・今晚 22:30 前準備休息</span>
 							<button
 								onClick={() => setSleepReminderOpen(true)}
 							>
@@ -1379,7 +1412,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							</button>
 						</div>
 					</section>
-				)}
 				<div className="hero-orb orb-one" />
 				<div className="hero-orb orb-two" />
 			</section>
@@ -1638,6 +1670,31 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					<span>剩餘分鐘</span>
 				</div>
 			</div>
+			<section className={`countdown-plan-card countdown-${countdownPhase.id}`} aria-label="考試倒數計畫">
+				<div className="countdown-plan-heading">
+					<div>
+						<span>考試倒數計畫・{countdownPhase.label}</span>
+						<b>{countdownPhase.title}</b>
+					</div>
+					<strong>{daysLeft}<small> 天</small></strong>
+				</div>
+				<p>{countdownPhase.detail}</p>
+				<ol>
+					{countdownTasks.map((task, index) => (
+						<li key={task.subject}>
+							<i>{index + 1}</i>
+							<div><b>{task.subject}</b><span>{task.detail}</span></div>
+							<small>{task.minutes} 分</small>
+						</li>
+					))}
+				</ol>
+				<div className="countdown-plan-footer">
+					<span>今日安排 {countdownTotalMinutes} 分鐘・弱科優先 {Math.round(countdownPhase.weakRatio * 100)}%</span>
+					<button onClick={applyCountdownPlan} disabled={completed > 0}>
+						{completed > 0 ? "明日自動更新" : "重新套用今日計畫"}
+					</button>
+				</div>
+			</section>
 			<div className="milestone-card">
 				<p>你的下一個里程碑</p>
 				<b>

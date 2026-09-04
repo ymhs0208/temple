@@ -8343,5 +8343,72 @@ main:has(.app-shell),
 		width: min(calc(100% - 24px), 430px) !important;
 		border-radius: 18px;
 	}
-	.app-shell > nav.primary-nav button { min-height: 48px; }
+.app-shell > nav.primary-nav button { min-height: 48px; }
+}
+
+/* 考試倒數計畫：每日自動把弱科、歷屆題與整理排成可執行順序。 */
+.exam-mode-card,
+.countdown-plan-card {
+	margin: 18px 0 0;
+	border: 1px solid #d8c486;
+	border-radius: 18px;
+	padding: 15px;
+	background: linear-gradient(135deg, #fff8e4, #edf2e4);
+	box-shadow: 0 8px 20px rgb(96 87 51 / 10%);
+}
+.exam-mode-heading,
+.countdown-plan-heading,
+.countdown-plan-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+.exam-mode-heading > span {
+	display: grid;
+	width: 30px;
+	height: 30px;
+	place-items: center;
+	border-radius: 10px;
+	background: #e7c462;
+	color: #5b4823;
+}
+.exam-mode-heading > div { flex: 1; }
+.exam-mode-heading small,
+.exam-mode-heading b { display: block; }
+.exam-mode-heading small,
+.countdown-plan-heading span { color: #8b6d32; font-size: 9px; font-weight: 800; letter-spacing: 0.1em; }
+.exam-mode-heading b,
+.countdown-plan-heading b { margin-top: 3px; color: #385241; font: 700 15px "Noto Serif TC", serif; }
+.exam-mode-card > p,
+.countdown-plan-card > p { margin: 10px 0; color: #657060; font-size: 11px; line-height: 1.6; }
+.exam-mode-card > p strong { color: #8c5c24; }
+.exam-mode-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid #ded6bb; padding-top: 10px; }
+.exam-mode-footer span,
+.countdown-plan-footer span { color: #7c765f; font-size: 10px; line-height: 1.45; }
+.exam-mode-footer button,
+.countdown-plan-footer button { flex: 0 0 auto; border: 0; border-radius: 10px; padding: 8px 10px; background: #446953; color: #fffdf2; font-size: 10px; font-weight: 800; cursor: pointer; }
+.countdown-plan-card { margin: 15px 0; background: linear-gradient(135deg, #fbf6e7, #f4faf0); }
+.countdown-plan-heading strong { color: #a5742d; font: 700 30px Georgia, serif; }
+.countdown-plan-heading strong small { color: #83755a; font: 10px Arial, sans-serif; }
+.countdown-plan-card ol { display: grid; gap: 8px; margin: 13px 0; padding: 0; list-style: none; }
+.countdown-plan-card li { display: flex; align-items: center; gap: 9px; min-width: 0; border: 1px solid #e4ddca; border-radius: 12px; padding: 9px; background: #fffdf8; }
+.countdown-plan-card li > i { display: grid; flex: 0 0 22px; width: 22px; height: 22px; place-items: center; border-radius: 50%; background: #e7d083; color: #72551d; font-size: 10px; font-style: normal; font-weight: 800; }
+.countdown-plan-card li div { min-width: 0; flex: 1; }
+.countdown-plan-card li b,
+.countdown-plan-card li span { display: block; }
+.countdown-plan-card li b { color: #435e4b; font-size: 12px; }
+.countdown-plan-card li span { overflow: hidden; margin-top: 2px; color: #85806e; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.countdown-plan-card li > small { flex: 0 0 auto; color: #967138; font-size: 10px; font-weight: 800; }
+.countdown-plan-footer { border-top: 1px solid #e2dbc5; padding-top: 10px; }
+.countdown-plan-footer button:disabled { background: #a5afa0; cursor: default; }
+.countdown-sprint { border-color: #d9ad82; background: linear-gradient(135deg, #fff1df, #f8f4de); }
+.countdown-exam { border-color: #c8bd9a; background: linear-gradient(135deg, #f6f2e6, #edf1e8); }
+@media (min-width: 768px) {
+	.exam-mode-card,
+	.countdown-plan-card { max-width: 836px; margin-right: auto; margin-left: auto; }
+}
+@media (min-width: 1200px) {
+	.exam-mode-card,
+	.countdown-plan-card { max-width: 940px; }
 }
