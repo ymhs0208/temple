@@ -5153,6 +5153,97 @@ main:has(.app-shell),
 .daily-fortune-feedback.correct {
 	color: #51764c;
 }
+.checkin-milestones {
+	margin-top: 14px;
+	border: 1px solid #e2d1a4;
+	border-radius: 15px;
+	padding: 12px;
+	background: rgb(255 253 245 / 72%);
+}
+.checkin-milestones-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+.checkin-milestones-heading span,
+.checkin-milestones-heading b {
+	display: block;
+}
+.checkin-milestones-heading span {
+	color: #9b7b40;
+	font-size: 9px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+}
+.checkin-milestones-heading b {
+	margin-top: 2px;
+	color: #3f5942;
+	font: 700 18px Georgia, "Noto Serif TC", serif;
+}
+.checkin-milestones-heading small {
+	max-width: 190px;
+	color: #89795b;
+	font-size: 9px;
+	line-height: 1.45;
+	text-align: right;
+}
+.checkin-milestones ol {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+	margin: 11px 0 0;
+	padding: 0;
+	list-style: none;
+}
+.checkin-milestones li {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	min-width: 0;
+	border: 1px solid #eee4cd;
+	border-radius: 10px;
+	padding: 7px;
+	background: #f7f4ec;
+	color: #9a907a;
+}
+.checkin-milestones li i {
+	display: grid;
+	flex: 0 0 25px;
+	width: 25px;
+	height: 29px;
+	place-items: center;
+	border-radius: 6px 6px 9px 9px;
+	background: #d9d4c7;
+	color: #f7f3e9;
+	font: 700 13px Georgia, "Noto Serif TC", serif;
+	font-style: normal;
+}
+.checkin-milestones li b,
+.checkin-milestones li span {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.checkin-milestones li b { font-size: 9px; }
+.checkin-milestones li span {
+	margin-top: 2px;
+	font-size: 8px;
+}
+.checkin-milestones li.unlocked {
+	border-color: #d5bd79;
+	background: linear-gradient(135deg, #fff9e8, #f5ebd1);
+	color: #67512b;
+}
+.checkin-milestones li.unlocked i {
+	background: linear-gradient(135deg, #b77b4f, #875033);
+	box-shadow: inset 0 0 0 1px rgb(255 239 181 / 55%);
+	color: #fff3c9;
+}
+.checkin-milestones li.unlocked:nth-child(2) i { background: linear-gradient(135deg, #66836a, #3e644c); }
+.checkin-milestones li.unlocked:nth-child(3) i { background: linear-gradient(135deg, #b55945, #843a31); }
+.checkin-milestones li.unlocked:nth-child(4) i { background: linear-gradient(135deg, #c49338, #865d20); }
 .daily-checkin-options {
 	display: grid;
 	gap: 7px;

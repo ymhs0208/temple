@@ -75,6 +75,7 @@ type SavedPlan = {
 	oraclePlanksSpent?: number;
 	oracleResultId?: number;
 	dailyFortuneTask?: DailyFortuneTask;
+	dailyCheckInDates?: string[];
 	focusRewardMinutes?: number;
 	deferredTasks?: DeferredTask[];
 	taskAdjustmentCounts?: TaskAdjustmentCounts;
@@ -222,6 +223,25 @@ const makeDailyFortuneTask = (date = taipeiDate()): DailyFortuneTask => ({
 	fortuneId: Number(date.replaceAll("-", "")) % fortunePoems.length,
 	done: false,
 });
+const checkInMilestones = [
+	{ days: 3, plaque: "初", title: "勤學新芽", detail: "解鎖青木牌" },
+	{ days: 7, plaque: "穩", title: "七日守志", detail: "解鎖墨綠木牌" },
+	{ days: 14, plaque: "進", title: "半月精進", detail: "解鎖朱砂木牌" },
+	{ days: 30, plaque: "願", title: "願成文昌殿", detail: "解鎖專屬祈願場景" },
+] as const;
+
+const consecutiveCheckInDays = (dates: string[], today = taipeiDate()) => {
+	const completed = new Set(dates);
+	let cursor = today;
+	let total = 0;
+	while (completed.has(cursor)) {
+		total += 1;
+		const date = new Date(`${cursor}T00:00:00.000Z`);
+		date.setUTCDate(date.getUTCDate() - 1);
+		cursor = date.toISOString().slice(0, 10);
+	}
+	return total;
+};
 
 export default function Home() {
 	const [tab, setTab] = useState<Tab>("today");
@@ -251,6 +271,7 @@ export default function Home() {
 	const [dailyFortuneTask, setDailyFortuneTask] = useState<DailyFortuneTask>(
 		() => makeDailyFortuneTask(),
 	);
+	const [dailyCheckInDates, setDailyCheckInDates] = useState<string[]>([]);
 	const [selectedDailyAnswer, setSelectedDailyAnswer] = useState<
 		string | null
 	>(null);
@@ -345,6 +366,13 @@ export default function Home() {
 					setOracleResultId(data.oracleResultId);
 				if (data.dailyFortuneTask?.date === taipeiDate())
 					setDailyFortuneTask(data.dailyFortuneTask);
+				if (Array.isArray(data.dailyCheckInDates))
+					setDailyCheckInDates(
+						data.dailyCheckInDates.filter(
+							(date): date is string =>
+								typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date),
+						),
+					);
 				if (typeof data.focusRewardMinutes === "number")
 					setFocusRewardMinutes(data.focusRewardMinutes);
 				if (typeof data.remindersEnabled === "boolean")
@@ -405,6 +433,7 @@ export default function Home() {
 				oraclePlanksSpent,
 				oracleResultId,
 				dailyFortuneTask,
+				dailyCheckInDates,
 				focusRewardMinutes,
 				deferredTasks,
 				taskAdjustmentCounts,
@@ -428,6 +457,7 @@ export default function Home() {
 		oraclePlanksSpent,
 		oracleResultId,
 		dailyFortuneTask,
+		dailyCheckInDates,
 		focusRewardMinutes,
 		deferredTasks,
 		taskAdjustmentCounts,
@@ -688,6 +718,19 @@ export default function Home() {
 		];
 	const dailyClassic =
 		dailyClassics[dailyFortuneTask.fortuneId % dailyClassics.length];
+	const effectiveCheckInDates = useMemo(() => {
+		const dates = new Set(dailyCheckInDates);
+		if (dailyFortuneTask.done && dailyFortuneTask.date === taipeiDate())
+			dates.add(taipeiDate());
+		return [...dates];
+	}, [dailyCheckInDates, dailyFortuneTask]);
+	const checkInStreak = consecutiveCheckInDays(effectiveCheckInDates);
+	const nextCheckInMilestone = checkInMilestones.find(
+		(milestone) => milestone.days > checkInStreak,
+	);
+	const newlyUnlockedMilestone = checkInMilestones.find(
+		(milestone) => milestone.days === checkInStreak,
+	);
 	const weakQuestions = dailyFortuneTask.weakQuestions ?? [];
 	const focusPlanks = Math.floor(focusRewardMinutes / 10);
 	const planks =
@@ -810,6 +853,11 @@ export default function Home() {
 			});
 		}, 520);
 		setDailyFortuneTask((current) => ({ ...current, done: true }));
+		setDailyCheckInDates((current) =>
+			current.includes(taipeiDate())
+				? current
+				: [...current, taipeiDate()].slice(-90),
+		);
 		setDailyAnswerFeedback("答對了！今日簽到完成。 ");
 		setDailyCheckInDialogOpen(false);
 		setCheckInCeremonyOpen(true);
@@ -2118,6 +2166,33 @@ export default function Home() {
 						{dailyAnswerFeedback}
 					</p>
 				)}
+				<section className="checkin-milestones" aria-label="連續簽到里程碑">
+					<div className="checkin-milestones-heading">
+						<div>
+							<span>連續簽到</span>
+							<b>{checkInStreak} 天</b>
+						</div>
+						<small>
+							{nextCheckInMilestone
+								? `再 ${nextCheckInMilestone.days - checkInStreak} 天解鎖「${nextCheckInMilestone.title}」`
+								: "四枚木牌已全數解鎖"}
+						</small>
+					</div>
+					<ol>
+						{checkInMilestones.map((milestone) => {
+							const unlocked = checkInStreak >= milestone.days;
+							return (
+								<li key={milestone.days} className={unlocked ? "unlocked" : ""}>
+									<i aria-hidden="true">{unlocked ? milestone.plaque : "·"}</i>
+									<div>
+										<b>{milestone.days} 日・{milestone.title}</b>
+										<span>{unlocked ? milestone.detail : "持續簽到以解鎖"}</span>
+									</div>
+								</li>
+							);
+						})}
+					</ol>
+				</section>
 				<p className="daily-fortune-note">
 					每天翻開一則典籍，答對今日題目即可完成簽到並獲得 1
 					枚祈福木牌。
@@ -2211,7 +2286,9 @@ export default function Home() {
 						</div>
 						<h2 id="checkin-ceremony-title">簽到完成</h2>
 						<p className="checkin-ceremony-message">
-							你已翻開今日典籍，也為目標留下一次踏實的前進。
+							{newlyUnlockedMilestone
+								? `連續 ${newlyUnlockedMilestone.days} 天簽到，已解鎖「${newlyUnlockedMilestone.title}」。`
+								: "你已翻開今日典籍，也為目標留下一次踏實的前進。"}
 						</p>
 						<div className="checkin-ceremony-plaque">
 							<i aria-hidden="true">福</i>
