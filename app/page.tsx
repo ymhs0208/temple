@@ -298,6 +298,7 @@ const addTaipeiDays = (date: string, days: number) => {
 
 export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [tab, setTab] = useState<Tab>(initialTab);
+	const [navVisible, setNavVisible] = useState(true);
 	const [tasks, setTasks] = useState<Task[]>(defaultTasks);
 	const [deferredTasks, setDeferredTasks] = useState<DeferredTask[]>([]);
 	const [adjustingTaskIndex, setAdjustingTaskIndex] = useState<number | null>(
@@ -376,6 +377,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	>(null);
 	const [hydrated, setHydrated] = useState(false);
 	const syncQueue = useRef(Promise.resolve(true));
+	const lastScrollY = useRef(0);
 	const navigateToTab = (nextTab: Tab) => {
 		setTab(nextTab);
 		if (window.location.pathname !== tabPaths[nextTab])
@@ -385,6 +387,26 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		const syncTabFromUrl = () => setTab(tabFromPath(window.location.pathname));
 		window.addEventListener("popstate", syncTabFromUrl);
 		return () => window.removeEventListener("popstate", syncTabFromUrl);
+	}, []);
+	useEffect(() => {
+		let frame: number | null = null;
+		const updateNavigation = () => {
+			frame = null;
+			const currentY = window.scrollY;
+			const difference = currentY - lastScrollY.current;
+			if (currentY < 48 || difference < -6) setNavVisible(true);
+			else if (difference > 6) setNavVisible(false);
+			lastScrollY.current = currentY;
+		};
+		const onScroll = () => {
+			if (frame === null) frame = window.requestAnimationFrame(updateNavigation);
+		};
+		lastScrollY.current = window.scrollY;
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => {
+			window.removeEventListener("scroll", onScroll);
+			if (frame !== null) window.cancelAnimationFrame(frame);
+		};
 	}, []);
 	useEffect(() => {
 		setHydrated(true);
@@ -3096,7 +3118,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						</button>
 					</div>
 				</header>
-				<nav className="primary-nav" aria-label="主要導覽">
+				<nav className={`primary-nav ${navVisible ? "is-visible" : "is-hidden"}`} aria-label="主要導覽">
 					<button
 						className={tab === "today" ? "active" : ""}
 						onClick={() => navigateToTab("today")}
