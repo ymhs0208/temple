@@ -8761,6 +8761,11 @@ main:has(.app-shell),
 	.profile-page .account-list,
 	.profile-page .notification-preference,
 	.profile-page .weekly-care-card { border-radius: 16px; }
+	.profile-page .weekly-care-card {
+		position: static !important;
+		top: auto !important;
+		margin-top: 14px;
+	}
 }
 @media (min-width: 768px) {
 	.app-shell > .hero,
