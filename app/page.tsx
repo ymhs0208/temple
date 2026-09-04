@@ -919,8 +919,8 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	].find(Boolean) as string | undefined;
 	// 木牌只由完整計時結束的專注任務累積；不以抽選、登入或點擊給予。
 	const planks = focusPlanks;
-	// 保留舊資料相容性；抽籤介面已從產品流程移除。
-	const availablePlanks = planks;
+	// 木牌可兌換求籤機會；兌換不會產生新的木牌。
+	const availablePlanks = Math.max(0, planks - oraclePlanksSpent);
 	const recordWeakQuestion = (questionIndex: number) => {
 		const today = taipeiDate();
 		setWeakQuestions((current) => {
@@ -2534,7 +2534,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					{nextCulturalScene ? `下一個場景：${nextCulturalScene.title}。完成完整專注任務、留下今日學習紀錄，讓場景隨習慣自然開展。` : "所有祈願場景皆已由你的真實學習完成解鎖。"}
 				</p>
 			</section>
-			<section className="oracle-card" aria-label="文昌求籤" hidden>
+			<section className="oracle-card" aria-label="文昌求籤">
 				<div className="oracle-heading">
 					<div>
 						<span>文昌靈籤</span>
