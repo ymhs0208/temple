@@ -52,6 +52,10 @@ type DailyFortuneTask = {
 	done: boolean;
 	smallStepDone?: boolean;
 	weakQuestions?: WeakQuestion[];
+	achievementStats?: {
+		focusSessionsCompleted?: number;
+		weaknessesConquered?: number;
+	};
 };
 type WeakQuestion = {
 	id: string;
@@ -809,6 +813,37 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		.filter((item) => item.nextReviewDate > taipeiDate())
 		.sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate))[0];
 	const focusPlanks = Math.floor(focusRewardMinutes / 10);
+	const focusSessionsCompleted =
+		dailyFortuneTask.achievementStats?.focusSessionsCompleted ?? 0;
+	const weaknessesConquered =
+		dailyFortuneTask.achievementStats?.weaknessesConquered ?? 0;
+	const achievementUnlockedCount = [
+		focusSessionsCompleted >= 1,
+		focusSessionsCompleted >= 10,
+		focusSessionsCompleted >= 30,
+		checkInStreak >= 3,
+		checkInStreak >= 7,
+		checkInStreak >= 14,
+		weaknessesConquered >= 1,
+		weaknessesConquered >= 5,
+	].filter(Boolean).length;
+	const nextAchievement = [
+		focusSessionsCompleted < 1 && `完成第 1 次完整專注`,
+		focusSessionsCompleted >= 1 &&
+			focusSessionsCompleted < 10 &&
+			`再完成 ${10 - focusSessionsCompleted} 次完整專注`,
+		focusSessionsCompleted >= 10 &&
+			focusSessionsCompleted < 30 &&
+			`再完成 ${30 - focusSessionsCompleted} 次完整專注`,
+		checkInStreak < 3 && `再連續簽到 ${3 - checkInStreak} 天`,
+		checkInStreak >= 3 &&
+			checkInStreak < 7 &&
+			`再連續簽到 ${7 - checkInStreak} 天`,
+		weaknessesConquered < 1 && "克服第 1 題回流弱點",
+		weaknessesConquered >= 1 &&
+			weaknessesConquered < 5 &&
+			`再克服 ${5 - weaknessesConquered} 題弱點`,
+	].find(Boolean) as string | undefined;
 	const planks =
 		10 +
 		completed +
@@ -900,6 +935,14 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			return;
 		}
 		setWeakQuestions((current) => current.filter((entry) => entry.id !== item.id));
+		setDailyFortuneTask((current) => ({
+			...current,
+			achievementStats: {
+				...current.achievementStats,
+				weaknessesConquered:
+					(current.achievementStats?.weaknessesConquered ?? 0) + 1,
+			},
+		}));
 		setWeakReviewFeedback((current) => ({
 			...current,
 			[item.id]: "已克服弱點。",
@@ -1210,6 +1253,14 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			void enqueueSync(next);
 			return next;
 		});
+		setDailyFortuneTask((current) => ({
+			...current,
+			achievementStats: {
+				...current.achievementStats,
+				focusSessionsCompleted:
+					(current.achievementStats?.focusSessionsCompleted ?? 0) + 1,
+			},
+		}));
 		void sendCompletionNotice(completedTask, completedCount);
 		closeFocus();
 		setSyncStatus(
@@ -1606,6 +1657,19 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				<div>
 					<b>讀書統計紀錄</b>
 					<small>查看專注時間、連續學習與每日足跡</small>
+				</div>
+				<i>›</i>
+			</button>
+			<button
+				className="achievement-wall-link"
+				onClick={() => {
+					location.href = "/badges";
+				}}
+			>
+				<span>🏅</span>
+				<div>
+					<small>真實成就牆・已解鎖 {achievementUnlockedCount}/8</small>
+					<b>{nextAchievement ?? "八枚真實成就已全數解鎖"}</b>
 				</div>
 				<i>›</i>
 			</button>
@@ -2021,8 +2085,8 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			>
 				<span>🏅</span>
 				<div>
-					<b>我的學習徽章</b>
-					<small>查看你的文昌學習勳章與解鎖進度</small>
+					<b>真實成就牆</b>
+					<small>完整專注、連續簽到與克服弱點才會解鎖</small>
 				</div>
 				<i>›</i>
 			</button>

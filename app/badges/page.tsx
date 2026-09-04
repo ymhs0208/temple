@@ -2,35 +2,55 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type SavedTask = { minutes?: number; done?: boolean };
-type SavedPlan = { tasks?: SavedTask[]; templeVisits?: string[] };
+type AchievementStats = { focusSessionsCompleted?: number; weaknessesConquered?: number };
+type SavedPlan = { dailyCheckInDates?: string[]; dailyFortuneTask?: { date?: string; done?: boolean; achievementStats?: AchievementStats } };
+
+const taipeiDate = (date = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(date);
+const addTaipeiDays = (date: string, days: number) => {
+	const next = new Date(`${date}T00:00:00.000Z`);
+	next.setUTCDate(next.getUTCDate() + days);
+	return next.toISOString().slice(0, 10);
+};
+const checkInStreak = (dates: string[]) => {
+	const completed = new Set(dates);
+	let cursor = taipeiDate();
+	let days = 0;
+	while (completed.has(cursor)) { days += 1; cursor = addTaipeiDays(cursor, -1); }
+	return days;
+};
 
 const catalog = [
-	["first", "✦", "開卷啟明", "一頁開讀，心燈初燃", "完成第一項學習任務", "gold"],
-	["focus", "香", "凝心定志", "一炷專注，萬念歸一", "累積完成 60 分鐘學習", "jade"],
-	["day", "◎", "日課圓滿", "朝夕勤拂，功不唐捐", "完成今日全部任務", "vermilion"],
-	["study", "文", "筆耕不輟", "字字耕耘，步步生光", "累積完成 180 分鐘學習", "indigo"],
-	["five", "五", "積跬成里", "不積小流，無以成江", "完成 5 項學習任務", "gold"],
-	["visit", "⛩", "文昌巡禮", "行至宮闕，願與學同行", "解鎖第一枚文化徽章", "jade"],
-	["three", "印", "香火相傳", "三方印記，三份初心", "解鎖 3 枚文化徽章", "vermilion"],
-	["scholar", "榜", "金榜題名", "志在青雲，終有迴響", "完成 300 分鐘學習並巡禮 1 站", "indigo"],
+	{ id: "focus-1", icon: "一", title: "初定心", poem: "一段專注，心便有了方向", metric: "focus" as const, target: 1, tone: "gold" },
+	{ id: "focus-10", icon: "十", title: "十次凝神", poem: "十次守住，便能積成底氣", metric: "focus" as const, target: 10, tone: "jade" },
+	{ id: "focus-30", icon: "三十", title: "靜讀三十", poem: "三十次回到書桌，功夫自現", metric: "focus" as const, target: 30, tone: "indigo" },
+	{ id: "checkin-3", icon: "初", title: "三日晨課", poem: "三日不輟，學習開始生根", metric: "checkin" as const, target: 3, tone: "gold" },
+	{ id: "checkin-7", icon: "七", title: "七日守志", poem: "七日守志，讓習慣替你前進", metric: "checkin" as const, target: 7, tone: "vermilion" },
+	{ id: "checkin-14", icon: "半", title: "半月精進", poem: "半月相伴，努力成為日常", metric: "checkin" as const, target: 14, tone: "jade" },
+	{ id: "weak-1", icon: "破", title: "破題開悟", poem: "看懂一次錯因，就是一次跨越", metric: "weakness" as const, target: 1, tone: "vermilion" },
+	{ id: "weak-5", icon: "五", title: "五關皆過", poem: "五處弱點，已練成新的長處", metric: "weakness" as const, target: 5, tone: "indigo" },
 ] as const;
 
 export default function BadgesPage() {
 	const [plan, setPlan] = useState<SavedPlan>({});
-	useEffect(() => { try { setPlan(JSON.parse(localStorage.getItem("wenchang-mvp") ?? "{}")); } catch { setPlan({}); } }, []);
+	useEffect(() => {
+		try { setPlan(JSON.parse(localStorage.getItem("wenchang-mvp") ?? "{}")); }
+		catch { setPlan({}); }
+	}, []);
 	const progress = useMemo(() => {
-		const tasks = plan.tasks ?? [];
-		const completed = tasks.filter((task) => task.done);
-		return { tasks: completed.length, minutes: completed.reduce((total, task) => total + (Number(task.minutes) || 0), 0), visits: plan.templeVisits?.length ?? 0, complete: tasks.length > 0 && completed.length === tasks.length };
+		const dates = new Set(plan.dailyCheckInDates ?? []);
+		if (plan.dailyFortuneTask?.done && plan.dailyFortuneTask.date === taipeiDate()) dates.add(taipeiDate());
+		return { focus: plan.dailyFortuneTask?.achievementStats?.focusSessionsCompleted ?? 0, checkin: checkInStreak([...dates]), weakness: plan.dailyFortuneTask?.achievementStats?.weaknessesConquered ?? 0 };
 	}, [plan]);
-	const badges = catalog.map(([id, icon, title, poem, detail, tone]) => ({ id, icon, title, poem, detail, tone, unlocked: (id === "first" && progress.tasks >= 1) || (id === "focus" && progress.minutes >= 60) || (id === "day" && progress.complete) || (id === "study" && progress.minutes >= 180) || (id === "five" && progress.tasks >= 5) || (id === "visit" && progress.visits >= 1) || (id === "three" && progress.visits >= 3) || (id === "scholar" && progress.minutes >= 300 && progress.visits >= 1) }));
-	const unlocked = badges.filter((badge) => badge.unlocked).length;
+	const achievements = catalog.map((achievement) => ({ ...achievement, value: progress[achievement.metric], unlocked: progress[achievement.metric] >= achievement.target }));
+	const unlocked = achievements.filter((achievement) => achievement.unlocked).length;
+	const next = achievements.find((achievement) => !achievement.unlocked);
+	const unit = (metric: "focus" | "checkin" | "weakness") => metric === "focus" ? "次完整專注" : metric === "checkin" ? "天連續簽到" : "題已克服弱點";
 	return <main className="feature-page badge-page"><div className="feature-shell badge-shell">
-		<button className="back-link" onClick={() => location.href = "/"}>← 返回</button>
-		<section className="badge-hero"><p className="feature-kicker">WENCHANG LEARNING SEALS</p><span className="badge-hero-seal" aria-hidden="true">文昌</span><h1>我的學習徽章</h1><p>把每一次認真，收進一枚有故事的文昌勳章。</p></section>
-		<section className="badge-progress-card" aria-label="徽章解鎖進度"><div><span>已收藏</span><b>{unlocked}<small> / {badges.length} 枚</small></b></div><p>完成任務、累積專注，或走進合作宮廟巡禮，即可點亮你的學習印記。</p><div className="badge-progress-track"><i style={{ width: `${unlocked / badges.length * 100}%` }} /></div></section>
-		<section className="badge-gallery" aria-label="學習徽章收藏冊">{badges.map((badge) => <article className={`learning-medal ${badge.tone} ${badge.unlocked ? "is-unlocked" : "is-locked"}`} key={badge.id}><div className="medal-ribbon"><i /><i /></div><div className="medal-face"><span>{badge.unlocked ? badge.icon : "✧"}</span></div><div className="medal-copy"><b>{badge.title}</b><em>{badge.poem}</em><small>{badge.unlocked ? "已收錄於文昌學習冊" : badge.detail}</small></div></article>)}</section>
-		<section className="badge-ritual-note"><span>⛩</span><p>文昌講求「勤、誠、恆」。不必一次點亮所有勳章，每日完成一點，就是朝目標更靠近。</p></section>
+		<button className="back-link" onClick={() => location.href = "/progress"}>← 返回進度</button>
+		<section className="badge-hero"><p className="feature-kicker">WENCHANG TRUE ACHIEVEMENTS</p><span className="badge-hero-seal" aria-hidden="true">成就</span><h1>真實成就牆</h1><p>只有完整專注、連續簽到與真正克服回流錯題，才會點亮這裡。</p></section>
+		<section className="achievement-summary" aria-label="成就總覽"><div><span>已解鎖</span><b>{unlocked}<small> / {achievements.length}</small></b></div><p>{next ? `下一枚：${next.title}・再完成 ${Math.max(0, next.target - next.value)} ${unit(next.metric)}` : "八枚成就已全數點亮，繼續留下你的學習足跡。"}</p><div className="badge-progress-track"><i style={{ width: `${(unlocked / achievements.length) * 100}%` }} /></div></section>
+		<section className="achievement-metrics" aria-label="真實累積數據"><div><span>完整專注</span><b>{progress.focus}<small> 次</small></b></div><div><span>連續簽到</span><b>{progress.checkin}<small> 天</small></b></div><div><span>已克服弱點</span><b>{progress.weakness}<small> 題</small></b></div></section>
+		<section className="badge-gallery achievement-gallery" aria-label="真實成就列表">{achievements.map((achievement) => <article className={`learning-medal ${achievement.tone} ${achievement.unlocked ? "is-unlocked" : "is-locked"}`} key={achievement.id}><div className="medal-ribbon"><i /><i /></div><div className="medal-face"><span>{achievement.unlocked ? achievement.icon : "✧"}</span></div><div className="medal-copy"><b>{achievement.title}</b><em>{achievement.poem}</em><small>{achievement.unlocked ? "已由真實學習紀錄解鎖" : `${achievement.value}/${achievement.target} ${unit(achievement.metric)}`}</small></div></article>)}</section>
+		<section className="badge-ritual-note"><span>⛩</span><p>成就不是按下確認就能得到。每一枚都來自實際完成的專注計時、連續簽到與兩輪回流後答對的弱點題。</p></section>
 	</div></main>;
 }
