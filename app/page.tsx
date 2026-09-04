@@ -225,11 +225,6 @@ const dailyClassics = [
 		note: "讀、問、想、辨、做，讓知識真正成為自己的。",
 	},
 ] as const;
-const focusModes = [
-	{ minutes: 10, label: "暖身專注", detail: "先完成 10 分鐘，進入讀書狀態" },
-	{ minutes: 25, label: "番茄專注", detail: "適合單一小節複習或寫題" },
-	{ minutes: 45, label: "深度專注", detail: "適合完整章節與錯題整理" },
-] as const;
 const taipeiDate = (date = new Date()) =>
 	new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(date);
 const makeDailyFortuneTask = (date = taipeiDate()): DailyFortuneTask => ({
@@ -915,6 +910,10 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	};
 	const completeDailyCheckIn = () => {
 		if (dailyFortuneTask.done) return;
+		if (completed < 1) {
+			setDailyAnswerFeedback("先完成至少一項專注任務，才可以進行今日簽到。 ");
+			return;
+		}
 		if (!selectedDailyAnswer) {
 			setDailyAnswerFeedback("請先選擇一個答案。 ");
 			return;
@@ -963,10 +962,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		setDailyCheckInDialogOpen(false);
 		setCheckInCeremonyOpen(true);
 		setSyncStatus("今日簽到題答對，獲得 1 枚祈福木牌！");
-	};
-	const completeDailySmallStep = () => {
-		setDailyFortuneTask((current) => ({ ...current, smallStepDone: true }));
-		setSyncStatus("今日一小步完成，這份專注正在累積。 ");
 	};
 	const exchangeOracleTicket = () => {
 		if (availablePlanks < 3) return;
@@ -1122,14 +1117,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			return next;
 		});
 	}, [ready, examModeActive, examDate, weak]);
-	const toggleTask = (index: number) =>
-		setTasks((current) => {
-			const next = current.map((task, i) =>
-				i === index ? { ...task, done: !task.done } : task,
-			);
-			void enqueueSync(next);
-			return next;
-		});
 	const openFocusModePicker = (index: number) => {
 		const task = tasks[index];
 		if (!task || task.done) return;
@@ -1140,10 +1127,11 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		openFocusModePicker(pendingIndex);
 	};
 	const startFocusAt = (index: number) => openFocusModePicker(index);
-	const beginFocus = (minutes: number) => {
+	const beginFocus = () => {
 		if (focusPickerTaskIndex === null) return;
 		const task = tasks[focusPickerTaskIndex];
 		if (!task || task.done) return;
+		const minutes = task.minutes;
 		const seconds = minutes * 60;
 		setFocusIndex(focusPickerTaskIndex);
 		setFocusSeconds(seconds);
@@ -1203,10 +1191,10 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		}
 	};
 	const completeFocus = () => {
-		if (focusIndex === null) return;
+		if (focusIndex === null || !focusEnded) return;
 		const completedTask = tasks[focusIndex];
 		const completedCount = tasks.filter((task) => task.done).length + 1;
-		const rewardedMinutes = focusEnded ? focusScheduledMinutes : 0;
+		const rewardedMinutes = focusScheduledMinutes;
 		const newlyEarnedPlanks = rewardedMinutes
 			? Math.floor((focusRewardMinutes + rewardedMinutes) / 10) -
 				Math.floor(focusRewardMinutes / 10)
@@ -1225,34 +1213,12 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		void sendCompletionNotice(completedTask, completedCount);
 		closeFocus();
 		setSyncStatus(
-			rewardedMinutes
-				? `專注 ${rewardedMinutes} 分鐘完成${newlyEarnedPlanks ? `，獲得 ${newlyEarnedPlanks} 枚祈福木牌！` : `，再累積 ${minutesToNextPlank} 分鐘可獲得 1 枚祈福木牌。`}`
-				: "任務已提前完成；完整專注滿 10 分鐘即可獲得 1 枚祈福木牌。",
+			`專注 ${rewardedMinutes} 分鐘完成${newlyEarnedPlanks ? `，獲得 ${newlyEarnedPlanks} 枚祈福木牌！` : `，再累積 ${minutesToNextPlank} 分鐘可獲得 1 枚祈福木牌。`}`,
 		);
 	};
-	const finishFocusAndContinue = () => {
-		const nextIndex = tasks.findIndex(
-			(task, index) => index !== focusIndex && !task.done,
-		);
-		completeFocus();
-		if (nextIndex >= 0)
-			window.setTimeout(() => openFocusModePicker(nextIndex), 180);
-	};
-	const toggleAllTasks = () => {
-		const shouldComplete = completed !== tasks.length;
-		const confirmation = shouldComplete
-			? "確定要將今天所有任務標記為完成嗎？"
-			: "確定要重新開啟今天所有任務嗎？";
-		if (!window.confirm(confirmation)) return;
-		setTasks((current) => {
-			const next = current.map((task) => ({
-				...task,
-				done: shouldComplete,
-			}));
-			void enqueueSync(next);
-			return next;
-		});
-	};
+	useEffect(() => {
+		if (focusEnded && focusIndex !== null) completeFocus();
+	}, [focusEnded, focusIndex]);
 	const login = async () => {
 		if (!liff.isLoggedIn()) {
 			liff.login();
@@ -1403,14 +1369,17 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							className={`task ${task.done ? "done" : ""} ${task.skipped ? "skipped" : ""}`}
 							key={`${task.subject}-${index}`}
 						>
-							<button
+							<span
 								className={`check ${task.done ? "checked" : ""}`}
-								onClick={() => toggleTask(index)}
-								aria-label={`${task.done ? "取消完成" : "完成"}${task.subject}：${task.detail}`}
-								aria-pressed={task.done}
+								aria-label={
+									task.done
+										? `${task.subject}已透過完整專注完成`
+										: `${task.subject}需完成完整專注計時才會標記完成`
+								}
+								title="任務會在完整專注計時結束後自動完成"
 							>
 								{task.done ? "✓" : ""}
-							</button>
+							</span>
 							<span className={`subject-dot ${task.color}`} />
 							<span className="task-copy">
 								<b>{task.subject}</b>
@@ -1466,7 +1435,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				<section className="focus-panel">
 					<small>
 						{focusEnded
-							? "時間到了・確認你的專注成果"
+							? "時間到了・正在記錄你的專注成果"
 							: focusPaused
 								? "已暫停・可隨時繼續"
 								: `正在專注・${tasks[focusIndex].subject}`}
@@ -1474,7 +1443,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					<b>{focusTime}</b>
 					<p>
 						{focusEnded
-							? "你完成這段專注了嗎？確認後才會標記任務完成。"
+							? "完整倒數結束後，系統會自動把任務記錄為完成。"
 							: "離開或重新整理後會依實際時間繼續倒數。"}
 					</p>
 					<div className="focus-reward" aria-label="祈福木牌專注獎勵">
@@ -1486,20 +1455,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					</div>
 					{focusEnded ? (
 						<div className="focus-actions">
-							<button onClick={completeFocus}>確認完成</button>
-							<button
-								onClick={() => {
-									setFocusSeconds(300);
-									setFocusScheduledMinutes(
-										(current) => current + 5,
-									);
-									setFocusEndsAt(Date.now() + 300000);
-									setFocusPaused(false);
-									setFocusEnded(false);
-								}}
-							>
-								再加 5 分鐘
-							</button>
+							<span>正在更新今日任務…</span>
 						</div>
 					) : (
 						<div className="focus-actions">
@@ -1508,17 +1464,8 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							>
 								{focusPaused ? "繼續專注" : "暫停"}
 							</button>
-							<button
-								onClick={() => {
-									if (
-										window.confirm(
-											"確定要提前完成並標記任務嗎？",
-										)
-									)
-										completeFocus();
-								}}
-							>
-								提前完成
+							<button onClick={abandonFocus}>
+								保留任務，先離開
 							</button>
 						</div>
 					)}
@@ -2210,12 +2157,19 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						setDailyAnswerFeedback("");
 						setDailyCheckInDialogOpen(true);
 					}}
-					disabled={dailyFortuneTask.done}
+					disabled={dailyFortuneTask.done || completed < 1}
 				>
 					{dailyFortuneTask.done
 						? "今日簽到完成・已獲得木牌 ✓"
-						: "翻開典籍・進行今日簽到"}
+						: completed < 1
+							? "先完成 1 項專注任務"
+							: "翻開典籍・進行今日簽到"}
 				</button>
+				{!dailyFortuneTask.done && completed < 1 && (
+					<p className="daily-fortune-feedback">
+						完成至少一項完整專注任務後，才會開放今日簽到。
+					</p>
+				)}
 				{dailyAnswerFeedback && (
 					<p
 						className={`daily-fortune-feedback ${dailyFortuneTask.done ? "correct" : ""}`}
@@ -2225,20 +2179,17 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				)}
 				{dailyFortuneTask.done && (
 					<section
-						className={`daily-small-step ${dailyFortuneTask.smallStepDone ? "is-done" : ""}`}
+						className="daily-small-step"
 						aria-label="簽到後的今日一小步"
 					>
 						<div className="daily-small-step-copy">
-							<i aria-hidden="true">{dailyFortuneTask.smallStepDone ? "✓" : "一"}</i>
+							<i aria-hidden="true">一</i>
 							<div>
 								<span>簽到後的今日一小步・{dailySmallStep.minutes} 分鐘</span>
-								<b>{dailyFortuneTask.smallStepDone ? "今日一小步已完成" : dailySmallStep.title}</b>
-								<small>{dailyFortuneTask.smallStepDone ? "把微小的完成，留給明天的自己。" : dailySmallStep.detail}</small>
+								<b>{dailySmallStep.title}</b>
+								<small>{dailySmallStep.detail} 完成紀錄請以專注任務計時為準。</small>
 							</div>
 						</div>
-						{!dailyFortuneTask.smallStepDone && (
-							<button onClick={completeDailySmallStep}>完成這一步</button>
-						)}
 					</section>
 				)}
 				<section className="checkin-milestones" aria-label="連續簽到里程碑">
@@ -3089,33 +3040,26 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 								</button>
 								<span>靜心開始</span>
 								<h2 id="focus-mode-title">
-									選擇這次的
+									完成這次的
 									<br />
-									<em>專注節奏</em>
+									<em>完整專注</em>
 								</h2>
 								<p>
 									{tasks[focusPickerTaskIndex].subject}・
 									{tasks[focusPickerTaskIndex].detail}
 								</p>
 								<div className="focus-mode-list">
-									{focusModes.map((mode) => (
-										<button
-											key={mode.minutes}
-											onClick={() =>
-												beginFocus(mode.minutes)
-											}
-										>
-											<b>
-												{mode.minutes}
-												<small> 分鐘</small>
-											</b>
-											<div>
-												<strong>{mode.label}</strong>
-												<span>{mode.detail}</span>
-											</div>
-											<i>開始 →</i>
-										</button>
-									))}
+									<button onClick={beginFocus}>
+										<b>
+											{tasks[focusPickerTaskIndex].minutes}
+											<small> 分鐘</small>
+										</b>
+										<div>
+											<strong>完成這項任務</strong>
+											<span>完整倒數結束後，系統會自動記錄完成</span>
+										</div>
+										<i>開始 →</i>
+									</button>
 								</div>
 								<small className="focus-mode-note">
 									完整專注每滿 10 分鐘，可獲得 1 枚祈福木牌。
@@ -3145,7 +3089,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							<h2 id="focus-session-title">{focusTime}</h2>
 							<span className="focus-session-goal">
 								{focusEnded
-									? "你完成這段專注了嗎？"
+									? "正在自動記錄任務完成"
 									: `本次目標・專注 ${focusScheduledMinutes} 分鐘`}
 							</span>
 							<div className="focus-session-progress">
@@ -3157,23 +3101,13 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							</div>
 							<small>
 								{focusEnded
-									? "完成後會更新任務，並帶你接續下一個讀書步驟。"
+									? "完整倒數已結束，正在更新今日任務。"
 									: `每滿 10 分鐘可獲得祈福木牌・本次已守住 ${Math.max(0, focusScheduledMinutes - Math.ceil(focusSeconds / 60))} 分鐘`}
 							</small>
 						</div>
 						<div className="focus-session-actions">
 							{focusEnded ? (
-								<>
-									<button
-										className="focus-confirm"
-										onClick={finishFocusAndContinue}
-									>
-										完成並接續下一項
-									</button>
-									<button onClick={completeFocus}>
-										完成並回到任務
-									</button>
-								</>
+								<span className="focus-confirm">正在記錄完成…</span>
 							) : (
 								<>
 									<button
