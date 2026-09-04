@@ -8480,3 +8480,13 @@ main:has(.app-shell),
 		max-width: 940px !important;
 	}
 }
+
+/* 桌面頁首維持方正邊界，不使用手機殼式的上方圓角。 */
+@media (min-width: 768px) {
+	main:has(.app-shell),
+	.app-shell,
+	.app-shell > .topbar {
+		border-top-left-radius: 0 !important;
+		border-top-right-radius: 0 !important;
+	}
+}
