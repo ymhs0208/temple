@@ -2975,33 +2975,33 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						</button>
 					</div>
 				</header>
-				<nav aria-label="主要導覽">
+				<nav className="primary-nav" aria-label="主要導覽">
 					<button
 						className={tab === "today" ? "active" : ""}
 						onClick={() => navigateToTab("today")}
 					>
-						<i aria-hidden="true">⌂</i>
+						<i aria-hidden="true">☀</i>
 						<span>今日</span>
 					</button>
 					<button
 						className={tab === "progress" ? "active" : ""}
 						onClick={() => navigateToTab("progress")}
 					>
-						<i aria-hidden="true">▥</i>
+						<i aria-hidden="true">▤</i>
 						<span>進度</span>
 					</button>
 					<button
 						className={tab === "prayer" ? "active" : ""}
 						onClick={() => navigateToTab("prayer")}
 					>
-						<i aria-hidden="true">✿</i>
+						<i aria-hidden="true">✦</i>
 						<span>祈福</span>
 					</button>
 					<button
 						className={tab === "profile" ? "active" : ""}
 						onClick={() => navigateToTab("profile")}
 					>
-						<i aria-hidden="true">◌</i>
+						<i aria-hidden="true">☺</i>
 						<span>我的</span>
 					</button>
 				</nav>
