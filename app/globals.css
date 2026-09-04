@@ -8062,12 +8062,13 @@ main:has(.app-shell),
 	}
 }
 @media (max-width: 500px) {
+	.app-shell { padding-bottom: 100px !important; }
 	.app-shell > nav {
-		bottom: max(14px, env(safe-area-inset-bottom));
+		bottom: max(12px, env(safe-area-inset-bottom));
 		width: min(calc(100% - 28px), 430px);
 		border: 1px solid #e8e0d0;
-		border-radius: 20px;
-		padding: 7px;
+		border-radius: 16px;
+		padding: 5px;
 		background: rgb(255 253 248 / 92%);
 		box-shadow:
 			0 12px 30px rgb(47 56 43 / 18%),
@@ -8077,11 +8078,28 @@ main:has(.app-shell),
 	.app-shell > nav button {
 		min-width: 0;
 		flex: 1;
-		padding: 8px 4px;
+		padding: 5px 3px;
 	}
 	.app-shell > nav button span {
-		font-size: 12px;
+		font-size: 10px;
 	}
+}
+
+/* 收斂四個主捷徑，讓導覽保持輕巧、不搶走頁面內容。 */
+@media (min-width: 501px) {
+	.app-shell { padding-bottom: 92px !important; }
+	.app-shell > nav {
+		bottom: 18px;
+		width: min(calc(100% - 48px), 390px);
+		border-radius: 14px;
+		padding: 5px 6px;
+	}
+	.app-shell > nav button {
+		min-width: 54px !important;
+		padding: 5px 11px !important;
+		font-size: 14px;
+	}
+	.app-shell > nav span { font-size: 9px; }
 }
 
 /* 彈出放大的 Q 版特效 */
