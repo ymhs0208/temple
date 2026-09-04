@@ -8463,3 +8463,20 @@ main:has(.app-shell),
 		margin-right: -5px;
 	}
 }
+
+/* 電腦版品牌列與內容卡片共用同一版心，避免品牌與登入鈕拉得太開。 */
+@media (min-width: 768px) {
+	.app-shell > .topbar {
+		width: min(100%, 836px) !important;
+		max-width: 836px !important;
+		margin: 0 auto 36px !important;
+		padding: 16px 0 !important;
+		background: transparent !important;
+	}
+}
+@media (min-width: 1200px) {
+	.app-shell > .topbar {
+		width: min(100%, 940px) !important;
+		max-width: 940px !important;
+	}
+}
