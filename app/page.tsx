@@ -96,6 +96,7 @@ type SavedPlan = {
 type OracleStage = "idle" | "choosing" | "drawing" | "result";
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
 const PENDING_SYNC_KEY = "wenchang-cloud-sync-pending";
+const SLEEP_REMINDER_KEY = "wenchang-sleep-reminder-seen";
 const defaultTasks: Task[] = [
 	{
 		subject: "數學",
@@ -334,6 +335,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [draftMorningTime, setDraftMorningTime] = useState("08:00");
 	const [draftEveningTime, setDraftEveningTime] = useState("20:30");
 	const [showSettlement, setShowSettlement] = useState(false);
+	const [sleepReminderOpen, setSleepReminderOpen] = useState(false);
 	const [focusIndex, setFocusIndex] = useState<number | null>(null);
 	const [focusSeconds, setFocusSeconds] = useState(0);
 	const [focusScheduledMinutes, setFocusScheduledMinutes] = useState(0);
@@ -359,6 +361,26 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	useEffect(() => {
 		setHydrated(true);
 	}, []);
+	useEffect(() => {
+		if (!ready) return;
+		const showSleepReminderIfDue = () => {
+			const now = new Date();
+			const time = new Intl.DateTimeFormat("en-GB", {
+				timeZone: "Asia/Taipei",
+				hour: "2-digit",
+				minute: "2-digit",
+				hourCycle: "h23",
+			}).format(now);
+			const today = taipeiDate(now);
+			if (time >= "22:30" && localStorage.getItem(SLEEP_REMINDER_KEY) !== today) {
+				localStorage.setItem(SLEEP_REMINDER_KEY, today);
+				setSleepReminderOpen(true);
+			}
+		};
+		showSleepReminderIfDue();
+		const timer = window.setInterval(showSleepReminderIfDue, 30000);
+		return () => window.clearInterval(timer);
+	}, [ready]);
 	useEffect(() => {
 		const refreshRestoredPage = (event: PageTransitionEvent) => {
 			if (event.persisted) window.location.reload();
@@ -1334,11 +1356,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						<div className="exam-mode-footer">
 							<span>🌙 今晚 22:30 前準備休息</span>
 							<button
-								onClick={() =>
-									setSyncStatus(
-										"睡眠提醒：今晚 22:30 前結束複習，讓大腦好好休息。",
-									)
-								}
+								onClick={() => setSleepReminderOpen(true)}
 							>
 								查看提醒
 							</button>
@@ -3237,6 +3255,27 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							alt="加入文昌同行 LINE 官方好友"
 						/>
 					</a>
+				)}
+				{sleepReminderOpen && (
+					<div
+						className="sleep-reminder-backdrop"
+						role="presentation"
+						onMouseDown={() => setSleepReminderOpen(false)}
+					>
+						<section
+							className="sleep-reminder-dialog"
+							role="dialog"
+							aria-modal="true"
+							aria-labelledby="sleep-reminder-title"
+							onMouseDown={(event) => event.stopPropagation()}
+						>
+							<div className="sleep-reminder-moon" aria-hidden="true">☾</div>
+							<span>今晚的溫柔提醒</span>
+							<h2 id="sleep-reminder-title">22:30 前結束複習</h2>
+							<p>讓大腦好好休息。睡得夠，明天才能把今天讀過的內容真正記住。</p>
+							<button onClick={() => setSleepReminderOpen(false)}>知道了，準備收心</button>
+						</section>
+					</div>
 				)}
 			</section>
 		</main>

@@ -7494,6 +7494,72 @@ main:has(.app-shell),
 	cursor: pointer;
 }
 
+.sleep-reminder-backdrop {
+	position: fixed;
+	z-index: 140;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	padding: 20px;
+	background: rgb(16 29 52 / 76%);
+	backdrop-filter: blur(10px);
+	animation: ceremony-veil-in 0.3s ease-out both;
+}
+.sleep-reminder-dialog {
+	width: min(100%, 380px);
+	border: 1px solid #bec9e1;
+	border-radius: 25px;
+	padding: 28px 24px 23px;
+	background:
+		radial-gradient(circle at 82% 12%, #f9edbf 0, transparent 18%),
+		linear-gradient(150deg, #fdfdff, #edf1fa);
+	box-shadow: 0 25px 68px rgb(5 12 32 / 45%);
+	text-align: center;
+	animation: ceremony-card-in 0.55s 0.05s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.sleep-reminder-moon {
+	display: grid;
+	width: 62px;
+	height: 62px;
+	margin: 0 auto 14px;
+	place-items: center;
+	border-radius: 50%;
+	background: #34476c;
+	box-shadow: 0 0 0 7px #dce4f4, 0 10px 20px rgb(36 53 88 / 22%);
+	color: #fff1ae;
+	font: 700 39px/1 Georgia, serif;
+}
+.sleep-reminder-dialog > span {
+	color: #7280a1;
+	font-size: 10px;
+	font-weight: 800;
+	letter-spacing: 0.14em;
+}
+.sleep-reminder-dialog h2 {
+	margin: 8px 0 9px;
+	color: #334664;
+	font: 700 25px Georgia, "Noto Serif TC", serif;
+}
+.sleep-reminder-dialog p {
+	margin: 0 auto 18px;
+	max-width: 280px;
+	color: #65718a;
+	font-size: 12px;
+	line-height: 1.7;
+}
+.sleep-reminder-dialog button {
+	width: 100%;
+	border: 0;
+	border-radius: 12px;
+	padding: 12px;
+	background: #3e557c;
+	color: #fff;
+	font-size: 11px;
+	font-weight: 800;
+	cursor: pointer;
+}
+.sleep-reminder-dialog button:hover { background: #304666; }
+
 /* 簽到完成不只是提示：用印記、木牌與祝福落款形成短暫的收束儀式。 */
 .checkin-ceremony {
 	position: fixed;
