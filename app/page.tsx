@@ -155,33 +155,33 @@ const buildCountdownTasks = (weak: string, hours: number, phase: CountdownPhase)
 };
 const fortunePoems = [
 	{
-		title: "第一籤・春風得意",
+		title: "今日箴言・春風得意",
 		verse: "春風輕拂柳梢新，靜守初心得好音。",
 		reading: "眼前的努力正在累積，不必急著求快，照著節奏完成今天的任務。",
 	},
 	{
-		title: "第二籤・專志有成",
+		title: "今日箴言・專志有成",
 		verse: "一念澄明書卷香，步穩方能到遠方。",
 		reading:
 			"先完成最重要的一件事。把注意力收回當下，成果會比焦慮更早抵達。",
 	},
 	{
-		title: "第三籤・厚積薄發",
+		title: "今日箴言・厚積薄發",
 		verse: "細雨潤田終成穗，深耕不語自生光。",
 		reading: "看似平凡的複習最有力量。今天整理一題錯題，也是在替明天鋪路。",
 	},
 	{
-		title: "第四籤・柳暗花明",
+		title: "今日箴言・柳暗花明",
 		verse: "峰迴路轉雲開處，且把難題細細分。",
 		reading: "遇到卡關時，先拆小步驟再前進。你不必一次解開所有問題。",
 	},
 	{
-		title: "第五籤・勤可補拙",
+		title: "今日箴言・勤可補拙",
 		verse: "燈下三分常不負，日添一點自成峰。",
 		reading: "規律勝過衝刺。今天多專注十分鐘，長久下來會成為你的底氣。",
 	},
 	{
-		title: "第六籤・金榜可期",
+		title: "今日箴言・金榜可期",
 		verse: "心定筆穩開新卷，所學終將答所求。",
 		reading: "你已具備前進的條件。相信累積，帶著平靜完成下一個任務。",
 	},
@@ -266,10 +266,17 @@ const makeDailyFortuneTask = (date = taipeiDate()): DailyFortuneTask => ({
 	done: false,
 });
 const checkInMilestones = [
-	{ days: 3, plaque: "初", title: "勤學新芽", detail: "解鎖青木牌" },
-	{ days: 7, plaque: "穩", title: "七日守志", detail: "解鎖墨綠木牌" },
-	{ days: 14, plaque: "進", title: "半月精進", detail: "解鎖朱砂木牌" },
-	{ days: 30, plaque: "願", title: "願成文昌殿", detail: "解鎖專屬祈願場景" },
+	{ days: 3, plaque: "初", title: "勤學新芽", detail: "解鎖青木牌・書院門景" },
+	{ days: 7, plaque: "穩", title: "七日守志", detail: "解鎖墨綠木牌・晨鐘廊景" },
+	{ days: 14, plaque: "進", title: "半月精進", detail: "解鎖朱砂木牌・燈火書齋" },
+	{ days: 30, plaque: "願", title: "願成文昌殿", detail: "解鎖文昌殿祈願場景" },
+] as const;
+const culturalScenes = [
+	{ days: 0, seal: "學", title: "書院門前", detail: "完成第一段完整專注，替今天立下學習的起點。" },
+	{ days: 3, seal: "初", title: "青木書院", detail: "連續三天以完成任務回應自己，木牌正式點亮。" },
+	{ days: 7, seal: "穩", title: "晨鐘長廊", detail: "七日穩定累積，讓規律成為可以依靠的節奏。" },
+	{ days: 14, seal: "進", title: "燈火書齋", detail: "半月精進，回望錯題與弱點，讓理解逐漸清晰。" },
+	{ days: 30, seal: "願", title: "文昌殿", detail: "三十日真實完成，解鎖專屬祈願場景與回顧時刻。" },
 ] as const;
 const dailySmallSteps = [
 	{ minutes: 5, title: "複習 5 個英文單字", detail: "把今天最常卡住的字重新讀一遍。" },
@@ -866,6 +873,12 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const newlyUnlockedMilestone = checkInMilestones.find(
 		(milestone) => milestone.days === checkInStreak,
 	);
+	const unlockedSceneIndex = culturalScenes.reduce(
+		(latest, scene, index) => (checkInStreak >= scene.days ? index : latest),
+		0,
+	);
+	const activeCulturalScene = culturalScenes[unlockedSceneIndex];
+	const nextCulturalScene = culturalScenes[unlockedSceneIndex + 1];
 	const dueWeakQuestions = weakQuestions.filter(
 		(item) => item.nextReviewDate <= taipeiDate(),
 	);
@@ -904,13 +917,10 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			weaknessesConquered < 5 &&
 			`再克服 ${5 - weaknessesConquered} 題弱點`,
 	].find(Boolean) as string | undefined;
-	const planks =
-		10 +
-		completed +
-		visits.length +
-		(dailyFortuneTask.done ? 1 : 0) +
-		focusPlanks;
-	const availablePlanks = Math.max(0, planks - oraclePlanksSpent);
+	// 木牌只由完整計時結束的專注任務累積；不以抽選、登入或點擊給予。
+	const planks = focusPlanks;
+	// 保留舊資料相容性；抽籤介面已從產品流程移除。
+	const availablePlanks = planks;
 	const recordWeakQuestion = (questionIndex: number) => {
 		const today = taipeiDate();
 		setWeakQuestions((current) => {
@@ -1064,7 +1074,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		setDailyAnswerFeedback("答對了！今日簽到完成。 ");
 		setDailyCheckInDialogOpen(false);
 		setCheckInCeremonyOpen(true);
-		setSyncStatus("今日簽到題答對，獲得 1 枚祈福木牌！");
+		setSyncStatus("今日學習紀錄已完成；木牌將依完整專注任務自動點亮。");
 	};
 	const exchangeOracleTicket = () => {
 		if (availablePlanks < 3) return;
@@ -2285,20 +2295,20 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	);
 	const prayerView = (
 		<section className="journey">
-			<p className="eyebrow">智慧宮廟・祈福同行</p>
+			<p className="eyebrow">智慧宮廟・學習文化回饋</p>
 			<h1>
-				為努力祈願
+				為真實完成留下記號
 				<br />
-				<em>也為自己留下一句話。</em>
+				<em>讓祈福陪你養成習慣。</em>
 			</h1>
 			<section
 				className={`daily-fortune-task ${dailyFortuneTask.done ? "is-complete" : ""}`}
-				aria-label="每日籤詩任務"
+				aria-label="每日學習紀錄"
 			>
 				<div className="daily-fortune-task-heading">
 					<b>每日學習簽到</b>
 					<small>
-						{dailyFortuneTask.done ? "今日已簽到" : "答對簽到"}
+					{dailyFortuneTask.done ? "今日已留存" : "完成任務後開放"}
 					</small>
 				</div>
 				<p className="daily-fortune-verse">「{dailyFortune.verse}」</p>
@@ -2321,7 +2331,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					disabled={dailyFortuneTask.done || completed < 1}
 				>
 					{dailyFortuneTask.done
-						? "今日簽到完成・已獲得木牌 ✓"
+					? "今日學習紀錄已留存 ✓"
 						: completed < 1
 							? "先完成 1 項專注任務"
 							: "翻開典籍・進行今日簽到"}
@@ -2381,8 +2391,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					</ol>
 				</section>
 				<p className="daily-fortune-note">
-					每天翻開一則典籍，答對今日題目即可完成簽到並獲得 1
-					枚祈福木牌。
+					典籍問答是今日的學習回望；祈福木牌只會在完整專注任務結束後自動點亮。
 				</p>
 			</section>
 			{dailyCheckInDialogOpen && (
@@ -2467,21 +2476,21 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						aria-labelledby="checkin-ceremony-title"
 					>
 						<div className="checkin-ceremony-rays" aria-hidden="true" />
-						<p className="checkin-ceremony-kicker">今日修習圓滿</p>
+						<p className="checkin-ceremony-kicker">今日修習留存</p>
 						<div className="checkin-ceremony-seal" aria-hidden="true">
 							<span>✓</span>
 						</div>
-						<h2 id="checkin-ceremony-title">簽到完成</h2>
+						<h2 id="checkin-ceremony-title">學習紀錄完成</h2>
 						<p className="checkin-ceremony-message">
 							{newlyUnlockedMilestone
 								? `連續 ${newlyUnlockedMilestone.days} 天簽到，已解鎖「${newlyUnlockedMilestone.title}」。`
 								: "你已翻開今日典籍，也為目標留下一次踏實的前進。"}
 						</p>
 						<div className="checkin-ceremony-plaque">
-							<i aria-hidden="true">福</i>
+							<i aria-hidden="true">學</i>
 							<div>
-								<span>今日獲得</span>
-								<b>祈福木牌 × 1</b>
+								<span>文化回饋</span>
+								<b>今日學習已留存</b>
 							</div>
 						</div>
 						<div className="checkin-ceremony-step">
@@ -2495,7 +2504,37 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					</section>
 				</div>
 			)}
-			<section className="oracle-card" aria-label="文昌求籤">
+			<section className="cultural-reward-card" aria-label="文化化的學習回饋">
+				<div className="cultural-reward-heading">
+					<div className="cultural-scene-seal" aria-hidden="true">{activeCulturalScene.seal}</div>
+					<div>
+						<span>完成任務後的文化回饋</span>
+						<b>{activeCulturalScene.title}</b>
+						<p>{activeCulturalScene.detail}</p>
+					</div>
+					<div className="cultural-plank-count">
+						<b>{planks}</b><span>已點亮木牌</span>
+					</div>
+				</div>
+				<div className="cultural-proof">
+					<div><b>{focusSessionsCompleted}</b><span>次完整專注</span></div>
+					<div><b>{focusRewardMinutes}</b><span>分鐘真實累積</span></div>
+					<div><b>{checkInStreak}</b><span>天學習連續</span></div>
+				</div>
+				<ol className="cultural-scene-path" aria-label="祈願場景解鎖進度">
+					{culturalScenes.slice(1).map((scene) => {
+						const unlocked = checkInStreak >= scene.days;
+						return <li key={scene.days} className={unlocked ? "unlocked" : ""}>
+							<i aria-hidden="true">{unlocked ? scene.seal : "·"}</i>
+							<div><b>{scene.days} 日・{scene.title}</b><span>{unlocked ? "已由真實完成解鎖" : `還需連續學習 ${scene.days - checkInStreak} 天`}</span></div>
+						</li>;
+					})}
+				</ol>
+				<p className="cultural-reward-note">
+					{nextCulturalScene ? `下一個場景：${nextCulturalScene.title}。完成完整專注任務、留下今日學習紀錄，讓場景隨習慣自然開展。` : "所有祈願場景皆已由你的真實學習完成解鎖。"}
+				</p>
+			</section>
+			<section className="oracle-card" aria-label="文昌求籤" hidden>
 				<div className="oracle-heading">
 					<div>
 						<span>文昌靈籤</span>

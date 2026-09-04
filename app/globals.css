@@ -8231,6 +8231,129 @@ main:has(.app-shell),
 	}
 }
 
+/* 智慧宮廟：將文化意象連結到完成的學習行為，而非抽選或兌換。 */
+.cultural-reward-card {
+	margin: 16px 0;
+	padding: 18px;
+	border: 1px solid #d9c993;
+	border-top: 6px solid #b78b3e;
+	border-radius: 18px;
+	background: linear-gradient(135deg, #fffdf4, #f4edda);
+	box-shadow: 0 10px 24px #6d5b3210;
+}
+.cultural-reward-heading {
+	display: grid;
+	grid-template-columns: 52px minmax(0, 1fr) auto;
+	gap: 12px;
+	align-items: center;
+}
+.cultural-scene-seal {
+	display: grid;
+	width: 52px;
+	height: 52px;
+	place-items: center;
+	border: 1px solid #a8762c;
+	border-radius: 50%;
+	background: linear-gradient(145deg, #d6a648, #96642a);
+	box-shadow: inset 0 0 0 3px #f6df9e;
+	color: #fff9e9;
+	font-size: 23px;
+	font-weight: 800;
+}
+.cultural-reward-heading > div:nth-child(2) {
+	display: grid;
+	gap: 4px;
+}
+.cultural-reward-heading span {
+	color: #8b6a32;
+	font-size: 11px;
+	font-weight: 800;
+}
+.cultural-reward-heading b {
+	color: #3e503f;
+	font-size: 16px;
+}
+.cultural-reward-heading p {
+	margin: 0;
+	color: #6e7568;
+	font-size: 12px;
+	line-height: 1.55;
+}
+.cultural-plank-count {
+	display: grid;
+	min-width: 58px;
+	justify-items: center;
+	gap: 1px;
+	padding-left: 10px;
+	border-left: 1px solid #d9c993;
+}
+.cultural-plank-count b {
+	color: #a76c29;
+	font-size: 23px;
+	line-height: 1;
+}
+.cultural-plank-count span {
+	font-size: 10px;
+	white-space: nowrap;
+}
+.cultural-proof {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 8px;
+	margin-top: 16px;
+}
+.cultural-proof div {
+	display: grid;
+	gap: 3px;
+	padding: 10px 8px;
+	border: 1px solid #e5dcc5;
+	border-radius: 11px;
+	background: #fffdf8;
+	text-align: center;
+}
+.cultural-proof b { color: #3b614a; font-size: 16px; }
+.cultural-proof span,
+.cultural-scene-path span,
+.cultural-reward-note { color: #778075; font-size: 11px; line-height: 1.5; }
+.cultural-scene-path {
+	display: grid;
+	gap: 8px;
+	margin: 16px 0 0;
+	padding: 0;
+	list-style: none;
+}
+.cultural-scene-path li {
+	display: grid;
+	grid-template-columns: 30px minmax(0, 1fr);
+	gap: 9px;
+	align-items: center;
+	padding: 9px 0;
+	border-top: 1px dashed #ddd1b5;
+	opacity: .58;
+}
+.cultural-scene-path li.unlocked { opacity: 1; }
+.cultural-scene-path i {
+	display: grid;
+	width: 28px;
+	height: 28px;
+	place-items: center;
+	border: 1px solid #c9b98f;
+	border-radius: 8px;
+	background: #e9dfc8;
+	color: #82745a;
+	font-style: normal;
+	font-weight: 800;
+}
+.cultural-scene-path li.unlocked i { border-color: #a57830; background: #b68335; color: #fff8e7; }
+.cultural-scene-path div { display: grid; gap: 2px; }
+.cultural-scene-path b { color: #405443; font-size: 12px; }
+.cultural-reward-note { margin: 13px 0 0; }
+@media (min-width: 768px) {
+	.cultural-reward-card { padding: 22px 24px; }
+	.cultural-scene-path { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+	.cultural-scene-path li { grid-template-columns: 28px minmax(0, 1fr); min-height: 58px; }
+}
+
 /* 收斂四個主捷徑，讓導覽保持輕巧、不搶走頁面內容。 */
 @media (min-width: 501px) {
 	.app-shell { padding-bottom: 92px !important; }
