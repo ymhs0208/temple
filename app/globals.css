@@ -8814,3 +8814,14 @@ main:has(.app-shell),
 	.app-shell > .topbar .brand-copy strong { font-size: 18px; }
 	.app-shell > .topbar .brand-copy small { font-size: 8px; }
 }
+
+/* 手機頁首跨出內容欄，貼齊螢幕左右；品牌與登入仍保留安全操作留白。 */
+@media (max-width: 767px) {
+	.app-shell > .topbar {
+		width: calc(100% + (var(--header-page-gutter) * 2)) !important;
+		margin: 0 0 22px calc(var(--header-page-gutter) * -1) !important;
+	}
+	.topbar-inner {
+		padding: 12px max(14px, env(safe-area-inset-right)) 12px max(14px, env(safe-area-inset-left));
+	}
+}
