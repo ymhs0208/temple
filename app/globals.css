@@ -8102,6 +8102,72 @@ main:has(.app-shell),
 	.app-shell > nav span { font-size: 9px; }
 }
 
+/* 今日頁以一件正在做的事為主，其餘資訊退到第二層。 */
+.today-command-card {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	margin: 0 0 14px;
+	border: 1px solid #d4c17f;
+	border-radius: 18px;
+	padding: 15px;
+	background: linear-gradient(135deg, #fff9e7, #f4ead0);
+	box-shadow: 0 8px 18px rgb(122 91 35 / 10%);
+}
+.today-command-card > div { min-width: 0; }
+.today-command-card span,
+.today-command-card b,
+.today-command-card small { display: block; }
+.today-command-card span {
+	color: #967138;
+	font-size: 9px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+}
+.today-command-card b {
+	margin-top: 4px;
+	overflow: hidden;
+	color: #3f563f;
+	font: 700 15px "Noto Serif TC", serif;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.today-command-card small {
+	margin-top: 4px;
+	color: #847457;
+	font-size: 9px;
+	line-height: 1.45;
+}
+.today-command-card button {
+	flex: 0 0 auto;
+	border: 0;
+	border-radius: 12px;
+	padding: 11px 13px;
+	background: #315f4c;
+	color: #fffdf4;
+	font-size: 11px;
+	font-weight: 800;
+	cursor: pointer;
+}
+.today-command-card button:disabled { background: #80927c; cursor: default; }
+.today-task-list {
+	margin-top: 12px;
+	border-top: 1px solid #eee3cd;
+	padding-top: 10px;
+}
+.today-task-list summary {
+	color: #80683b;
+	font-size: 10px;
+	font-weight: 800;
+	cursor: pointer;
+}
+.today-task-list .tasks { margin-top: 10px; }
+@media (max-width: 500px) {
+	.hero { padding-top: 30px; padding-bottom: 23px; }
+	.today-command-card { margin-right: 2px; margin-left: 2px; }
+}
+
 /* 彈出放大的 Q 版特效 */
 @keyframes bounce-pop {
 	0% {

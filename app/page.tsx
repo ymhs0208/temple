@@ -1330,14 +1330,14 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const today = (
 		<>
 			<section className="hero">
-				<p className="eyebrow">{name.toUpperCase()}</p>
+				<p className="eyebrow">今日學習・{name}</p>
 				<h1>
-					距離目標還有
+					{pendingIndex >= 0 ? "現在先完成" : "今天已經"}
 					<br />
-					<em>{daysLeft} 天</em>
+					<em>{pendingIndex >= 0 ? tasks[pendingIndex].subject : "做得很好"}</em>
 				</h1>
 				<div className="countdown">
-					<span>每天 {hours} 小時・先完成今天</span>
+					<span>{pendingIndex >= 0 ? `${tasks[pendingIndex].detail}・${tasks[pendingIndex].minutes} 分鐘` : `今日 ${completed}/${tasks.length} 項任務已完成`}</span>
 				</div>
 				{examModeActive && (
 					<section className="exam-mode-card">
@@ -1366,33 +1366,19 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				<div className="hero-orb orb-one" />
 				<div className="hero-orb orb-two" />
 			</section>
-			<section className="stats">
-				<div className="stat">
-					<span className="stat-icon fire">🔥</span>
-					<div>
-						<small>今日能量</small>
-						<b>
-							{energy}
-							<i> / 100</i>
-						</b>
-					</div>
+			<section className="today-command-card" aria-label="下一個學習任務">
+				<div>
+					<span>下一個要完成的任務</span>
+					<b>{pendingIndex >= 0 ? `${tasks[pendingIndex].subject}・${tasks[pendingIndex].detail}` : "今日任務已圓滿完成"}</b>
+					<small>{pendingIndex >= 0 ? `預計 ${tasks[pendingIndex].minutes} 分鐘，完成後再決定下一步。` : "現在適合休息，讓努力慢慢沉澱。"}</small>
 				</div>
-				<div className="stat">
-					<span className="stat-icon blossom">🌸</span>
-					<div>
-						<small>祈福木牌</small>
-						<b>
-							{planks}
-							<i> 枚</i>
-						</b>
-					</div>
-				</div>
+				<button onClick={startFocus} disabled={pendingIndex < 0}>{pendingIndex >= 0 ? "開始專注" : "已完成"}</button>
 			</section>
 			<section className="progress-card">
 				<div className="section-heading">
 					<div>
-						<p className="eyebrow">今日任務・弱科 {weak}</p>
-						<h2>一步一步完成</h2>
+						<p className="eyebrow">今日待辦・弱科 {weak}</p>
+						<h2>完成後，再看下一件事</h2>
 					</div>
 					<span className="completion">
 						{completed} / {tasks.length} 完成
@@ -1408,27 +1394,10 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					<span>
 						尚餘 <b>{remaining}</b> 分鐘
 					</span>
-					<div>
-						<button
-							className="task-primary-action"
-							onClick={startFocus}
-							disabled={pendingIndex < 0}
-						>
-							{pendingIndex < 0
-								? "今日已完成"
-								: `專注下一項・${tasks[pendingIndex].minutes} 分`}
-						</button>
-						<button
-							className="task-secondary-action"
-							onClick={toggleAllTasks}
-						>
-							{completed === tasks.length
-								? "重新開啟"
-								: "全部完成"}
-						</button>
-					</div>
 				</div>
-				<div className="tasks">
+				<details className="today-task-list">
+					<summary>查看全部任務與調整選項</summary>
+					<div className="tasks">
 					{tasks.map((task, index) => (
 						<div
 							className={`task ${task.done ? "done" : ""} ${task.skipped ? "skipped" : ""}`}
@@ -1490,7 +1459,8 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							)}
 						</div>
 					))}
-				</div>
+					</div>
+				</details>
 			</section>
 			{focusIndex !== null ? (
 				<section className="focus-panel">
@@ -1553,17 +1523,12 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						</div>
 					)}
 				</section>
-			) : pendingIndex >= 0 ? (
-				<button className="start-button" onClick={startFocus}>
-					開始專注・{tasks[pendingIndex].subject}{" "}
-					{tasks[pendingIndex].minutes} 分鐘
-				</button>
-			) : (
+			) : pendingIndex < 0 ? (
 				<section className="focus-panel complete">
 					<b>今日全數完成 ✦</b>
 					<p>你已累積能量與祈福木牌，明天繼續前進。</p>
 				</section>
-			)}
+			) : null}
 			<section className="encouragement">
 				<span>「</span>
 				<p>
@@ -2038,19 +2003,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					<span className="quick-icon goal">◎</span>
 					<b>調整目標</b>
 					<small>日期・弱科・時間</small>
-				</button>
-				<button
-					onClick={() => {
-						if (pendingIndex >= 0) startFocus();
-					}}
-				>
-					<span className="quick-icon focus">◷</span>
-					<b>開始專注</b>
-					<small>
-						{pendingIndex >= 0
-							? `${tasks[pendingIndex].minutes} 分鐘任務`
-							: "今日已完成"}
-					</small>
 				</button>
 				<button
 					onClick={() => {
