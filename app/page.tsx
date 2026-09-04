@@ -49,6 +49,9 @@ type WeakQuestion = {
 	questionIndex: number;
 	misses: number;
 	lastWrongAt: string;
+	firstWrongDate: string;
+	reviewStep: 1 | 2;
+	nextReviewDate: string;
 };
 type WishReflection = {
 	id: string;
@@ -76,6 +79,7 @@ type SavedPlan = {
 	oracleResultId?: number;
 	dailyFortuneTask?: DailyFortuneTask;
 	dailyCheckInDates?: string[];
+	weakQuestions?: WeakQuestion[];
 	focusRewardMinutes?: number;
 	deferredTasks?: DeferredTask[];
 	taskAdjustmentCounts?: TaskAdjustmentCounts;
@@ -242,6 +246,11 @@ const consecutiveCheckInDays = (dates: string[], today = taipeiDate()) => {
 	}
 	return total;
 };
+const addTaipeiDays = (date: string, days: number) => {
+	const next = new Date(`${date}T00:00:00.000Z`);
+	next.setUTCDate(next.getUTCDate() + days);
+	return next.toISOString().slice(0, 10);
+};
 
 export default function Home() {
 	const [tab, setTab] = useState<Tab>("today");
@@ -272,6 +281,7 @@ export default function Home() {
 		() => makeDailyFortuneTask(),
 	);
 	const [dailyCheckInDates, setDailyCheckInDates] = useState<string[]>([]);
+	const [weakQuestions, setWeakQuestions] = useState<WeakQuestion[]>([]);
 	const [selectedDailyAnswer, setSelectedDailyAnswer] = useState<
 		string | null
 	>(null);
@@ -285,6 +295,7 @@ export default function Home() {
 	const [weakReviewFeedback, setWeakReviewFeedback] = useState<
 		Record<string, string>
 	>({});
+	const [weaknessNotice, setWeaknessNotice] = useState("");
 	const [idToken, setIdToken] = useState<string | null>(null);
 	const [lineName, setLineName] = useState<string | null>(null);
 	const [syncStatus, setSyncStatus] = useState("");
@@ -373,6 +384,20 @@ export default function Home() {
 								typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date),
 						),
 					);
+				if (Array.isArray(data.weakQuestions))
+					setWeakQuestions(data.weakQuestions.slice(0, 12));
+				else if (data.dailyFortuneTask?.weakQuestions?.length)
+					setWeakQuestions(
+						data.dailyFortuneTask.weakQuestions.map((item) => ({
+							...item,
+							firstWrongDate: data.dailyFortuneTask?.date ?? taipeiDate(),
+							reviewStep: 1,
+							nextReviewDate: addTaipeiDays(
+								data.dailyFortuneTask?.date ?? taipeiDate(),
+								1,
+							),
+						})),
+					);
 				if (typeof data.focusRewardMinutes === "number")
 					setFocusRewardMinutes(data.focusRewardMinutes);
 				if (typeof data.remindersEnabled === "boolean")
@@ -434,6 +459,7 @@ export default function Home() {
 				oracleResultId,
 				dailyFortuneTask,
 				dailyCheckInDates,
+				weakQuestions,
 				focusRewardMinutes,
 				deferredTasks,
 				taskAdjustmentCounts,
@@ -458,6 +484,7 @@ export default function Home() {
 		oracleResultId,
 		dailyFortuneTask,
 		dailyCheckInDates,
+		weakQuestions,
 		focusRewardMinutes,
 		deferredTasks,
 		taskAdjustmentCounts,
@@ -731,7 +758,12 @@ export default function Home() {
 	const newlyUnlockedMilestone = checkInMilestones.find(
 		(milestone) => milestone.days === checkInStreak,
 	);
-	const weakQuestions = dailyFortuneTask.weakQuestions ?? [];
+	const dueWeakQuestions = weakQuestions.filter(
+		(item) => item.nextReviewDate <= taipeiDate(),
+	);
+	const upcomingWeakQuestion = weakQuestions
+		.filter((item) => item.nextReviewDate > taipeiDate())
+		.sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate))[0];
 	const focusPlanks = Math.floor(focusRewardMinutes / 10);
 	const planks =
 		10 +
@@ -741,33 +773,35 @@ export default function Home() {
 		focusPlanks;
 	const availablePlanks = Math.max(0, planks - oraclePlanksSpent);
 	const recordWeakQuestion = (questionIndex: number) => {
-		setDailyFortuneTask((current) => {
-			const weakQuestions = current.weakQuestions ?? [];
-			const existing = weakQuestions.find(
+		const today = taipeiDate();
+		setWeakQuestions((current) => {
+			const existing = current.find(
 				(item) => item.questionIndex === questionIndex,
 			);
-			return {
-				...current,
-				weakQuestions: existing
-					? weakQuestions.map((item) =>
-							item.questionIndex === questionIndex
-								? {
-										...item,
-										misses: item.misses + 1,
-										lastWrongAt: new Date().toISOString(),
-									}
-								: item,
-						)
-					: [
-							{
-								id: `weak-${Date.now()}-${questionIndex}`,
-								questionIndex,
-								misses: 1,
-								lastWrongAt: new Date().toISOString(),
-							},
-							...weakQuestions,
-						].slice(0, 12),
-			};
+			return existing
+				? current.map((item) =>
+						item.questionIndex === questionIndex
+							? {
+									...item,
+									misses: item.misses + 1,
+									lastWrongAt: new Date().toISOString(),
+									reviewStep: 1,
+									nextReviewDate: addTaipeiDays(today, 1),
+								}
+							: item,
+					)
+				: [
+						{
+							id: `weak-${Date.now()}-${questionIndex}`,
+							questionIndex,
+							misses: 1,
+							lastWrongAt: new Date().toISOString(),
+							firstWrongDate: today,
+							reviewStep: 1,
+							nextReviewDate: addTaipeiDays(today, 1),
+						},
+						...current,
+					].slice(0, 12);
 		});
 	};
 	const submitWeakReview = (item: WeakQuestion) => {
@@ -781,36 +815,54 @@ export default function Home() {
 			return;
 		}
 		if (selected !== question?.answer) {
-			setDailyFortuneTask((current) => ({
-				...current,
-				weakQuestions: (current.weakQuestions ?? []).map((entry) =>
+			setWeakQuestions((current) =>
+				current.map((entry) =>
 					entry.id === item.id
 						? {
 								...entry,
 								misses: entry.misses + 1,
 								lastWrongAt: new Date().toISOString(),
+								reviewStep: 1,
+								nextReviewDate: addTaipeiDays(taipeiDate(), 1),
 							}
 						: entry,
 				),
-			}));
+			);
 			setWeakReviewFeedback((current) => ({
 				...current,
 				[item.id]: "再看一次題幹，你一定能找到線索。",
 			}));
+			setWeaknessNotice("這題會在明天再回流，陪你把觀念練穩。");
 			return;
 		}
-		setDailyFortuneTask((current) => ({
-			...current,
-			weakQuestions: (current.weakQuestions ?? []).filter(
-				(entry) => entry.id !== item.id,
-			),
-		}));
+		if (item.reviewStep === 1) {
+			setWeakQuestions((current) =>
+				current.map((entry) =>
+					entry.id === item.id
+						? {
+								...entry,
+								reviewStep: 2,
+								nextReviewDate: addTaipeiDays(entry.firstWrongDate, 3),
+							}
+						: entry,
+				),
+			);
+			setWeakReviewFeedback((current) => ({
+				...current,
+				[item.id]: "第一輪複習答對！第 3 天會再回來確認一次。",
+			}));
+			setWeaknessNotice("第一輪複習答對！第 3 天會再回來確認一次。 ");
+			setReviewingWeakId(null);
+			return;
+		}
+		setWeakQuestions((current) => current.filter((entry) => entry.id !== item.id));
 		setWeakReviewFeedback((current) => ({
 			...current,
-			[item.id]: "答對了！已從弱點清單移除。",
+			[item.id]: "已克服弱點。",
 		}));
+		setWeaknessNotice("已克服弱點，這題不會再回流。 ");
 		setReviewingWeakId(null);
-		setSyncStatus("弱點複習答對，已更新你的學習紀錄。");
+		setSyncStatus("已克服弱點，這題不會再回流。 ");
 	};
 	const completeDailyCheckIn = () => {
 		if (dailyFortuneTask.done) return;
@@ -822,7 +874,7 @@ export default function Home() {
 			recordWeakQuestion(
 				dailyFortuneTask.fortuneId % dailyCheckInQuestions.length,
 			);
-			setDailyAnswerFeedback("這題已加入弱點複習，稍後可以再挑戰一次。 ");
+			setDailyAnswerFeedback("這題會在明天與第 3 天回流，陪你把觀念練穩。 ");
 			return;
 		}
 		// 讓慶祝從答對當下延續到木牌落定，而不是一瞬即逝。
@@ -1602,15 +1654,20 @@ export default function Home() {
 						<span>錯題／弱點追蹤</span>
 						<b>把不熟的地方，練成下一次的底氣</b>
 					</div>
-					<i>{weakQuestions.length}</i>
+					<i>{dueWeakQuestions.length}</i>
 				</div>
-				{weakQuestions.length === 0 ? (
+				{weaknessNotice && (
+					<p className="weakness-notice">{weaknessNotice}</p>
+				)}
+				{dueWeakQuestions.length === 0 ? (
 					<p className="weakness-empty">
-						目前沒有待複習錯題；每日簽到題答錯時，會自動收在這裡。
+						{upcomingWeakQuestion
+							? `下一題將在 ${upcomingWeakQuestion.nextReviewDate.slice(5).replace("-", "/")} 回流複習。`
+							: "目前沒有到期錯題；答錯簽到題會在隔天與第 3 天回流。"}
 					</p>
 				) : (
 					<div className="weakness-list">
-						{weakQuestions.map((item) => {
+						{dueWeakQuestions.map((item) => {
 							const question =
 								dailyCheckInQuestions[item.questionIndex];
 							if (!question) return null;
@@ -1623,8 +1680,7 @@ export default function Home() {
 									<div className="weakness-item-summary">
 										<div>
 											<span>
-												{question.subject}・累計錯誤{" "}
-												{item.misses} 次
+												{question.subject}・第 {item.reviewStep} 輪回流複習
 											</span>
 											<b>{question.question}</b>
 										</div>
