@@ -1,0 +1,81 @@
+{
+  "type": "bubble",
+  "hero": {
+    "type": "image",
+    "url": "https://media.discordapp.net/attachments/1038043366690140180/1548237468103606282/LINE_ALBUM_2026.9.12_260912_1.jpg?ex=6aa65401&is=6aa50281&hm=4cc2517b7a098d83dc648d1952f89019148b98e21f0ea65651a0456324f1583c&=&format=webp&width=1280&height=1280",
+    "size": "full",
+    "aspectRatio": "20:13",
+    "aspectMode": "cover",
+    "action": {
+      "type": "uri",
+      "uri": "https://line.me/"
+    }
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "text",
+        "text": "已完成目標",
+        "weight": "bold",
+        "size": "xl",
+        "style": "normal",
+        "decoration": "none"
+      },
+      {
+        "type": "box",
+        "layout": "baseline",
+        "margin": "md",
+        "contents": []
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "margin": "lg",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "baseline",
+            "spacing": "sm",
+            "contents": [
+              {
+                "type": "text",
+                "color": "#aaaaaa",
+                "size": "sm",
+                "flex": 1,
+                "text": "目標已達成"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "height": "md",
+        "action": {
+          "type": "uri",
+          "label": "前往讀書統計紀錄",
+          "uri": "https://liff.line.me/2011050459-8bPHPFCw/statistics"
+        },
+        "gravity": "center"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [],
+        "margin": "sm"
+      }
+    ],
+    "flex": 0
+  }
+}
