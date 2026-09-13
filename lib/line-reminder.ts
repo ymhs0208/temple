@@ -6,13 +6,15 @@ const liffUrl = () => {
   return process.env.NEXT_PUBLIC_APP_URL || `https://liff.line.me/${id}`;
 };
 
-export function buildReminderFlex({ kind, displayName, tasks, pending }: { kind: ReminderKind; displayName?: string | null; tasks: ReminderTask[]; pending: ReminderTask[] }) {
+export function buildReminderFlex({ kind, displayName, tasks, pending, dayNumber, weakSubject, completionRate }: { kind: ReminderKind; displayName?: string | null; tasks: ReminderTask[]; pending: ReminderTask[]; dayNumber?: number; weakSubject?: string; completionRate?: number }) {
   const completed = tasks.length - pending.length;
   const next = pending[0];
   const isMorning = kind === "morning";
   const title = isMorning ? "早安，今天也一起前進" : pending.length ? "晚安前，留給自己一小步" : "今天任務圓滿完成";
+  const dayLine = dayNumber ? `今天是你的 Day ${dayNumber}` : "今天也一起前進";
+  const insight = weakSubject ? `昨天的紀錄顯示，今天先安排 ${weakSubject} 複習。` : "先從第一項任務開始，就能穩定累積。";
   const intro = isMorning
-    ? `${displayName ?? "同學"}，先完成第一項任務就很棒。`
+    ? `${displayName ?? "同學"}，${dayLine}。${insight}`
     : pending.length ? `還有 ${pending.length} 項任務，不必一次做完。` : "穩定完成的你，值得好好休息。";
   const summary = tasks.length ? `今日進度 ${completed}/${tasks.length} 項` : "今天還沒有建立任務";
   const taskLine = next ? `${next.subject}・${next.minutes} 分鐘` : "明天再一起安排新的學習節奏";
@@ -35,7 +37,7 @@ export function buildReminderFlex({ kind, displayName, tasks, pending }: { kind:
           { type: "text", text: summary, color: "#9D7B40", size: "xs", weight: "bold" },
           { type: "text", text: taskLine, margin: "sm", color: "#594225", size: "md", weight: "bold", wrap: true },
         ] },
-        { type: "text", text: "完成任務後，直接按按鈕同步到你的學習進度。", size: "xxs", color: "#9C927E", wrap: true },
+        { type: "text", text: `${completionRate !== undefined ? `目前完成率 ${completionRate}%。` : ""} 完成任務後，直接按按鈕同步到你的學習進度。`, size: "xxs", color: "#9C927E", wrap: true },
       ] },
       footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "14px", contents: buttons },
     },
