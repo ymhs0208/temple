@@ -404,15 +404,15 @@ export default function Pilgrimage() {
 					<div className="temple-hero-content">
 						<div className="temple-hero-label"><span>⛩</span> 1917 七媽會・台中萬春宮</div>
 						<p className="temple-hero-eyebrow">百年香火匯聚，從第一站開始尋回記憶</p>
-						<h1>尋找七媽蹤跡，<em>收集百年歷史碎片。</em></h1>
-						<p className="temple-hero-description">掃描活動現場 QR Code，依序解鎖 1917 年七媽會的專屬故事。集滿七塊碎片，即可開啟隱藏劇情。</p>
+						<h1>從第一站開始，<em>收集七塊歷史碎片。</em></h1>
+						<p className="temple-hero-description">先前往下一站宮廟，掃描現場 QR Code，依序解鎖故事；集滿七塊碎片後即可完成巡禮。</p>
 						<div className="temple-hero-meta"><span>七座宮廟</span><i /> <span>七段故事</span><i /> <span>一場時空巡禮</span></div>
 					</div>
 				</section>
 
 				<section className="ritual-progress pilgrimage-progress-card" aria-label="巡禮進度與參與方式">
 					<div className="ritual-progress-summary">
-						<span>歷史碎片收集進度</span>
+						<span>你的巡禮進度</span>
 						<b>{unlockedCount}<small> / {matsus.length} 塊</small></b>
 						<div><i style={{ width: `${(unlockedCount / matsus.length) * 100}%`, backgroundColor: "#a855f7" }} /></div>
 					</div>
@@ -420,7 +420,7 @@ export default function Pilgrimage() {
 						<div><span>01</span><b>查看下一站</b><small>依導覽前往指定宮廟</small></div>
 						<div><span>02</span><b>掃描現場 QR Code</b><small>依序解鎖專屬歷史故事</small></div>
 						<div><span>03</span><b>集滿七塊碎片</b><small>完成問答，開啟隱藏劇情</small></div>
-						<button type="button" onClick={() => scanCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>前往掃描</button>
+						<button type="button" onClick={() => scanCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>{nextMatsu ? `掃描第 ${unlockedCount + 1} 站` : "查看巡禮成果"}</button>
 					</div>
 				</section>
 
@@ -472,7 +472,7 @@ export default function Pilgrimage() {
 					<div className="card-title">
 						<span>🔍</span>
 						<div>
-							<b>尋找與掃描</b>
+									<b>{nextMatsu ? `第 ${unlockedCount + 1} 站：解鎖碎片` : "巡禮掃描"}</b>
 							<small>
 								掃描現場 QR Code；無法開啟相機時，也可手動輸入。
 							</small>

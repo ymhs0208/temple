@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const db = supabaseAdmin();
     const { data: user } = await db
       .from("users")
-      .select("id")
+      .select("id, weak_subject, created_at")
       .eq("line_user_id", identity.userId)
       .maybeSingle();
     if (!user)
@@ -58,6 +58,8 @@ export async function POST(request: Request) {
       );
     const done = new Set(completions?.map((item) => item.task_id));
     const pending = tasks.filter((task) => !done.has(task.id));
+    const dayNumber = plan.created_at ? Math.max(1, Math.floor((Date.now() - new Date(plan.created_at).getTime()) / 86400000) + 1) : undefined;
+    const completionRate = tasks.length ? Math.round((done.size / tasks.length) * 100) : 0;
     const push = await fetch("https://api.line.me/v2/bot/message/push", {
       method: "POST",
       headers: {
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         to: identity.userId,
-        messages: [buildReminderFlex({ kind: body.kind, displayName: identity.displayName, tasks, pending })],
+        messages: [buildReminderFlex({ kind: body.kind, displayName: identity.displayName, tasks, pending, dayNumber, weakSubject: plan.weak_subject, completionRate })],
       }),
     });
     if (!push.ok) throw new Error("LINE OA 推播失敗");

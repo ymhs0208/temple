@@ -83,13 +83,9 @@ export default function PrayerWall() {
         </button>
         <section className="feature-hero wall-hero">
           <span className="feature-kicker">WENCHANG PRAYER WALL</span>
-          <h1>
-            把祈願留在牆上，
-            <br />
-            <em>讓努力彼此照亮。</em>
-          </h1>
+          <h1>寫下今天的祈願</h1>
           <p>
-            每則公開內容都會經過基本安全檢查；你可匿名發文，也能協助檢舉不當內容。
+            留下一句祝福，也看看其他學習夥伴正在努力什麼。你可以選擇匿名發布。
           </p>
       </section>
       {featured && (
@@ -112,7 +108,7 @@ export default function PrayerWall() {
           <div className="card-title">
             <span>✦</span>
             <div>
-              <b>寫下今日祈願</b>
+              <b>新增一則祈願</b>
               <small>2–120 字；每位使用者每分鐘可發送一則</small>
             </div>
           </div>
@@ -131,7 +127,7 @@ export default function PrayerWall() {
               />{" "}
               匿名發佈
             </label>
-            <button onClick={post}>送出祈願</button>
+            <button onClick={post}>{idToken ? "發布祈願" : "登入 LINE 後發布"}</button>
           </div>
           {notice && <p className="unlock-notice">{notice}</p>}
         </section>
