@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import liff from "@line/liff";
-import confetti from "canvas-confetti"; // ✨ 新增這行引入紙花套件
 
 type Task = {
 	subject: string;
@@ -13,11 +12,7 @@ type Task = {
 	skipped?: boolean;
 };
 type DeferredTask = { task: Task; availableOn: string };
-type TaskAdjustmentCounts = {
-	deferred: number;
-	split: number;
-	skipped: number;
-};
+type TaskAdjustmentCounts = { deferred: number; split: number; skipped: number };
 type LearningDay = { date: string; minutes: number };
 type LearningRecord = {
 	date: string;
@@ -30,14 +25,6 @@ type LearningRecord = {
 	}[];
 };
 type Tab = "today" | "progress" | "prayer" | "profile";
-const tabPaths: Record<Tab, string> = {
-	today: "/today",
-	progress: "/progress",
-	prayer: "/prayer",
-	profile: "/profile",
-};
-const tabFromPath = (pathname: string): Tab =>
-	(Object.entries(tabPaths).find(([, path]) => path === pathname)?.[0] as Tab | undefined) ?? "today";
 type FocusSession = {
 	taskIndex: number;
 	remainingSeconds: number;
@@ -50,21 +37,13 @@ type DailyFortuneTask = {
 	date: string;
 	fortuneId: number;
 	done: boolean;
-	smallStepDone?: boolean;
 	weakQuestions?: WeakQuestion[];
-	achievementStats?: {
-		focusSessionsCompleted?: number;
-		weaknessesConquered?: number;
-	};
 };
 type WeakQuestion = {
 	id: string;
 	questionIndex: number;
 	misses: number;
 	lastWrongAt: string;
-	firstWrongDate: string;
-	reviewStep: 1 | 2;
-	nextReviewDate: string;
 };
 type WishReflection = {
 	id: string;
@@ -91,8 +70,6 @@ type SavedPlan = {
 	oraclePlanksSpent?: number;
 	oracleResultId?: number;
 	dailyFortuneTask?: DailyFortuneTask;
-	dailyCheckInDates?: string[];
-	weakQuestions?: WeakQuestion[];
 	focusRewardMinutes?: number;
 	deferredTasks?: DeferredTask[];
 	taskAdjustmentCounts?: TaskAdjustmentCounts;
@@ -100,7 +77,6 @@ type SavedPlan = {
 type OracleStage = "idle" | "choosing" | "drawing" | "result";
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
 const PENDING_SYNC_KEY = "wenchang-cloud-sync-pending";
-const SLEEP_REMINDER_KEY = "wenchang-sleep-reminder-seen";
 const defaultTasks: Task[] = [
 	{
 		subject: "數學",
@@ -124,195 +100,40 @@ const defaultTasks: Task[] = [
 		color: "violet",
 	},
 ];
-type CountdownPhase = {
-	id: "steady" | "strengthen" | "sprint" | "exam";
-	title: string;
-	label: string;
-	detail: string;
-	factor: number;
-	weakRatio: number;
-	pastRatio: number;
-};
-const getCountdownPhase = (daysLeft: number): CountdownPhase => {
-	if (daysLeft <= 0)
-		return { id: "exam", title: "應試日整理", label: "應試日", detail: "只回顧關鍵題型與考場策略，保留穩定感。", factor: 0.35, weakRatio: 0.45, pastRatio: 0.35 };
-	if (daysLeft <= 7)
-		return { id: "sprint", title: "考前衝刺", label: "7 日衝刺", detail: "縮短總量、提高弱科比例，保留睡眠與考場節奏。", factor: 0.65, weakRatio: 0.55, pastRatio: 0.3 };
-	if (daysLeft <= 21)
-		return { id: "strengthen", title: "弱科加強", label: "21 日加強", detail: "弱科放在第一項，搭配歷屆題校正解題節奏。", factor: 0.85, weakRatio: 0.5, pastRatio: 0.32 };
-	return { id: "steady", title: "穩定累積", label: "長線準備", detail: "先穩定完成，再逐步提高弱科與歷屆題的比重。", factor: 1, weakRatio: 0.45, pastRatio: 0.32 };
-};
-const buildCountdownTasks = (weak: string, hours: number, phase: CountdownPhase): Task[] => {
-	const total = Math.max(45, Math.round((Math.max(1, hours) * 60 * phase.factor) / 5) * 5);
-	const weakMinutes = Math.max(15, Math.round((total * phase.weakRatio) / 5) * 5);
-	const pastMinutes = Math.max(15, Math.round((total * phase.pastRatio) / 5) * 5);
-	const reviewMinutes = Math.max(10, total - weakMinutes - pastMinutes);
-	return [
-		{ subject: weak, minutes: weakMinutes, detail: "弱點加強・先釐清最常卡住的觀念", done: false, color: "amber" },
-		{ subject: "歷屆題", minutes: pastMinutes, detail: "限時演練・記下錯因與解題步驟", done: false, color: "jade" },
-		{ subject: "重點整理", minutes: reviewMinutes, detail: "回顧核心觀念・整理明日要複習的線索", done: false, color: "violet" },
-	];
-};
 const fortunePoems = [
-	{
-		title: "今日箴言・春風得意",
-		verse: "春風輕拂柳梢新，靜守初心得好音。",
-		reading: "眼前的努力正在累積，不必急著求快，照著節奏完成今天的任務。",
-	},
-	{
-		title: "今日箴言・專志有成",
-		verse: "一念澄明書卷香，步穩方能到遠方。",
-		reading:
-			"先完成最重要的一件事。把注意力收回當下，成果會比焦慮更早抵達。",
-	},
-	{
-		title: "今日箴言・厚積薄發",
-		verse: "細雨潤田終成穗，深耕不語自生光。",
-		reading: "看似平凡的複習最有力量。今天整理一題錯題，也是在替明天鋪路。",
-	},
-	{
-		title: "今日箴言・柳暗花明",
-		verse: "峰迴路轉雲開處，且把難題細細分。",
-		reading: "遇到卡關時，先拆小步驟再前進。你不必一次解開所有問題。",
-	},
-	{
-		title: "今日箴言・勤可補拙",
-		verse: "燈下三分常不負，日添一點自成峰。",
-		reading: "規律勝過衝刺。今天多專注十分鐘，長久下來會成為你的底氣。",
-	},
-	{
-		title: "今日箴言・金榜可期",
-		verse: "心定筆穩開新卷，所學終將答所求。",
-		reading: "你已具備前進的條件。相信累積，帶著平靜完成下一個任務。",
-	},
+	{ title: "第一籤・春風得意", verse: "春風輕拂柳梢新，靜守初心得好音。", reading: "眼前的努力正在累積，不必急著求快，照著節奏完成今天的任務。" },
+	{ title: "第二籤・專志有成", verse: "一念澄明書卷香，步穩方能到遠方。", reading: "先完成最重要的一件事。把注意力收回當下，成果會比焦慮更早抵達。" },
+	{ title: "第三籤・厚積薄發", verse: "細雨潤田終成穗，深耕不語自生光。", reading: "看似平凡的複習最有力量。今天整理一題錯題，也是在替明天鋪路。" },
+	{ title: "第四籤・柳暗花明", verse: "峰迴路轉雲開處，且把難題細細分。", reading: "遇到卡關時，先拆小步驟再前進。你不必一次解開所有問題。" },
+	{ title: "第五籤・勤可補拙", verse: "燈下三分常不負，日添一點自成峰。", reading: "規律勝過衝刺。今天多專注十分鐘，長久下來會成為你的底氣。" },
+	{ title: "第六籤・金榜可期", verse: "心定筆穩開新卷，所學終將答所求。", reading: "你已具備前進的條件。相信累積，帶著平靜完成下一個任務。" },
 ];
 const dailyCheckInQuestions = [
-	{
-		subject: "地理",
-		question:
-			"2024 年 7 月下旬，雲林、臺南與嘉義農損嚴重。依災害時間與受影響地區判斷，最可能是何種災害？",
-		choices: [
-			["A", "颱風帶來的豪大雨淹沒農田"],
-			["B", "強勁東北季風吹襲造成水稻倒伏"],
-			["C", "梅雨季節的連續降雨造成果樹浸水"],
-			["D", "強勁西南風越過山脈形成熱風使作物枯黃"],
-		],
-		answer: "A",
-	},
-	{
-		subject: "公民",
-		question:
-			"日本擴大自越南、菲律賓、印尼、泰國等地招募外籍移工；哪一地區因同樣缺工且來源國高度重疊，受衝擊最大？",
-		choices: [
-			["A", "印度"],
-			["B", "美國"],
-			["C", "德國"],
-			["D", "臺灣"],
-		],
-		answer: "D",
-	},
-	{
-		subject: "臺灣史地",
-		question:
-			"某平埔族居住在雪山山脈與中央山脈間的平原，以竹筏穿梭溪流與海岸，生活空間最可能位於現今哪一行政區？",
-		choices: [
-			["A", "宜蘭縣"],
-			["B", "苗栗縣"],
-			["C", "屏東縣"],
-			["D", "臺東縣"],
-		],
-		answer: "A",
-	},
-	{
-		subject: "歷史",
-		question:
-			"政府提出「莊敬自強，處變不驚」，民間出現「牙刷主義」，電臺播放〈龍的傳人〉；此情境最可能與何事有關？",
-		choices: [
-			["A", "美國在韓戰後協防臺灣海峽"],
-			["B", "美國宣布將與中華民國斷交"],
-			["C", "國共內戰使政府敗退至臺灣"],
-			["D", "臺灣受到同盟國軍機的空襲"],
-		],
-		answer: "B",
-	},
+	{ subject: "地理", question: "2024 年 7 月下旬，雲林、臺南與嘉義農損嚴重。依災害時間與受影響地區判斷，最可能是何種災害？", choices: [["A", "颱風帶來的豪大雨淹沒農田"], ["B", "強勁東北季風吹襲造成水稻倒伏"], ["C", "梅雨季節的連續降雨造成果樹浸水"], ["D", "強勁西南風越過山脈形成熱風使作物枯黃"]], answer: "A" },
+	{ subject: "公民", question: "日本擴大自越南、菲律賓、印尼、泰國等地招募外籍移工；哪一地區因同樣缺工且來源國高度重疊，受衝擊最大？", choices: [["A", "印度"], ["B", "美國"], ["C", "德國"], ["D", "臺灣"]], answer: "D" },
+	{ subject: "臺灣史地", question: "某平埔族居住在雪山山脈與中央山脈間的平原，以竹筏穿梭溪流與海岸，生活空間最可能位於現今哪一行政區？", choices: [["A", "宜蘭縣"], ["B", "苗栗縣"], ["C", "屏東縣"], ["D", "臺東縣"]], answer: "A" },
+	{ subject: "歷史", question: "政府提出「莊敬自強，處變不驚」，民間出現「牙刷主義」，電臺播放〈龍的傳人〉；此情境最可能與何事有關？", choices: [["A", "美國在韓戰後協防臺灣海峽"], ["B", "美國宣布將與中華民國斷交"], ["C", "國共內戰使政府敗退至臺灣"], ["D", "臺灣受到同盟國軍機的空襲"]], answer: "B" },
 ] as const;
 const dailyClassics = [
-	{
-		title: "《論語》",
-		passage: "學而時習之，不亦說乎。",
-		note: "每天回來複習一小段，就是累積學問的開始。",
-	},
-	{
-		title: "《禮記・學記》",
-		passage: "學然後知不足，教然後知困。",
-		note: "看見不足，不是挫折，而是下一步的方向。",
-	},
-	{
-		title: "《荀子・勸學》",
-		passage: "不積跬步，無以至千里。",
-		note: "把今天的小練習完成，就比昨天更靠近目標。",
-	},
-	{
-		title: "《中庸》",
-		passage: "博學之，審問之，慎思之，明辨之，篤行之。",
-		note: "讀、問、想、辨、做，讓知識真正成為自己的。",
-	},
+	{ title: "《論語》", passage: "學而時習之，不亦說乎。", note: "每天回來複習一小段，就是累積學問的開始。" },
+	{ title: "《禮記・學記》", passage: "學然後知不足，教然後知困。", note: "看見不足，不是挫折，而是下一步的方向。" },
+	{ title: "《荀子・勸學》", passage: "不積跬步，無以至千里。", note: "把今天的小練習完成，就比昨天更靠近目標。" },
+	{ title: "《中庸》", passage: "博學之，審問之，慎思之，明辨之，篤行之。", note: "讀、問、想、辨、做，讓知識真正成為自己的。" },
 ] as const;
-const taipeiDate = (date = new Date()) =>
-	new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(date);
-const makeDailyFortuneTask = (date = taipeiDate()): DailyFortuneTask => ({
-	date,
-	fortuneId: Number(date.replaceAll("-", "")) % fortunePoems.length,
-	done: false,
-});
-const checkInMilestones = [
-	{ days: 3, plaque: "初", title: "勤學新芽", detail: "解鎖青木牌・書院門景" },
-	{ days: 7, plaque: "穩", title: "七日守志", detail: "解鎖墨綠木牌・晨鐘廊景" },
-	{ days: 14, plaque: "進", title: "半月精進", detail: "解鎖朱砂木牌・燈火書齋" },
-	{ days: 30, plaque: "願", title: "願成文昌殿", detail: "解鎖文昌殿祈願場景" },
+const focusModes = [
+	{ minutes: 10, label: "暖身專注", detail: "先完成 10 分鐘，進入讀書狀態" },
+	{ minutes: 25, label: "番茄專注", detail: "適合單一小節複習或寫題" },
+	{ minutes: 45, label: "深度專注", detail: "適合完整章節與錯題整理" },
 ] as const;
-const culturalScenes = [
-	{ days: 0, seal: "學", title: "書院門前", detail: "完成第一段完整專注，替今天立下學習的起點。" },
-	{ days: 3, seal: "初", title: "青木書院", detail: "連續三天以完成任務回應自己，木牌正式點亮。" },
-	{ days: 7, seal: "穩", title: "晨鐘長廊", detail: "七日穩定累積，讓規律成為可以依靠的節奏。" },
-	{ days: 14, seal: "進", title: "燈火書齋", detail: "半月精進，回望錯題與弱點，讓理解逐漸清晰。" },
-	{ days: 30, seal: "願", title: "文昌殿", detail: "三十日真實完成，解鎖專屬祈願場景與回顧時刻。" },
-] as const;
-const dailySmallSteps = [
-	{ minutes: 5, title: "複習 5 個英文單字", detail: "把今天最常卡住的字重新讀一遍。" },
-	{ minutes: 10, title: "訂正 1 題錯題", detail: "寫下錯因與正確解題線索。" },
-	{ minutes: 10, title: "整理一個核心觀念", detail: "用自己的話寫成三行重點。" },
-	{ minutes: 15, title: "完成一段專注練習", detail: "挑一小節內容，暫時遠離通知。" },
-] as const;
+const taipeiDate = (date = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(date);
+const makeDailyFortuneTask = (date = taipeiDate()): DailyFortuneTask => ({ date, fortuneId: Number(date.replaceAll("-", "")) % fortunePoems.length, done: false });
 
-const consecutiveCheckInDays = (dates: string[], today = taipeiDate()) => {
-	const completed = new Set(dates);
-	let cursor = today;
-	let total = 0;
-	while (completed.has(cursor)) {
-		total += 1;
-		const date = new Date(`${cursor}T00:00:00.000Z`);
-		date.setUTCDate(date.getUTCDate() - 1);
-		cursor = date.toISOString().slice(0, 10);
-	}
-	return total;
-};
-const addTaipeiDays = (date: string, days: number) => {
-	const next = new Date(`${date}T00:00:00.000Z`);
-	next.setUTCDate(next.getUTCDate() + days);
-	return next.toISOString().slice(0, 10);
-};
-
-export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
-	const [tab, setTab] = useState<Tab>(initialTab);
-	const [navVisible, setNavVisible] = useState(true);
+export default function Home() {
+	const [tab, setTab] = useState<Tab>("today");
 	const [tasks, setTasks] = useState<Task[]>(defaultTasks);
 	const [deferredTasks, setDeferredTasks] = useState<DeferredTask[]>([]);
-	const [adjustingTaskIndex, setAdjustingTaskIndex] = useState<number | null>(
-		null,
-	);
-	const [taskAdjustmentCounts, setTaskAdjustmentCounts] =
-		useState<TaskAdjustmentCounts>({ deferred: 0, split: 0, skipped: 0 });
+	const [adjustingTaskIndex, setAdjustingTaskIndex] = useState<number | null>(null);
+	const [taskAdjustmentCounts, setTaskAdjustmentCounts] = useState<TaskAdjustmentCounts>({ deferred: 0, split: 0, skipped: 0 });
 	const [name, setName] = useState("30 日學習挑戰");
 	const [examDate, setExamDate] = useState("2026-10-31");
 	const [goal, setGoal] = useState("穩定完成每日學習任務");
@@ -320,34 +141,20 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [weak, setWeak] = useState("數學");
 	const [visits, setVisits] = useState<string[]>([]);
 	const [wishes, setWishes] = useState<string[]>([]);
-	const [wishReflections, setWishReflections] = useState<WishReflection[]>(
-		[],
-	);
+	const [wishReflections, setWishReflections] = useState<WishReflection[]>([]);
 	const [wish, setWish] = useState("");
 	const [oracleTickets, setOracleTickets] = useState(0);
 	const [oraclePlanksSpent, setOraclePlanksSpent] = useState(0);
 	const [oracleStage, setOracleStage] = useState<OracleStage>("idle");
 	const [selectedStick, setSelectedStick] = useState<number | null>(null);
 	const [oracleResultId, setOracleResultId] = useState<number | null>(null);
-	const [dailyFortuneTask, setDailyFortuneTask] = useState<DailyFortuneTask>(
-		() => makeDailyFortuneTask(),
-	);
-	const [dailyCheckInDates, setDailyCheckInDates] = useState<string[]>([]);
-	const [weakQuestions, setWeakQuestions] = useState<WeakQuestion[]>([]);
-	const [selectedDailyAnswer, setSelectedDailyAnswer] = useState<
-		string | null
-	>(null);
+	const [dailyFortuneTask, setDailyFortuneTask] = useState<DailyFortuneTask>(() => makeDailyFortuneTask());
+	const [selectedDailyAnswer, setSelectedDailyAnswer] = useState<string | null>(null);
 	const [dailyAnswerFeedback, setDailyAnswerFeedback] = useState("");
 	const [dailyCheckInDialogOpen, setDailyCheckInDialogOpen] = useState(false);
-	const [checkInCeremonyOpen, setCheckInCeremonyOpen] = useState(false);
 	const [reviewingWeakId, setReviewingWeakId] = useState<string | null>(null);
-	const [selectedWeakAnswers, setSelectedWeakAnswers] = useState<
-		Record<string, string>
-	>({});
-	const [weakReviewFeedback, setWeakReviewFeedback] = useState<
-		Record<string, string>
-	>({});
-	const [weaknessNotice, setWeaknessNotice] = useState("");
+	const [selectedWeakAnswers, setSelectedWeakAnswers] = useState<Record<string, string>>({});
+	const [weakReviewFeedback, setWeakReviewFeedback] = useState<Record<string, string>>({});
 	const [idToken, setIdToken] = useState<string | null>(null);
 	const [lineName, setLineName] = useState<string | null>(null);
 	const [syncStatus, setSyncStatus] = useState("");
@@ -367,12 +174,10 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [eveningTime, setEveningTime] = useState("20:30");
 	const [editingNotifications, setEditingNotifications] = useState(false);
 	const [savingNotifications, setSavingNotifications] = useState(false);
-	const [careSummaryAudience, setCareSummaryAudience] = useState<"self" | "teacher" | "parent">("self");
 	const [draftRemindersEnabled, setDraftRemindersEnabled] = useState(true);
 	const [draftMorningTime, setDraftMorningTime] = useState("08:00");
 	const [draftEveningTime, setDraftEveningTime] = useState("20:30");
 	const [showSettlement, setShowSettlement] = useState(false);
-	const [sleepReminderOpen, setSleepReminderOpen] = useState(false);
 	const [focusIndex, setFocusIndex] = useState<number | null>(null);
 	const [focusSeconds, setFocusSeconds] = useState(0);
 	const [focusScheduledMinutes, setFocusScheduledMinutes] = useState(0);
@@ -380,65 +185,12 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [focusEndsAt, setFocusEndsAt] = useState<number | null>(null);
 	const [focusPaused, setFocusPaused] = useState(false);
 	const [focusEnded, setFocusEnded] = useState(false);
-	const [focusPickerTaskIndex, setFocusPickerTaskIndex] = useState<
-		number | null
-	>(null);
+	const [focusPickerTaskIndex, setFocusPickerTaskIndex] = useState<number | null>(null);
 	const [hydrated, setHydrated] = useState(false);
 	const syncQueue = useRef(Promise.resolve(true));
-	const lastScrollY = useRef(0);
-	const navigateToTab = (nextTab: Tab) => {
-		setTab(nextTab);
-		if (window.location.pathname !== tabPaths[nextTab])
-			window.history.pushState(null, "", tabPaths[nextTab]);
-	};
-	useEffect(() => {
-		const syncTabFromUrl = () => setTab(tabFromPath(window.location.pathname));
-		window.addEventListener("popstate", syncTabFromUrl);
-		return () => window.removeEventListener("popstate", syncTabFromUrl);
-	}, []);
-	useEffect(() => {
-		let frame: number | null = null;
-		const updateNavigation = () => {
-			frame = null;
-			const currentY = window.scrollY;
-			const difference = currentY - lastScrollY.current;
-			if (currentY < 48 || difference < -6) setNavVisible(true);
-			else if (difference > 6) setNavVisible(false);
-			lastScrollY.current = currentY;
-		};
-		const onScroll = () => {
-			if (frame === null) frame = window.requestAnimationFrame(updateNavigation);
-		};
-		lastScrollY.current = window.scrollY;
-		window.addEventListener("scroll", onScroll, { passive: true });
-		return () => {
-			window.removeEventListener("scroll", onScroll);
-			if (frame !== null) window.cancelAnimationFrame(frame);
-		};
-	}, []);
 	useEffect(() => {
 		setHydrated(true);
 	}, []);
-	useEffect(() => {
-		if (!ready) return;
-		const showSleepReminderIfDue = () => {
-			const now = new Date();
-			const time = new Intl.DateTimeFormat("en-GB", {
-				timeZone: "Asia/Taipei",
-				hour: "2-digit",
-				minute: "2-digit",
-				hourCycle: "h23",
-			}).format(now);
-			const today = taipeiDate(now);
-			if (time >= "22:30" && localStorage.getItem(SLEEP_REMINDER_KEY) !== today) {
-				localStorage.setItem(SLEEP_REMINDER_KEY, today);
-				setSleepReminderOpen(true);
-			}
-		};
-		showSleepReminderIfDue();
-		const timer = window.setInterval(showSleepReminderIfDue, 30000);
-		return () => window.clearInterval(timer);
-	}, [ready]);
 	useEffect(() => {
 		const refreshRestoredPage = (event: PageTransitionEvent) => {
 			if (event.persisted) window.location.reload();
@@ -453,10 +205,8 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			try {
 				const data = JSON.parse(stored) as SavedPlan;
 				if (data.tasks?.length) setTasks(data.tasks);
-				if (data.deferredTasks?.length)
-					setDeferredTasks(data.deferredTasks);
-				if (data.taskAdjustmentCounts)
-					setTaskAdjustmentCounts(data.taskAdjustmentCounts);
+				if (data.deferredTasks?.length) setDeferredTasks(data.deferredTasks);
+				if (data.taskAdjustmentCounts) setTaskAdjustmentCounts(data.taskAdjustmentCounts);
 				if (data.challengeName) setName(data.challengeName);
 				if (data.examDate) setExamDate(data.examDate);
 				if (data.goal) setGoal(data.goal);
@@ -464,47 +214,13 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				if (data.weak) setWeak(data.weak);
 				if (data.templeVisits) setVisits(data.templeVisits);
 				if (data.wishes) setWishes(data.wishes);
-				if (data.wishReflections?.length)
-					setWishReflections(data.wishReflections);
-				else if (data.wishes?.length)
-					setWishReflections(
-						data.wishes.map((text, index) => ({
-							id: `legacy-${index}-${text}`,
-							text,
-							createdAt: new Date().toISOString(),
-						})),
-					);
-				if (typeof data.oracleTickets === "number")
-					setOracleTickets(data.oracleTickets);
-				if (typeof data.oraclePlanksSpent === "number")
-					setOraclePlanksSpent(data.oraclePlanksSpent);
-				if (typeof data.oracleResultId === "number")
-					setOracleResultId(data.oracleResultId);
-				if (data.dailyFortuneTask?.date === taipeiDate())
-					setDailyFortuneTask(data.dailyFortuneTask);
-				if (Array.isArray(data.dailyCheckInDates))
-					setDailyCheckInDates(
-						data.dailyCheckInDates.filter(
-							(date): date is string =>
-								typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date),
-						),
-					);
-				if (Array.isArray(data.weakQuestions))
-					setWeakQuestions(data.weakQuestions.slice(0, 12));
-				else if (data.dailyFortuneTask?.weakQuestions?.length)
-					setWeakQuestions(
-						data.dailyFortuneTask.weakQuestions.map((item) => ({
-							...item,
-							firstWrongDate: data.dailyFortuneTask?.date ?? taipeiDate(),
-							reviewStep: 1,
-							nextReviewDate: addTaipeiDays(
-								data.dailyFortuneTask?.date ?? taipeiDate(),
-								1,
-							),
-						})),
-					);
-				if (typeof data.focusRewardMinutes === "number")
-					setFocusRewardMinutes(data.focusRewardMinutes);
+				if (data.wishReflections?.length) setWishReflections(data.wishReflections);
+				else if (data.wishes?.length) setWishReflections(data.wishes.map((text, index) => ({ id: `legacy-${index}-${text}`, text, createdAt: new Date().toISOString() })));
+				if (typeof data.oracleTickets === "number") setOracleTickets(data.oracleTickets);
+				if (typeof data.oraclePlanksSpent === "number") setOraclePlanksSpent(data.oraclePlanksSpent);
+				if (typeof data.oracleResultId === "number") setOracleResultId(data.oracleResultId);
+				if (data.dailyFortuneTask?.date === taipeiDate()) setDailyFortuneTask(data.dailyFortuneTask);
+				if (typeof data.focusRewardMinutes === "number") setFocusRewardMinutes(data.focusRewardMinutes);
 				if (typeof data.remindersEnabled === "boolean")
 					setRemindersEnabled(data.remindersEnabled);
 				if (data.morningTime) setMorningTime(data.morningTime);
@@ -522,11 +238,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 								);
 					setFocusIndex(session.taskIndex);
 					setFocusSeconds(remaining);
-					setFocusScheduledMinutes(
-						session.scheduledMinutes ??
-							data.tasks?.[session.taskIndex]?.minutes ??
-							0,
-					);
+					setFocusScheduledMinutes(session.scheduledMinutes ?? data.tasks?.[session.taskIndex]?.minutes ?? 0);
 					setFocusPaused(session.paused);
 					setFocusEndsAt(session.paused ? null : session.endsAt);
 					setFocusEnded(session.ended || remaining === 0);
@@ -563,8 +275,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				oraclePlanksSpent,
 				oracleResultId,
 				dailyFortuneTask,
-				dailyCheckInDates,
-				weakQuestions,
 				focusRewardMinutes,
 				deferredTasks,
 				taskAdjustmentCounts,
@@ -588,8 +298,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		oraclePlanksSpent,
 		oracleResultId,
 		dailyFortuneTask,
-		dailyCheckInDates,
-		weakQuestions,
 		focusRewardMinutes,
 		deferredTasks,
 		taskAdjustmentCounts,
@@ -728,39 +436,13 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				}
 				if (Array.isArray(data.visits)) setVisits(data.visits);
 				if (data.companionState) {
-					if (typeof data.companionState.oracleTickets === "number")
-						setOracleTickets(data.companionState.oracleTickets);
-					if (
-						typeof data.companionState.oraclePlanksSpent ===
-						"number"
-					)
-						setOraclePlanksSpent(
-							data.companionState.oraclePlanksSpent,
-						);
-					if (typeof data.companionState.oracleResultId === "number")
-						setOracleResultId(data.companionState.oracleResultId);
-					if (data.companionState.oracleResultId === null)
-						setOracleResultId(null);
-					if (
-						data.companionState.dailyFortuneTask &&
-						typeof data.companionState.dailyFortuneTask === "object"
-					)
-						setDailyFortuneTask(
-							data.companionState
-								.dailyFortuneTask as DailyFortuneTask,
-						);
-					if (
-						typeof data.companionState.focusRewardMinutes ===
-						"number"
-					)
-						setFocusRewardMinutes(
-							data.companionState.focusRewardMinutes,
-						);
-					if (Array.isArray(data.companionState.wishReflections))
-						setWishReflections(
-							data.companionState
-								.wishReflections as WishReflection[],
-						);
+					if (typeof data.companionState.oracleTickets === "number") setOracleTickets(data.companionState.oracleTickets);
+					if (typeof data.companionState.oraclePlanksSpent === "number") setOraclePlanksSpent(data.companionState.oraclePlanksSpent);
+					if (typeof data.companionState.oracleResultId === "number") setOracleResultId(data.companionState.oracleResultId);
+					if (data.companionState.oracleResultId === null) setOracleResultId(null);
+					if (data.companionState.dailyFortuneTask && typeof data.companionState.dailyFortuneTask === "object") setDailyFortuneTask(data.companionState.dailyFortuneTask as DailyFortuneTask);
+					if (typeof data.companionState.focusRewardMinutes === "number") setFocusRewardMinutes(data.companionState.focusRewardMinutes);
+					if (Array.isArray(data.companionState.wishReflections)) setWishReflections(data.companionState.wishReflections as WishReflection[]);
 				}
 				setSyncStatus("已從雲端還原學習紀錄");
 			})
@@ -775,20 +457,9 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	}, [idToken, ready]);
 	useEffect(() => {
 		if (!idToken || !ready) return;
-		const timer = window.setTimeout(() => {
-			void enqueueSync(tasks);
-		}, 700);
+		const timer = window.setTimeout(() => { void enqueueSync(tasks); }, 700);
 		return () => window.clearTimeout(timer);
-	}, [
-		idToken,
-		ready,
-		oracleTickets,
-		oraclePlanksSpent,
-		oracleResultId,
-		dailyFortuneTask,
-		focusRewardMinutes,
-		wishReflections,
-	]);
+	}, [idToken, ready, oracleTickets, oraclePlanksSpent, oracleResultId, dailyFortuneTask, focusRewardMinutes, wishReflections]);
 	useEffect(() => {
 		if (!idToken) return;
 		fetch("/api/stats", {
@@ -832,15 +503,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				86400000,
 		),
 	);
-	const countdownPhase = getCountdownPhase(daysLeft);
-	const countdownTasks = useMemo(
-		() => buildCountdownTasks(weak, hours, countdownPhase),
-		[weak, hours, countdownPhase],
-	);
-	const countdownTotalMinutes = countdownTasks.reduce(
-		(total, task) => total + task.minutes,
-		0,
-	);
+	const examModeActive = daysLeft <= 7;
 	const completed = tasks.filter((t) => t.done).length;
 	const progress = tasks.length
 		? Math.round((completed / tasks.length) * 100)
@@ -850,231 +513,50 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		[tasks],
 	);
 	const energy = Math.min(100, 42 + completed * 10 + visits.length * 3);
-	const dailyFortune =
-		fortunePoems[dailyFortuneTask.fortuneId] ?? fortunePoems[0];
-	const dailyCheckInQuestion =
-		dailyCheckInQuestions[
-			dailyFortuneTask.fortuneId % dailyCheckInQuestions.length
-		];
-	const dailyClassic =
-		dailyClassics[dailyFortuneTask.fortuneId % dailyClassics.length];
-	const dailySmallStep =
-		dailySmallSteps[dailyFortuneTask.fortuneId % dailySmallSteps.length];
-	const effectiveCheckInDates = useMemo(() => {
-		const dates = new Set(dailyCheckInDates);
-		if (dailyFortuneTask.done && dailyFortuneTask.date === taipeiDate())
-			dates.add(taipeiDate());
-		return [...dates];
-	}, [dailyCheckInDates, dailyFortuneTask]);
-	const checkInStreak = consecutiveCheckInDays(effectiveCheckInDates);
-	const nextCheckInMilestone = checkInMilestones.find(
-		(milestone) => milestone.days > checkInStreak,
-	);
-	const newlyUnlockedMilestone = checkInMilestones.find(
-		(milestone) => milestone.days === checkInStreak,
-	);
-	const unlockedSceneIndex = culturalScenes.reduce(
-		(latest, scene, index) => (checkInStreak >= scene.days ? index : latest),
-		0,
-	);
-	const activeCulturalScene = culturalScenes[unlockedSceneIndex];
-	const nextCulturalScene = culturalScenes[unlockedSceneIndex + 1];
-	const dueWeakQuestions = weakQuestions.filter(
-		(item) => item.nextReviewDate <= taipeiDate(),
-	);
-	const upcomingWeakQuestion = weakQuestions
-		.filter((item) => item.nextReviewDate > taipeiDate())
-		.sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate))[0];
+	const dailyFortune = fortunePoems[dailyFortuneTask.fortuneId] ?? fortunePoems[0];
+	const dailyCheckInQuestion = dailyCheckInQuestions[dailyFortuneTask.fortuneId % dailyCheckInQuestions.length];
+	const dailyClassic = dailyClassics[dailyFortuneTask.fortuneId % dailyClassics.length];
+	const weakQuestions = dailyFortuneTask.weakQuestions ?? [];
 	const focusPlanks = Math.floor(focusRewardMinutes / 10);
-	const focusSessionsCompleted =
-		dailyFortuneTask.achievementStats?.focusSessionsCompleted ?? 0;
-	const weaknessesConquered =
-		dailyFortuneTask.achievementStats?.weaknessesConquered ?? 0;
-	const achievementUnlockedCount = [
-		focusSessionsCompleted >= 1,
-		focusSessionsCompleted >= 10,
-		focusSessionsCompleted >= 30,
-		checkInStreak >= 3,
-		checkInStreak >= 7,
-		checkInStreak >= 14,
-		weaknessesConquered >= 1,
-		weaknessesConquered >= 5,
-	].filter(Boolean).length;
-	const nextAchievement = [
-		focusSessionsCompleted < 1 && `完成第 1 次完整專注`,
-		focusSessionsCompleted >= 1 &&
-			focusSessionsCompleted < 10 &&
-			`再完成 ${10 - focusSessionsCompleted} 次完整專注`,
-		focusSessionsCompleted >= 10 &&
-			focusSessionsCompleted < 30 &&
-			`再完成 ${30 - focusSessionsCompleted} 次完整專注`,
-		checkInStreak < 3 && `再連續簽到 ${3 - checkInStreak} 天`,
-		checkInStreak >= 3 &&
-			checkInStreak < 7 &&
-			`再連續簽到 ${7 - checkInStreak} 天`,
-		weaknessesConquered < 1 && "克服第 1 題回流弱點",
-		weaknessesConquered >= 1 &&
-			weaknessesConquered < 5 &&
-			`再克服 ${5 - weaknessesConquered} 題弱點`,
-	].find(Boolean) as string | undefined;
-	// 木牌只由完整計時結束的專注任務累積；不以抽選、登入或點擊給予。
-	const planks = focusPlanks;
-	// 木牌可兌換求籤機會；兌換不會產生新的木牌。
+	const planks = 10 + completed + visits.length + (dailyFortuneTask.done ? 1 : 0) + focusPlanks;
 	const availablePlanks = Math.max(0, planks - oraclePlanksSpent);
 	const recordWeakQuestion = (questionIndex: number) => {
-		const today = taipeiDate();
-		setWeakQuestions((current) => {
-			const existing = current.find(
-				(item) => item.questionIndex === questionIndex,
-			);
-			return existing
-				? current.map((item) =>
-						item.questionIndex === questionIndex
-							? {
-									...item,
-									misses: item.misses + 1,
-									lastWrongAt: new Date().toISOString(),
-									reviewStep: 1,
-									nextReviewDate: addTaipeiDays(today, 1),
-								}
-							: item,
-					)
-				: [
-						{
-							id: `weak-${Date.now()}-${questionIndex}`,
-							questionIndex,
-							misses: 1,
-							lastWrongAt: new Date().toISOString(),
-							firstWrongDate: today,
-							reviewStep: 1,
-							nextReviewDate: addTaipeiDays(today, 1),
-						},
-						...current,
-					].slice(0, 12);
+		setDailyFortuneTask((current) => {
+			const weakQuestions = current.weakQuestions ?? [];
+			const existing = weakQuestions.find((item) => item.questionIndex === questionIndex);
+			return {
+				...current,
+				weakQuestions: existing
+					? weakQuestions.map((item) => item.questionIndex === questionIndex ? { ...item, misses: item.misses + 1, lastWrongAt: new Date().toISOString() } : item)
+					: [{ id: `weak-${Date.now()}-${questionIndex}`, questionIndex, misses: 1, lastWrongAt: new Date().toISOString() }, ...weakQuestions].slice(0, 12),
+			};
 		});
 	};
 	const submitWeakReview = (item: WeakQuestion) => {
 		const question = dailyCheckInQuestions[item.questionIndex];
 		const selected = selectedWeakAnswers[item.id];
 		if (!selected) {
-			setWeakReviewFeedback((current) => ({
-				...current,
-				[item.id]: "請先選擇一個答案。",
-			}));
+			setWeakReviewFeedback((current) => ({ ...current, [item.id]: "請先選擇一個答案。" }));
 			return;
 		}
 		if (selected !== question?.answer) {
-			setWeakQuestions((current) =>
-				current.map((entry) =>
-					entry.id === item.id
-						? {
-								...entry,
-								misses: entry.misses + 1,
-								lastWrongAt: new Date().toISOString(),
-								reviewStep: 1,
-								nextReviewDate: addTaipeiDays(taipeiDate(), 1),
-							}
-						: entry,
-				),
-			);
-			setWeakReviewFeedback((current) => ({
-				...current,
-				[item.id]: "再看一次題幹，你一定能找到線索。",
-			}));
-			setWeaknessNotice("這題會在明天再回流，陪你把觀念練穩。");
+			setDailyFortuneTask((current) => ({ ...current, weakQuestions: (current.weakQuestions ?? []).map((entry) => entry.id === item.id ? { ...entry, misses: entry.misses + 1, lastWrongAt: new Date().toISOString() } : entry) }));
+			setWeakReviewFeedback((current) => ({ ...current, [item.id]: "再看一次題幹，你一定能找到線索。" }));
 			return;
 		}
-		if (item.reviewStep === 1) {
-			setWeakQuestions((current) =>
-				current.map((entry) =>
-					entry.id === item.id
-						? {
-								...entry,
-								reviewStep: 2,
-								nextReviewDate: addTaipeiDays(entry.firstWrongDate, 3),
-							}
-						: entry,
-				),
-			);
-			setWeakReviewFeedback((current) => ({
-				...current,
-				[item.id]: "第一輪複習答對！第 3 天會再回來確認一次。",
-			}));
-			setWeaknessNotice("第一輪複習答對！第 3 天會再回來確認一次。 ");
-			setReviewingWeakId(null);
-			return;
-		}
-		setWeakQuestions((current) => current.filter((entry) => entry.id !== item.id));
-		setDailyFortuneTask((current) => ({
-			...current,
-			achievementStats: {
-				...current.achievementStats,
-				weaknessesConquered:
-					(current.achievementStats?.weaknessesConquered ?? 0) + 1,
-			},
-		}));
-		setWeakReviewFeedback((current) => ({
-			...current,
-			[item.id]: "已克服弱點。",
-		}));
-		setWeaknessNotice("已克服弱點，這題不會再回流。 ");
+		setDailyFortuneTask((current) => ({ ...current, weakQuestions: (current.weakQuestions ?? []).filter((entry) => entry.id !== item.id) }));
+		setWeakReviewFeedback((current) => ({ ...current, [item.id]: "答對了！已從弱點清單移除。" }));
 		setReviewingWeakId(null);
-		setSyncStatus("已克服弱點，這題不會再回流。 ");
+		setSyncStatus("弱點複習答對，已更新你的學習紀錄。");
 	};
 	const completeDailyCheckIn = () => {
 		if (dailyFortuneTask.done) return;
-		if (completed < 1) {
-			setDailyAnswerFeedback("先完成至少一項專注任務，才可以進行今日簽到。 ");
-			return;
-		}
-		if (!selectedDailyAnswer) {
-			setDailyAnswerFeedback("請先選擇一個答案。 ");
-			return;
-		}
-		if (selectedDailyAnswer !== dailyCheckInQuestion.answer) {
-			recordWeakQuestion(
-				dailyFortuneTask.fortuneId % dailyCheckInQuestions.length,
-			);
-			setDailyAnswerFeedback("這題會在明天與第 3 天回流，陪你把觀念練穩。 ");
-			return;
-		}
-		// 讓慶祝從答對當下延續到木牌落定，而不是一瞬即逝。
-		confetti({
-			particleCount: 76,
-			spread: 58,
-			startVelocity: 34,
-			origin: { x: 0.5, y: 0.58 },
-			zIndex: 130,
-			colors: ["#e4bc52", "#fff3b7", "#a9513f", "#71906a"],
-		});
-		window.setTimeout(() => {
-			confetti({
-				particleCount: 48,
-				angle: 60,
-				spread: 52,
-				origin: { x: 0.05, y: 0.72 },
-				zIndex: 130,
-				colors: ["#e4bc52", "#fff3b7", "#a9513f", "#71906a"],
-			});
-			confetti({
-				particleCount: 48,
-				angle: 120,
-				spread: 52,
-				origin: { x: 0.95, y: 0.72 },
-				zIndex: 130,
-				colors: ["#e4bc52", "#fff3b7", "#a9513f", "#71906a"],
-			});
-		}, 520);
+		if (!selectedDailyAnswer) { setDailyAnswerFeedback("請先選擇一個答案。 "); return; }
+		if (selectedDailyAnswer !== dailyCheckInQuestion.answer) { recordWeakQuestion(dailyFortuneTask.fortuneId % dailyCheckInQuestions.length); setDailyAnswerFeedback("這題已加入弱點複習，稍後可以再挑戰一次。 "); return; }
 		setDailyFortuneTask((current) => ({ ...current, done: true }));
-		setDailyCheckInDates((current) =>
-			current.includes(taipeiDate())
-				? current
-				: [...current, taipeiDate()].slice(-90),
-		);
 		setDailyAnswerFeedback("答對了！今日簽到完成。 ");
 		setDailyCheckInDialogOpen(false);
-		setCheckInCeremonyOpen(true);
-		setSyncStatus("今日學習紀錄已完成；木牌將依完整專注任務自動點亮。");
+		setSyncStatus("今日簽到題答對，獲得 1 枚祈福木牌！");
 	};
 	const exchangeOracleTicket = () => {
 		if (availablePlanks < 3) return;
@@ -1090,14 +572,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		setOracleStage("drawing");
 		window.setTimeout(() => {
 			setOracleResultId(selectedStick % fortunePoems.length);
-			setDailyFortuneTask((current) =>
-				current.done
-					? current
-					: {
-							...current,
-							fortuneId: selectedStick % fortunePoems.length,
-						},
-			);
+			setDailyFortuneTask((current) => current.done ? current : { ...current, fortuneId: selectedStick % fortunePoems.length });
 			setOracleStage("result");
 		}, 1250);
 	};
@@ -1112,21 +587,10 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	);
 	useEffect(() => {
 		if (!ready) return;
-		const available = deferredTasks.filter(
-			(item) => item.availableOn <= taipeiDate(),
-		);
+		const available = deferredTasks.filter((item) => item.availableOn <= taipeiDate());
 		if (!available.length) return;
-		setTasks((current) => [
-			...current,
-			...available.map((item) => ({
-				...item.task,
-				done: false,
-				skipped: false,
-			})),
-		]);
-		setDeferredTasks((current) =>
-			current.filter((item) => item.availableOn > taipeiDate()),
-		);
+		setTasks((current) => [...current, ...available.map((item) => ({ ...item.task, done: false, skipped: false }))]);
+		setDeferredTasks((current) => current.filter((item) => item.availableOn > taipeiDate()));
 		setSyncStatus(`已將 ${available.length} 項延後任務加入今天的清單。`);
 	}, [deferredTasks, ready]);
 	const pendingIndex = tasks.findIndex((task) => !task.done && !task.skipped);
@@ -1135,99 +599,63 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		if (!task) return;
 		const tomorrow = new Date();
 		tomorrow.setDate(tomorrow.getDate() + 1);
-		setDeferredTasks((current) => [
-			...current,
-			{
-				task: { ...task, done: false, skipped: false },
-				availableOn: taipeiDate(tomorrow),
-			},
-		]);
-		setTasks((current) =>
-			current.filter((_, taskIndex) => taskIndex !== index),
-		);
+		setDeferredTasks((current) => [...current, { task: { ...task, done: false, skipped: false }, availableOn: taipeiDate(tomorrow) }]);
+		setTasks((current) => current.filter((_, taskIndex) => taskIndex !== index));
 		setAdjustingTaskIndex(null);
-		setTaskAdjustmentCounts((current) => ({
-			...current,
-			deferred: current.deferred + 1,
-		}));
+		setTaskAdjustmentCounts((current) => ({ ...current, deferred: current.deferred + 1 }));
 		setSyncStatus(`「${task.subject}」已延後到明天。`);
 	};
 	const splitTask = (index: number) => {
 		const task = tasks[index];
-		if (!task || task.minutes <= 15) {
-			setSyncStatus("這項任務已是 15 分鐘，可直接開始完成。 ");
-			return;
-		}
+		if (!task || task.minutes <= 15) { setSyncStatus("這項任務已是 15 分鐘，可直接開始完成。 "); return; }
 		const firstMinutes = 15;
 		const remainingMinutes = task.minutes - firstMinutes;
-		setTasks((current) =>
-			current.flatMap((item, taskIndex) =>
-				taskIndex === index
-					? [
-							{
-								...item,
-								minutes: firstMinutes,
-								detail: `${item.detail}（第一段）`,
-							},
-							{
-								...item,
-								minutes: remainingMinutes,
-								detail: `${item.detail}（第二段）`,
-								done: false,
-							},
-						]
-					: [item],
-			),
-		);
+		setTasks((current) => current.flatMap((item, taskIndex) => taskIndex === index ? [{ ...item, minutes: firstMinutes, detail: `${item.detail}（第一段）` }, { ...item, minutes: remainingMinutes, detail: `${item.detail}（第二段）`, done: false }] : [item]));
 		setAdjustingTaskIndex(null);
-		setTaskAdjustmentCounts((current) => ({
-			...current,
-			split: current.split + 1,
-		}));
-		setSyncStatus(
-			`已將「${task.subject}」拆成 ${firstMinutes} 分鐘與 ${remainingMinutes} 分鐘兩段。`,
-		);
+		setTaskAdjustmentCounts((current) => ({ ...current, split: current.split + 1 }));
+		setSyncStatus(`已將「${task.subject}」拆成 ${firstMinutes} 分鐘與 ${remainingMinutes} 分鐘兩段。`);
 	};
 	const skipTask = (index: number) => {
-		setTasks((current) =>
-			current.map((task, taskIndex) =>
-				taskIndex === index
-					? { ...task, skipped: !task.skipped }
-					: task,
-			),
-		);
+		setTasks((current) => current.map((task, taskIndex) => taskIndex === index ? { ...task, skipped: !task.skipped } : task));
 		setAdjustingTaskIndex(null);
-		setTaskAdjustmentCounts((current) => ({
-			...current,
-			skipped: current.skipped + 1,
-		}));
-	};
-	const applyCountdownPlan = () => {
-		if (completed > 0) {
-			setSyncStatus("今天已有完成任務；倒數計畫會在明天自動重新安排。");
-			return;
-		}
-		const next = buildCountdownTasks(weak, hours, countdownPhase);
-		setTasks(next);
-		localStorage.setItem(
-			`wenchang-countdown-plan-${examDate}-${taipeiDate()}`,
-			countdownPhase.id,
-		);
-		void enqueueSync(next);
-		setSyncStatus(`已套用「${countdownPhase.title}」的今日任務安排。`);
+		setTaskAdjustmentCounts((current) => ({ ...current, skipped: current.skipped + 1 }));
 	};
 	useEffect(() => {
-		if (!ready || completed > 0) return;
+		if (!ready || !examModeActive) return;
 		const todayKey = new Intl.DateTimeFormat("en-CA", {
 			timeZone: "Asia/Taipei",
 		}).format(new Date());
-		const modeKey = `wenchang-countdown-plan-${examDate}-${todayKey}`;
+		const modeKey = `wenchang-exam-mode-${examDate}-${todayKey}`;
 		if (localStorage.getItem(modeKey)) return;
-		const next = buildCountdownTasks(weak, hours, countdownPhase);
-		localStorage.setItem(modeKey, countdownPhase.id);
-		setTasks(next);
-		void enqueueSync(next);
-	}, [ready, completed, examDate, weak, hours, countdownPhase]);
+		setTasks((current) => {
+			const next = current.map((task) => {
+				const factor = task.subject === weak ? 0.8 : 0.6;
+				const minutes = Math.max(
+					15,
+					Math.round((task.minutes * factor) / 5) * 5,
+				);
+				return {
+					...task,
+					minutes,
+					detail:
+						task.subject === weak
+							? "考前弱科重點複習"
+							: "考前重點整理・保留體力",
+				};
+			});
+			localStorage.setItem(modeKey, "applied");
+			void enqueueSync(next);
+			return next;
+		});
+	}, [ready, examModeActive, examDate, weak]);
+	const toggleTask = (index: number) =>
+		setTasks((current) => {
+			const next = current.map((task, i) =>
+				i === index ? { ...task, done: !task.done } : task,
+			);
+			void enqueueSync(next);
+			return next;
+		});
 	const openFocusModePicker = (index: number) => {
 		const task = tasks[index];
 		if (!task || task.done) return;
@@ -1238,11 +666,10 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		openFocusModePicker(pendingIndex);
 	};
 	const startFocusAt = (index: number) => openFocusModePicker(index);
-	const beginFocus = () => {
+	const beginFocus = (minutes: number) => {
 		if (focusPickerTaskIndex === null) return;
 		const task = tasks[focusPickerTaskIndex];
 		if (!task || task.done) return;
-		const minutes = task.minutes;
 		const seconds = minutes * 60;
 		setFocusIndex(focusPickerTaskIndex);
 		setFocusSeconds(seconds);
@@ -1273,12 +700,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		setFocusEnded(false);
 	};
 	const abandonFocus = () => {
-		if (
-			!window.confirm(
-				"這次專注尚未完成，要先離開嗎？目前任務會保留，隨時可以回來繼續。",
-			)
-		)
-			return;
+		if (!window.confirm("這次專注尚未完成，要先離開嗎？目前任務會保留，隨時可以回來繼續。")) return;
 		closeFocus();
 		setSyncStatus("任務已保留，準備好時再從 10 分鐘開始也很好。");
 	};
@@ -1302,18 +724,15 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		}
 	};
 	const completeFocus = () => {
-		if (focusIndex === null || !focusEnded) return;
+		if (focusIndex === null) return;
 		const completedTask = tasks[focusIndex];
 		const completedCount = tasks.filter((task) => task.done).length + 1;
-		const rewardedMinutes = focusScheduledMinutes;
+		const rewardedMinutes = focusEnded ? focusScheduledMinutes : 0;
 		const newlyEarnedPlanks = rewardedMinutes
-			? Math.floor((focusRewardMinutes + rewardedMinutes) / 10) -
-				Math.floor(focusRewardMinutes / 10)
+			? Math.floor((focusRewardMinutes + rewardedMinutes) / 10) - Math.floor(focusRewardMinutes / 10)
 			: 0;
-		const minutesToNextPlank =
-			10 - ((focusRewardMinutes + rewardedMinutes) % 10 || 10);
-		if (rewardedMinutes)
-			setFocusRewardMinutes((current) => current + rewardedMinutes);
+		const minutesToNextPlank = 10 - ((focusRewardMinutes + rewardedMinutes) % 10 || 10);
+		if (rewardedMinutes) setFocusRewardMinutes((current) => current + rewardedMinutes);
 		setTasks((current) => {
 			const next = current.map((task, index) =>
 				index === focusIndex ? { ...task, done: true } : task,
@@ -1321,23 +740,33 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			void enqueueSync(next);
 			return next;
 		});
-		setDailyFortuneTask((current) => ({
-			...current,
-			achievementStats: {
-				...current.achievementStats,
-				focusSessionsCompleted:
-					(current.achievementStats?.focusSessionsCompleted ?? 0) + 1,
-			},
-		}));
 		void sendCompletionNotice(completedTask, completedCount);
 		closeFocus();
-		setSyncStatus(
-			`專注 ${rewardedMinutes} 分鐘完成${newlyEarnedPlanks ? `，獲得 ${newlyEarnedPlanks} 枚祈福木牌！` : `，再累積 ${minutesToNextPlank} 分鐘可獲得 1 枚祈福木牌。`}`,
+		setSyncStatus(rewardedMinutes
+			? `專注 ${rewardedMinutes} 分鐘完成${newlyEarnedPlanks ? `，獲得 ${newlyEarnedPlanks} 枚祈福木牌！` : `，再累積 ${minutesToNextPlank} 分鐘可獲得 1 枚祈福木牌。`}`
+			: "任務已提前完成；完整專注滿 10 分鐘即可獲得 1 枚祈福木牌。"
 		);
 	};
-	useEffect(() => {
-		if (focusEnded && focusIndex !== null) completeFocus();
-	}, [focusEnded, focusIndex]);
+	const finishFocusAndContinue = () => {
+		const nextIndex = tasks.findIndex((task, index) => index !== focusIndex && !task.done);
+		completeFocus();
+		if (nextIndex >= 0) window.setTimeout(() => openFocusModePicker(nextIndex), 180);
+	};
+	const toggleAllTasks = () => {
+		const shouldComplete = completed !== tasks.length;
+		const confirmation = shouldComplete
+			? "確定要將今天所有任務標記為完成嗎？"
+			: "確定要重新開啟今天所有任務嗎？";
+		if (!window.confirm(confirmation)) return;
+		setTasks((current) => {
+			const next = current.map((task) => ({
+				...task,
+				done: shouldComplete,
+			}));
+			void enqueueSync(next);
+			return next;
+		});
+	};
 	const login = async () => {
 		if (!liff.isLoggedIn()) {
 			liff.login();
@@ -1370,23 +799,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			setSyncStatus("提醒傳送失敗，請稍後再試");
 		}
 	};
-	const sendWeeklyCareSummary = async () => {
-		if (!idToken) {
-			await login();
-			return;
-		}
-		setSyncStatus("正在整理本週關懷摘要…");
-		try {
-			const response = await fetch("/api/weekly-summary", {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ idToken, audience: careSummaryAudience }),
-			});
-			setSyncStatus(response.ok ? "本週關懷摘要已推播至你的 LINE OA" : "摘要推播失敗，請確認已加官方帳號好友");
-		} catch {
-			setSyncStatus("摘要推播失敗，請稍後再試");
-		}
-	};
 	const saveWish = () => {
 		const text = wish.trim();
 		if (!text) return;
@@ -1396,88 +808,87 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			void enqueueSync(tasks, idToken, next);
 			return next;
 		});
-		setWishReflections((current) =>
-			[
-				{ id: `${Date.now()}-${text}`, text, createdAt },
-				...current,
-			].slice(0, 5),
-		);
+		setWishReflections((current) => [{ id: `${Date.now()}-${text}`, text, createdAt }, ...current].slice(0, 5));
 		setWish("");
 		setSyncStatus("祈願已留存，將在第 7 天與第 30 天邀請你回望。 ");
 	};
 	const completeWishReview = (id: string, milestone: 7 | 30) => {
-		setWishReflections((current) =>
-			current.map((item) =>
-				item.id !== id
-					? item
-					: milestone === 7
-						? { ...item, reviewedAfter7Days: true }
-						: { ...item, reviewedAfter30Days: true },
-			),
-		);
+		setWishReflections((current) => current.map((item) => item.id !== id ? item : milestone === 7 ? { ...item, reviewedAfter7Days: true } : { ...item, reviewedAfter30Days: true }));
 		setSyncStatus(`已完成第 ${milestone} 天的願望回顧。`);
 	};
-	const reviewDate = (createdAt: string, days: number) =>
-		new Intl.DateTimeFormat("zh-TW", {
-			month: "long",
-			day: "numeric",
-			timeZone: "Asia/Taipei",
-		}).format(new Date(new Date(createdAt).getTime() + days * 86400000));
-	const daysSinceWish = (createdAt: string) =>
-		Math.max(
-			0,
-			Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000),
-		);
+	const reviewDate = (createdAt: string, days: number) => new Intl.DateTimeFormat("zh-TW", { month: "long", day: "numeric", timeZone: "Asia/Taipei" }).format(new Date(new Date(createdAt).getTime() + days * 86400000));
+	const daysSinceWish = (createdAt: string) => Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000));
 	const focusTime = `${String(Math.floor(focusSeconds / 60)).padStart(2, "0")}:${String(focusSeconds % 60).padStart(2, "0")}`;
 	const today = (
 		<>
 			<section className="hero">
-				<p className="eyebrow">今日學習・{name}</p>
+				<p className="eyebrow">{name.toUpperCase()}</p>
 				<h1>
-					{pendingIndex >= 0 ? "現在先完成" : "今天已經"}
+					距離目標還有
 					<br />
-					<em>{pendingIndex >= 0 ? tasks[pendingIndex].subject : "做得很好"}</em>
+					<em>{daysLeft} 天</em>
 				</h1>
 				<div className="countdown">
-					<span>{pendingIndex >= 0 ? `${tasks[pendingIndex].detail}・${tasks[pendingIndex].minutes} 分鐘` : `今日 ${completed}/${tasks.length} 項任務已完成`}</span>
+					<span>每天 {hours} 小時・先完成今天</span>
 				</div>
-				<section className={`exam-mode-card countdown-${countdownPhase.id}`}>
+				{examModeActive && (
+					<section className="exam-mode-card">
 						<div className="exam-mode-heading">
 							<span>✦</span>
 							<div>
-								<small>EXAM COUNTDOWN PLAN</small>
-								<b>{countdownPhase.title}・剩 {daysLeft} 天</b>
+								<small>EXAM MODE</small>
+								<b>考前衝刺模式・剩 {daysLeft} 天</b>
 							</div>
 						</div>
 						<p>
-							{countdownPhase.detail} 今日共 {countdownTotalMinutes} 分鐘，先完成{" "}
-							<strong>{weak}</strong> 的弱點加強，再做歷屆題與重點整理。
+							今天已自動降低任務量，優先保留{" "}
+							<strong>{weak}</strong>{" "}
+							的重點複習；穩定完成，也要保留睡眠。
 						</p>
 						<div className="exam-mode-footer">
-							<span>弱科 {Math.round(countdownPhase.weakRatio * 100)}%・今晚 22:30 前準備休息</span>
+							<span>🌙 今晚 22:30 前準備休息</span>
 							<button
-								onClick={() => setSleepReminderOpen(true)}
+								onClick={() =>
+									setSyncStatus(
+										"睡眠提醒：今晚 22:30 前結束複習，讓大腦好好休息。",
+									)
+								}
 							>
 								查看提醒
 							</button>
 						</div>
 					</section>
+				)}
 				<div className="hero-orb orb-one" />
 				<div className="hero-orb orb-two" />
 			</section>
-			<section className="today-command-card" aria-label="下一個學習任務">
-				<div>
-					<span>下一個要完成的任務</span>
-					<b>{pendingIndex >= 0 ? `${tasks[pendingIndex].subject}・${tasks[pendingIndex].detail}` : "今日任務已圓滿完成"}</b>
-					<small>{pendingIndex >= 0 ? `預計 ${tasks[pendingIndex].minutes} 分鐘，完成後再決定下一步。` : "現在適合休息，讓努力慢慢沉澱。"}</small>
+			<section className="stats">
+				<div className="stat">
+					<span className="stat-icon fire">🔥</span>
+					<div>
+						<small>今日能量</small>
+						<b>
+							{energy}
+							<i> / 100</i>
+						</b>
+					</div>
 				</div>
-				<button onClick={startFocus} disabled={pendingIndex < 0}>{pendingIndex >= 0 ? "開始專注" : "已完成"}</button>
+				<div className="stat">
+					<span className="stat-icon blossom">🌸</span>
+					<div>
+						<small>祈福木牌</small>
+						<b>
+							{planks}
+							<i> 枚</i>
+						</b>
+					</div>
+				</div>
 			</section>
 			<section className="progress-card">
 				<div className="section-heading">
 					<div>
-						<p className="eyebrow">今日待辦・弱科 {weak}</p>
-						<h2>完成後，再看下一件事</h2>
+						<p className="eyebrow">今日任務・弱科 {weak}</p>
+						<h2>一步一步完成</h2>
 					</div>
 					<span className="completion">
 						{completed} / {tasks.length} 完成
@@ -1493,26 +904,40 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					<span>
 						尚餘 <b>{remaining}</b> 分鐘
 					</span>
+					<div>
+						<button
+							className="task-primary-action"
+							onClick={startFocus}
+							disabled={pendingIndex < 0}
+						>
+							{pendingIndex < 0
+								? "今日已完成"
+								: `專注下一項・${tasks[pendingIndex].minutes} 分`}
+						</button>
+						<button
+							className="task-secondary-action"
+							onClick={toggleAllTasks}
+						>
+							{completed === tasks.length
+								? "重新開啟"
+								: "全部完成"}
+						</button>
+					</div>
 				</div>
-				<details className="today-task-list">
-					<summary>查看全部任務與調整選項</summary>
-					<div className="tasks">
+				<div className="tasks">
 					{tasks.map((task, index) => (
 						<div
 							className={`task ${task.done ? "done" : ""} ${task.skipped ? "skipped" : ""}`}
 							key={`${task.subject}-${index}`}
 						>
-							<span
+							<button
 								className={`check ${task.done ? "checked" : ""}`}
-								aria-label={
-									task.done
-										? `${task.subject}已透過完整專注完成`
-										: `${task.subject}需完成完整專注計時才會標記完成`
-								}
-								title="任務會在完整專注計時結束後自動完成"
+								onClick={() => toggleTask(index)}
+								aria-label={`${task.done ? "取消完成" : "完成"}${task.subject}：${task.detail}`}
+								aria-pressed={task.done}
 							>
 								{task.done ? "✓" : ""}
-							</span>
+							</button>
 							<span className={`subject-dot ${task.color}`} />
 							<span className="task-copy">
 								<b>{task.subject}</b>
@@ -1527,48 +952,19 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 								onClick={() => startFocusAt(index)}
 								disabled={task.done || task.skipped}
 							>
-								{task.done
-									? "已完成"
-									: task.skipped
-										? "已跳過"
-										: "專注"}
+								{task.done ? "已完成" : task.skipped ? "已跳過" : "專注"}
 							</button>
-							{!task.done && (
-								<button
-									className="task-adjust"
-									onClick={() =>
-										setAdjustingTaskIndex((current) =>
-											current === index ? null : index,
-										)
-									}
-									aria-label={`調整${task.subject}任務`}
-								>
-									⋯
-								</button>
-							)}
-							{adjustingTaskIndex === index && !task.done && (
-								<div className="task-adjust-menu">
-									<button onClick={() => deferTask(index)}>
-										延後到明天
-									</button>
-									<button onClick={() => splitTask(index)}>
-										拆成 15 分鐘
-									</button>
-									<button onClick={() => skipTask(index)}>
-										{task.skipped ? "取消跳過" : "標記跳過"}
-									</button>
-								</div>
-							)}
+							{!task.done && <button className="task-adjust" onClick={() => setAdjustingTaskIndex((current) => current === index ? null : index)} aria-label={`調整${task.subject}任務`}>⋯</button>}
+							{adjustingTaskIndex === index && !task.done && <div className="task-adjust-menu"><button onClick={() => deferTask(index)}>延後到明天</button><button onClick={() => splitTask(index)}>拆成 15 分鐘</button><button onClick={() => skipTask(index)}>{task.skipped ? "取消跳過" : "標記跳過"}</button></div>}
 						</div>
 					))}
-					</div>
-				</details>
+				</div>
 			</section>
 			{focusIndex !== null ? (
 				<section className="focus-panel">
 					<small>
 						{focusEnded
-							? "時間到了・正在記錄你的專注成果"
+							? "時間到了・確認你的專注成果"
 							: focusPaused
 								? "已暫停・可隨時繼續"
 								: `正在專注・${tasks[focusIndex].subject}`}
@@ -1576,19 +972,27 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					<b>{focusTime}</b>
 					<p>
 						{focusEnded
-							? "完整倒數結束後，系統會自動把任務記錄為完成。"
+							? "你完成這段專注了嗎？確認後才會標記任務完成。"
 							: "離開或重新整理後會依實際時間繼續倒數。"}
 					</p>
 					<div className="focus-reward" aria-label="祈福木牌專注獎勵">
 						<span>🌸 每專注 10 分鐘獲得 1 枚祈福木牌</span>
-						<b>
-							已累積 {focusRewardMinutes % 10}/10 分鐘・已獲得{" "}
-							{focusPlanks} 枚
-						</b>
+						<b>已累積 {focusRewardMinutes % 10}/10 分鐘・已獲得 {focusPlanks} 枚</b>
 					</div>
 					{focusEnded ? (
 						<div className="focus-actions">
-							<span>正在更新今日任務…</span>
+							<button onClick={completeFocus}>確認完成</button>
+							<button
+								onClick={() => {
+									setFocusSeconds(300);
+									setFocusScheduledMinutes((current) => current + 5);
+									setFocusEndsAt(Date.now() + 300000);
+									setFocusPaused(false);
+									setFocusEnded(false);
+								}}
+							>
+								再加 5 分鐘
+							</button>
 						</div>
 					) : (
 						<div className="focus-actions">
@@ -1597,18 +1001,32 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							>
 								{focusPaused ? "繼續專注" : "暫停"}
 							</button>
-							<button onClick={abandonFocus}>
-								保留任務，先離開
+							<button
+								onClick={() => {
+									if (
+										window.confirm(
+											"確定要提前完成並標記任務嗎？",
+										)
+									)
+										completeFocus();
+								}}
+							>
+								提前完成
 							</button>
 						</div>
 					)}
 				</section>
-			) : pendingIndex < 0 ? (
+			) : pendingIndex >= 0 ? (
+				<button className="start-button" onClick={startFocus}>
+					開始專注・{tasks[pendingIndex].subject}{" "}
+					{tasks[pendingIndex].minutes} 分鐘
+				</button>
+			) : (
 				<section className="focus-panel complete">
 					<b>今日全數完成 ✦</b>
 					<p>你已累積能量與祈福木牌，明天繼續前進。</p>
 				</section>
-			) : null}
+			)}
 			<section className="encouragement">
 				<span>「</span>
 				<p>
@@ -1720,31 +1138,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					<span>剩餘分鐘</span>
 				</div>
 			</div>
-			<section className={`countdown-plan-card countdown-${countdownPhase.id}`} aria-label="考試倒數計畫">
-				<div className="countdown-plan-heading">
-					<div>
-						<span>考試倒數計畫・{countdownPhase.label}</span>
-						<b>{countdownPhase.title}</b>
-					</div>
-					<strong>{daysLeft}<small> 天</small></strong>
-				</div>
-				<p>{countdownPhase.detail}</p>
-				<ol>
-					{countdownTasks.map((task, index) => (
-						<li key={task.subject}>
-							<i>{index + 1}</i>
-							<div><b>{task.subject}</b><span>{task.detail}</span></div>
-							<small>{task.minutes} 分</small>
-						</li>
-					))}
-				</ol>
-				<div className="countdown-plan-footer">
-					<span>今日安排 {countdownTotalMinutes} 分鐘・弱科優先 {Math.round(countdownPhase.weakRatio * 100)}%</span>
-					<button onClick={applyCountdownPlan} disabled={completed > 0}>
-						{completed > 0 ? "明日自動更新" : "重新套用今日計畫"}
-					</button>
-				</div>
-			</section>
 			<div className="milestone-card">
 				<p>你的下一個里程碑</p>
 				<b>
@@ -1754,160 +1147,25 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				</b>
 				<span>小步累積，會比一次衝刺走得更遠。</span>
 			</div>
-			<button
-				className="statistics-entry"
-				onClick={() => {
-					location.href = "/statistics";
-				}}
-			>
+			<button className="statistics-entry" onClick={() => { location.href = "/statistics"; }}>
 				<span>▦</span>
-				<div>
-					<b>讀書統計紀錄</b>
-					<small>查看專注時間、連續學習與每日足跡</small>
-				</div>
-				<i>›</i>
-			</button>
-			<button
-				className="achievement-wall-link"
-				onClick={() => {
-					location.href = "/badges";
-				}}
-			>
-				<span>🏅</span>
-				<div>
-					<small>真實成就牆・已解鎖 {achievementUnlockedCount}/8</small>
-					<b>{nextAchievement ?? "八枚真實成就已全數解鎖"}</b>
-				</div>
+				<div><b>讀書統計紀錄</b><small>查看專注時間、連續學習與每日足跡</small></div>
 				<i>›</i>
 			</button>
 			<section className="weakness-card" aria-label="錯題與弱點複習">
 				<div className="weakness-heading">
-					<div>
-						<span>錯題／弱點追蹤</span>
-						<b>把不熟的地方，練成下一次的底氣</b>
-					</div>
-					<i>{dueWeakQuestions.length}</i>
+					<div><span>錯題／弱點追蹤</span><b>把不熟的地方，練成下一次的底氣</b></div>
+					<i>{weakQuestions.length}</i>
 				</div>
-				{weaknessNotice && (
-					<p className="weakness-notice">{weaknessNotice}</p>
-				)}
-				{dueWeakQuestions.length === 0 ? (
-					<p className="weakness-empty">
-						{upcomingWeakQuestion
-							? `下一題將在 ${upcomingWeakQuestion.nextReviewDate.slice(5).replace("-", "/")} 回流複習。`
-							: "目前沒有到期錯題；答錯簽到題會在隔天與第 3 天回流。"}
-					</p>
-				) : (
-					<div className="weakness-list">
-						{dueWeakQuestions.map((item) => {
-							const question =
-								dailyCheckInQuestions[item.questionIndex];
-							if (!question) return null;
-							const isReviewing = reviewingWeakId === item.id;
-							return (
-								<article
-									className="weakness-item"
-									key={item.id}
-								>
-									<div className="weakness-item-summary">
-										<div>
-											<span>
-												{question.subject}・第 {item.reviewStep} 輪回流複習
-											</span>
-											<b>{question.question}</b>
-										</div>
-										<button
-											onClick={() => {
-												setReviewingWeakId(
-													isReviewing
-														? null
-														: item.id,
-												);
-												setWeakReviewFeedback(
-													(current) => ({
-														...current,
-														[item.id]: "",
-													}),
-												);
-											}}
-										>
-											{isReviewing ? "收起" : "再次作答"}
-										</button>
-									</div>
-									{isReviewing && (
-										<div className="weakness-review">
-											<div
-												className="weakness-options"
-												role="radiogroup"
-												aria-label={`${question.subject} 弱點複習答案`}
-											>
-												{question.choices.map(
-													([key, label]) => (
-														<button
-															key={key}
-															className={
-																selectedWeakAnswers[
-																	item.id
-																] === key
-																	? "selected"
-																	: ""
-															}
-															onClick={() => {
-																setSelectedWeakAnswers(
-																	(
-																		current,
-																	) => ({
-																		...current,
-																		[item.id]:
-																			key,
-																	}),
-																);
-																setWeakReviewFeedback(
-																	(
-																		current,
-																	) => ({
-																		...current,
-																		[item.id]:
-																			"",
-																	}),
-																);
-															}}
-															aria-pressed={
-																selectedWeakAnswers[
-																	item.id
-																] === key
-															}
-														>
-															<b>{key}</b>
-															<span>{label}</span>
-														</button>
-													),
-												)}
-											</div>
-											<button
-												className="weakness-submit"
-												onClick={() =>
-													submitWeakReview(item)
-												}
-											>
-												確認複習答案
-											</button>
-											{weakReviewFeedback[item.id] && (
-												<p>
-													{
-														weakReviewFeedback[
-															item.id
-														]
-													}
-												</p>
-											)}
-										</div>
-									)}
-								</article>
-							);
-						})}
-					</div>
-				)}
+				{weakQuestions.length === 0 ? <p className="weakness-empty">目前沒有待複習錯題；每日簽到題答錯時，會自動收在這裡。</p> : <div className="weakness-list">{weakQuestions.map((item) => {
+					const question = dailyCheckInQuestions[item.questionIndex];
+					if (!question) return null;
+					const isReviewing = reviewingWeakId === item.id;
+					return <article className="weakness-item" key={item.id}>
+						<div className="weakness-item-summary"><div><span>{question.subject}・累計錯誤 {item.misses} 次</span><b>{question.question}</b></div><button onClick={() => { setReviewingWeakId(isReviewing ? null : item.id); setWeakReviewFeedback((current) => ({ ...current, [item.id]: "" })); }}>{isReviewing ? "收起" : "再次作答"}</button></div>
+						{isReviewing && <div className="weakness-review"><div className="weakness-options" role="radiogroup" aria-label={`${question.subject} 弱點複習答案`}>{question.choices.map(([key, label]) => <button key={key} className={selectedWeakAnswers[item.id] === key ? "selected" : ""} onClick={() => { setSelectedWeakAnswers((current) => ({ ...current, [item.id]: key })); setWeakReviewFeedback((current) => ({ ...current, [item.id]: "" })); }} aria-pressed={selectedWeakAnswers[item.id] === key}><b>{key}</b><span>{label}</span></button>)}</div><button className="weakness-submit" onClick={() => submitWeakReview(item)}>確認複習答案</button>{weakReviewFeedback[item.id] && <p>{weakReviewFeedback[item.id]}</p>}</div>}
+					</article>;
+				})}</div>}
 			</section>
 			<section
 				className="learning-calendar"
@@ -2124,6 +1382,19 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				</button>
 				<button
 					onClick={() => {
+						if (pendingIndex >= 0) startFocus();
+					}}
+				>
+					<span className="quick-icon focus">◷</span>
+					<b>開始專注</b>
+					<small>
+						{pendingIndex >= 0
+							? `${tasks[pendingIndex].minutes} 分鐘任務`
+							: "今日已完成"}
+					</small>
+				</button>
+				<button
+					onClick={() => {
 						location.href = "/prayer-wall";
 					}}
 				>
@@ -2184,18 +1455,8 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				</div>
 				<i>›</i>
 			</button>
-			<button
-				className="badge-collection-link"
-				onClick={() => {
-					location.href = "/badges";
-				}}
-			>
-				<span>🏅</span>
-				<div>
-					<b>真實成就牆</b>
-					<small>完整專注、連續簽到與克服弱點才會解鎖</small>
-				</div>
-				<i>›</i>
+			<button className="badge-collection-link" onClick={() => { location.href = "/badges"; }}>
+				<span>🏅</span><div><b>我的學習徽章</b><small>查看你的文昌學習勳章與解鎖進度</small></div><i>›</i>
 			</button>
 			{showSettlement && (
 				<div
@@ -2295,393 +1556,43 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	);
 	const prayerView = (
 		<section className="journey">
-			<p className="eyebrow">智慧宮廟・學習文化回饋</p>
+			<p className="eyebrow">智慧宮廟・祈福同行</p>
 			<h1>
-				為真實完成留下記號
+				為努力祈願
 				<br />
-				<em>讓祈福陪你養成習慣。</em>
+				<em>也為自己留下一句話。</em>
 			</h1>
-			<section
-				className={`daily-fortune-task ${dailyFortuneTask.done ? "is-complete" : ""}`}
-				aria-label="每日學習紀錄"
-			>
-				<div className="daily-fortune-task-heading">
-					<b>每日學習簽到</b>
-					<small>
-					{dailyFortuneTask.done ? "今日已留存" : "完成任務後開放"}
-					</small>
-				</div>
+			<section className={`daily-fortune-task ${dailyFortuneTask.done ? "is-complete" : ""}`} aria-label="每日籤詩任務">
+				<div className="daily-fortune-task-heading"><b>每日學習簽到</b><small>{dailyFortuneTask.done ? "今日已簽到" : "答對簽到"}</small></div>
 				<p className="daily-fortune-verse">「{dailyFortune.verse}」</p>
-				<div className="daily-classic">
-					<i aria-hidden="true">
-						{dailyFortuneTask.done ? "✓" : "典"}
-					</i>
-					<div>
-						<span>今日典籍・{dailyClassic.title}</span>
-						<strong>{dailyClassic.passage}</strong>
-						<small>{dailyClassic.note}</small>
-					</div>
-				</div>
-				<button
-					onClick={() => {
-						setSelectedDailyAnswer(null);
-						setDailyAnswerFeedback("");
-						setDailyCheckInDialogOpen(true);
-					}}
-					disabled={dailyFortuneTask.done || completed < 1}
-				>
-					{dailyFortuneTask.done
-					? "今日學習紀錄已留存 ✓"
-						: completed < 1
-							? "先完成 1 項專注任務"
-							: "翻開典籍・進行今日簽到"}
-				</button>
-				{!dailyFortuneTask.done && completed < 1 && (
-					<p className="daily-fortune-feedback">
-						完成至少一項完整專注任務後，才會開放今日簽到。
-					</p>
-				)}
-				{dailyAnswerFeedback && (
-					<p
-						className={`daily-fortune-feedback ${dailyFortuneTask.done ? "correct" : ""}`}
-					>
-						{dailyAnswerFeedback}
-					</p>
-				)}
-				{dailyFortuneTask.done && (
-					<section
-						className="daily-small-step"
-						aria-label="簽到後的今日一小步"
-					>
-						<div className="daily-small-step-copy">
-							<i aria-hidden="true">一</i>
-							<div>
-								<span>簽到後的今日一小步・{dailySmallStep.minutes} 分鐘</span>
-								<b>{dailySmallStep.title}</b>
-								<small>{dailySmallStep.detail} 完成紀錄請以專注任務計時為準。</small>
-							</div>
-						</div>
-					</section>
-				)}
-				<section className="checkin-milestones" aria-label="連續簽到里程碑">
-					<div className="checkin-milestones-heading">
-						<div>
-							<span>連續簽到</span>
-							<b>{checkInStreak} 天</b>
-						</div>
-						<small>
-							{nextCheckInMilestone
-								? `再 ${nextCheckInMilestone.days - checkInStreak} 天解鎖「${nextCheckInMilestone.title}」`
-								: "四枚木牌已全數解鎖"}
-						</small>
-					</div>
-					<ol>
-						{checkInMilestones.map((milestone) => {
-							const unlocked = checkInStreak >= milestone.days;
-							return (
-								<li key={milestone.days} className={unlocked ? "unlocked" : ""}>
-									<i aria-hidden="true">{unlocked ? milestone.plaque : "·"}</i>
-									<div>
-										<b>{milestone.days} 日・{milestone.title}</b>
-										<span>{unlocked ? milestone.detail : "持續簽到以解鎖"}</span>
-									</div>
-								</li>
-							);
-						})}
-					</ol>
-				</section>
-				<p className="daily-fortune-note">
-					典籍問答是今日的學習回望；祈福木牌只會在完整專注任務結束後自動點亮。
-				</p>
+				<div className="daily-classic"><i aria-hidden="true">{dailyFortuneTask.done ? "✓" : "典"}</i><div><span>今日典籍・{dailyClassic.title}</span><strong>{dailyClassic.passage}</strong><small>{dailyClassic.note}</small></div></div>
+				<button onClick={() => setDailyCheckInDialogOpen(true)} disabled={dailyFortuneTask.done}>{dailyFortuneTask.done ? "今日簽到完成・已獲得木牌 ✓" : "翻開典籍・進行今日簽到"}</button>
+				{dailyAnswerFeedback && <p className={`daily-fortune-feedback ${dailyFortuneTask.done ? "correct" : ""}`}>{dailyAnswerFeedback}</p>}
+				<p className="daily-fortune-note">每天翻開一則典籍，答對今日題目即可完成簽到並獲得 1 枚祈福木牌。</p>
 			</section>
-			{dailyCheckInDialogOpen && (
-				<div
-					className="daily-checkin-backdrop"
-					role="presentation"
-					onMouseDown={() => setDailyCheckInDialogOpen(false)}
-				>
-					<section
-						className="daily-checkin-dialog"
-						role="dialog"
-						aria-modal="true"
-						aria-labelledby="daily-checkin-title"
-						onMouseDown={(event) => event.stopPropagation()}
-					>
-						<button
-							className="daily-checkin-close"
-							aria-label="關閉簽到題目"
-							onClick={() => setDailyCheckInDialogOpen(false)}
-						>
-							×
-						</button>
-						<span>今日典籍問答</span>
-						<h2 id="daily-checkin-title">{dailyClassic.title}</h2>
-						<p className="daily-checkin-passage">
-							「{dailyClassic.passage}」
-						</p>
-						<div className="daily-checkin-question">
-							<small>
-								{dailyCheckInQuestion.subject}・今日簽到題
-							</small>
-							<b>{dailyCheckInQuestion.question}</b>
-						</div>
-						<div
-							className="daily-checkin-options"
-							role="radiogroup"
-							aria-label="選擇今日簽到題答案"
-						>
-							{dailyCheckInQuestion.choices.map(
-								([key, label]) => (
-									<button
-										key={key}
-										className={
-											selectedDailyAnswer === key
-												? "selected"
-												: ""
-										}
-										onClick={() => {
-											setSelectedDailyAnswer(key);
-											setDailyAnswerFeedback("");
-										}}
-										aria-pressed={
-											selectedDailyAnswer === key
-										}
-									>
-										<b>{key}</b>
-										<span>{label}</span>
-									</button>
-								),
-							)}
-						</div>
-						{dailyAnswerFeedback && (
-							<p className="daily-fortune-feedback">
-								{dailyAnswerFeedback}
-							</p>
-						)}
-						<button
-							className="daily-checkin-submit"
-							onClick={completeDailyCheckIn}
-						>
-							確認答案・完成簽到
-						</button>
-					</section>
-				</div>
-			)}
-			{checkInCeremonyOpen && (
-				<div className="checkin-ceremony" role="presentation">
-					<section
-						className="checkin-ceremony-card"
-						role="dialog"
-						aria-modal="true"
-						aria-labelledby="checkin-ceremony-title"
-					>
-						<div className="checkin-ceremony-rays" aria-hidden="true" />
-						<p className="checkin-ceremony-kicker">今日修習留存</p>
-						<div className="checkin-ceremony-seal" aria-hidden="true">
-							<span>✓</span>
-						</div>
-						<h2 id="checkin-ceremony-title">學習紀錄完成</h2>
-						<p className="checkin-ceremony-message">
-							{newlyUnlockedMilestone
-								? `連續 ${newlyUnlockedMilestone.days} 天簽到，已解鎖「${newlyUnlockedMilestone.title}」。`
-								: "你已翻開今日典籍，也為目標留下一次踏實的前進。"}
-						</p>
-						<div className="checkin-ceremony-plaque">
-							<i aria-hidden="true">學</i>
-							<div>
-								<span>文化回饋</span>
-								<b>今日學習已留存</b>
-							</div>
-						</div>
-						<div className="checkin-ceremony-step">
-							<span>接著做一小步・{dailySmallStep.minutes} 分鐘</span>
-							<b>{dailySmallStep.title}</b>
-						</div>
-						<p className="checkin-ceremony-date">願你把這份專注，帶進今天的每一段學習。</p>
-						<button onClick={() => setCheckInCeremonyOpen(false)} autoFocus>
-							收下祝福
-						</button>
-					</section>
-				</div>
-			)}
-			<section className="cultural-reward-card" aria-label="文化化的學習回饋">
-				<div className="cultural-reward-heading">
-					<div className="cultural-scene-seal" aria-hidden="true">{activeCulturalScene.seal}</div>
-					<div>
-						<span>完成任務後的文化回饋</span>
-						<b>{activeCulturalScene.title}</b>
-						<p>{activeCulturalScene.detail}</p>
-					</div>
-					<div className="cultural-plank-count">
-						<b>{planks}</b><span>已點亮木牌</span>
-					</div>
-				</div>
-				<div className="cultural-proof">
-					<div><b>{focusSessionsCompleted}</b><span>次完整專注</span></div>
-					<div><b>{focusRewardMinutes}</b><span>分鐘真實累積</span></div>
-					<div><b>{checkInStreak}</b><span>天學習連續</span></div>
-				</div>
-				<ol className="cultural-scene-path" aria-label="祈願場景解鎖進度">
-					{culturalScenes.slice(1).map((scene) => {
-						const unlocked = checkInStreak >= scene.days;
-						return <li key={scene.days} className={unlocked ? "unlocked" : ""}>
-							<i aria-hidden="true">{unlocked ? scene.seal : "·"}</i>
-							<div><b>{scene.days} 日・{scene.title}</b><span>{unlocked ? "已由真實完成解鎖" : `還需連續學習 ${scene.days - checkInStreak} 天`}</span></div>
-						</li>;
-					})}
-				</ol>
-				<p className="cultural-reward-note">
-					{nextCulturalScene ? `下一個場景：${nextCulturalScene.title}。完成完整專注任務、留下今日學習紀錄，讓場景隨習慣自然開展。` : "所有祈願場景皆已由你的真實學習完成解鎖。"}
-				</p>
-			</section>
+			{dailyCheckInDialogOpen && <div className="daily-checkin-backdrop" role="presentation" onMouseDown={() => setDailyCheckInDialogOpen(false)}><section className="daily-checkin-dialog" role="dialog" aria-modal="true" aria-labelledby="daily-checkin-title" onMouseDown={(event) => event.stopPropagation()}><button className="daily-checkin-close" aria-label="關閉簽到題目" onClick={() => setDailyCheckInDialogOpen(false)}>×</button><span>今日典籍問答</span><h2 id="daily-checkin-title">{dailyClassic.title}</h2><p className="daily-checkin-passage">「{dailyClassic.passage}」</p><div className="daily-checkin-question"><small>{dailyCheckInQuestion.subject}・今日簽到題</small><b>{dailyCheckInQuestion.question}</b></div><div className="daily-checkin-options" role="radiogroup" aria-label="選擇今日簽到題答案">{dailyCheckInQuestion.choices.map(([key, label]) => <button key={key} className={selectedDailyAnswer === key ? "selected" : ""} onClick={() => { setSelectedDailyAnswer(key); setDailyAnswerFeedback(""); }} aria-pressed={selectedDailyAnswer === key}><b>{key}</b><span>{label}</span></button>)}</div>{dailyAnswerFeedback && <p className="daily-fortune-feedback">{dailyAnswerFeedback}</p>}<button className="daily-checkin-submit" onClick={completeDailyCheckIn}>確認答案・完成簽到</button></section></div>}
 			<section className="oracle-card" aria-label="文昌求籤">
 				<div className="oracle-heading">
-					<div>
-						<span>文昌靈籤</span>
-						<b>求一支給今天的指引</b>
-					</div>
-					<div className="oracle-balance">
-						<span>祈福木牌</span>
-						<b>
-							{availablePlanks}
-							<small> 枚</small>
-						</b>
-					</div>
+					<div><span>文昌靈籤</span><b>求一支給今天的指引</b></div>
+					<div className="oracle-balance"><span>祈福木牌</span><b>{availablePlanks}<small> 枚</small></b></div>
 				</div>
 				{oracleStage === "idle" && (
 					<div className="oracle-exchange">
-						<div className="oracle-tube" aria-hidden="true">
-							<i />
-							<i />
-							<i />
-							<i />
-							<i />
-							<i />
-						</div>
-						<div>
-							<b>以祈福木牌換取籤緣</b>
-							<p>
-								每 3 枚木牌可兌換 1
-								次求籤機會；籤詩將依你親自選取的籤枝揭曉。
-							</p>
-							<button
-								onClick={exchangeOracleTicket}
-								disabled={availablePlanks < 3}
-							>
-								{availablePlanks >= 3
-									? "兌換 1 次求籤機會"
-									: `還差 ${3 - availablePlanks} 枚木牌`}
-							</button>
-						</div>
+						<div className="oracle-tube" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
+						<div><b>以祈福木牌換取籤緣</b><p>每 3 枚木牌可兌換 1 次求籤機會；籤詩將依你親自選取的籤枝揭曉。</p><button onClick={exchangeOracleTicket} disabled={availablePlanks < 3}>{availablePlanks >= 3 ? "兌換 1 次求籤機會" : `還差 ${3 - availablePlanks} 枚木牌`}</button></div>
 					</div>
 				)}
 				{oracleStage === "choosing" && (
 					<div className="oracle-choice">
 						<p>閉上眼想著此刻的心願，從籤筒裡親自選出一支籤。</p>
-						<div
-							className="fortune-sticks"
-							role="group"
-							aria-label="選擇一支籤"
-						>
-							{fortunePoems.map((_, index) => (
-								<button
-									className={`fortune-stick ${selectedStick === index ? "selected" : ""}`}
-									key={index}
-									onClick={() => setSelectedStick(index)}
-									aria-label={`選擇第 ${index + 1} 支籤`}
-								>
-									<i>{index + 1}</i>
-								</button>
-							))}
+						<div className="fortune-sticks" role="group" aria-label="選擇一支籤">
+							{fortunePoems.map((_, index) => <button className={`fortune-stick ${selectedStick === index ? "selected" : ""}`} key={index} onClick={() => setSelectedStick(index)} aria-label={`選擇第 ${index + 1} 支籤`}><i>{index + 1}</i></button>)}
 						</div>
-						<button
-							className="oracle-draw-button"
-							onClick={drawFortune}
-							disabled={selectedStick === null}
-						>
-							請取第{" "}
-							{selectedStick === null ? "—" : selectedStick + 1}{" "}
-							籤 <span>→</span>
-						</button>
+						<button className="oracle-draw-button" onClick={drawFortune} disabled={selectedStick === null}>請取第 {selectedStick === null ? "—" : selectedStick + 1} 籤 <span>→</span></button>
 					</div>
 				)}
-				{oracleStage === "drawing" && (
-					<div className="oracle-drawing" aria-live="polite">
-						<div className="oracle-tube shaking" aria-hidden="true">
-							<i />
-							<i />
-							<i />
-							<i />
-							<i />
-							<i />
-							<span className="oracle-drawn-stick">
-								{selectedStick !== null
-									? selectedStick + 1
-									: ""}
-							</span>
-						</div>
-						<b>籤筒正在為你搖出指引</b>
-						<small>靜心片刻，讓選中的籤枝自己浮現</small>
-					</div>
-				)}
-				{oracleStage === "result" && oracleResultId !== null && (
-					<div className="oracle-result">
-						<div className="oracle-result-display">
-							<div
-								className="oracle-result-stick"
-								aria-hidden="true"
-							>
-								<b>{oracleResultId + 1}</b>
-							</div>
-							<div className="oracle-lot-paper">
-								<div className="oracle-lot-heading">
-									<span>WENCHANG LOT</span>
-									<b>第 {oracleResultId + 1} 籤</b>
-								</div>
-								<i className="oracle-seal">文昌</i>
-								<div className="oracle-lot-body">
-									<strong className="oracle-luck">
-										吉<br />籤
-									</strong>
-									<div>
-										<h2>
-											{fortunePoems[oracleResultId].title}
-										</h2>
-										<p className="oracle-verse">
-											{fortunePoems[oracleResultId].verse}
-										</p>
-										<p className="oracle-interpret-label">
-											【解曰】
-										</p>
-										<p className="oracle-reading-copy">
-											{
-												fortunePoems[oracleResultId]
-													.reading
-											}
-										</p>
-									</div>
-								</div>
-								<small>
-									<span>誠心求籤</span>
-									<span>靜心解籤</span>
-								</small>
-							</div>
-						</div>
-						<div className="oracle-result-actions">
-							<button onClick={drawAgain}>
-								{oracleTickets > 0 ? "再求一籤" : "回到籤筒"}
-							</button>
-							{availablePlanks >= 3 && (
-								<button
-									className="oracle-exchange-small"
-									onClick={exchangeOracleTicket}
-								>
-									再兌換 1 次
-								</button>
-							)}
-						</div>
-					</div>
-				)}
+				{oracleStage === "drawing" && <div className="oracle-drawing" aria-live="polite"><div className="oracle-tube shaking" aria-hidden="true"><i /><i /><i /><i /><i /><i /><span className="oracle-drawn-stick">{selectedStick !== null ? selectedStick + 1 : ""}</span></div><b>籤筒正在為你搖出指引</b><small>靜心片刻，讓選中的籤枝自己浮現</small></div>}
+				{oracleStage === "result" && oracleResultId !== null && <div className="oracle-result"><div className="oracle-result-display"><div className="oracle-result-stick" aria-hidden="true"><b>{oracleResultId + 1}</b></div><div className="oracle-lot-paper"><div className="oracle-lot-heading"><span>WENCHANG LOT</span><b>第 {oracleResultId + 1} 籤</b></div><i className="oracle-seal">文昌</i><div className="oracle-lot-body"><strong className="oracle-luck">吉<br />籤</strong><div><h2>{fortunePoems[oracleResultId].title}</h2><p className="oracle-verse">{fortunePoems[oracleResultId].verse}</p><p className="oracle-interpret-label">【解曰】</p><p className="oracle-reading-copy">{fortunePoems[oracleResultId].reading}</p></div></div><small><span>誠心求籤</span><span>靜心解籤</span></small></div></div><div className="oracle-result-actions"><button onClick={drawAgain}>{oracleTickets > 0 ? "再求一籤" : "回到籤筒"}</button>{availablePlanks >= 3 && <button className="oracle-exchange-small" onClick={exchangeOracleTicket}>再兌換 1 次</button>}</div></div>}
 			</section>
 			<section className="wish-card">
 				<div className="wish-card-heading">
@@ -2714,89 +1625,14 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						))}
 					</div>
 				)}
-				{wishReflections.some(
-					(item) => daysSinceWish(item.createdAt) >= 7,
-				) && (
-					<section className="wish-review" aria-label="願望回顧">
-						<div className="wish-review-heading">
-							<div>
-								<span>給未來的自己</span>
-								<b>願望回顧</b>
-							</div>
-							<i>⏳</i>
-						</div>
-						<p>
-							把當初的心願留給時間。第 7 天與第 30
-							天，回來看看自己已走了多遠。
-						</p>
-						<div className="wish-review-list">
-							{wishReflections
-								.filter(
-									(item) =>
-										daysSinceWish(item.createdAt) >= 7,
-								)
-								.map((item) => {
-									const elapsed = daysSinceWish(
-										item.createdAt,
-									);
-									return (
-										<article
-											key={item.id}
-											className="wish-review-item"
-										>
-											<strong>「{item.text}」</strong>
-											<div className="wish-review-milestones">
-												<button
-													className={
-														item.reviewedAfter7Days
-															? "done"
-															: ""
-													}
-													onClick={() =>
-														!item.reviewedAfter7Days &&
-														completeWishReview(
-															item.id,
-															7,
-														)
-													}
-													disabled={
-														item.reviewedAfter7Days
-													}
-												>
-													{item.reviewedAfter7Days
-														? "第 7 天已回望 ✓"
-														: "回顧第 7 天"}
-												</button>
-												{elapsed >= 30 && (
-													<button
-														className={
-															item.reviewedAfter30Days
-																? "done"
-																: ""
-														}
-														onClick={() =>
-															!item.reviewedAfter30Days &&
-															completeWishReview(
-																item.id,
-																30,
-															)
-														}
-														disabled={
-															item.reviewedAfter30Days
-														}
-													>
-														{item.reviewedAfter30Days
-															? "第 30 天已回望 ✓"
-															: "回顧第 30 天"}
-													</button>
-												)}
-											</div>
-										</article>
-									);
-								})}
-						</div>
-					</section>
-				)}
+				{wishReflections.some((item) => daysSinceWish(item.createdAt) >= 7) && <section className="wish-review" aria-label="願望回顧">
+					<div className="wish-review-heading"><div><span>給未來的自己</span><b>願望回顧</b></div><i>⏳</i></div>
+					<p>把當初的心願留給時間。第 7 天與第 30 天，回來看看自己已走了多遠。</p>
+					<div className="wish-review-list">{wishReflections.filter((item) => daysSinceWish(item.createdAt) >= 7).map((item) => {
+						const elapsed = daysSinceWish(item.createdAt);
+						return <article key={item.id} className="wish-review-item"><strong>「{item.text}」</strong><div className="wish-review-milestones"><button className={item.reviewedAfter7Days ? "done" : ""} onClick={() => !item.reviewedAfter7Days && completeWishReview(item.id, 7)} disabled={item.reviewedAfter7Days}>{item.reviewedAfter7Days ? "第 7 天已回望 ✓" : "回顧第 7 天"}</button>{elapsed >= 30 && <button className={item.reviewedAfter30Days ? "done" : ""} onClick={() => !item.reviewedAfter30Days && completeWishReview(item.id, 30)} disabled={item.reviewedAfter30Days}>{item.reviewedAfter30Days ? "第 30 天已回望 ✓" : "回顧第 30 天"}</button>}</div></article>;
+					})}</div>
+				</section>}
 				<button
 					className="wall-link"
 					onClick={() => {
@@ -3038,14 +1874,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						</button>
 					)}
 				</section>
-				<section className="weekly-care-card" aria-label="每週關懷摘要">
-					<div><span>每週關懷摘要</span><b>只看學習趨勢，不顯示題目內容</b><small>包含完成率、專注時間與最需要加強的科目。</small></div>
-					<div className="care-audience" role="radiogroup" aria-label="摘要版本">
-						{(["self", "teacher", "parent"] as const).map((audience) => <button key={audience} className={careSummaryAudience === audience ? "selected" : ""} onClick={() => setCareSummaryAudience(audience)} aria-pressed={careSummaryAudience === audience}>{audience === "self" ? "本人版" : audience === "teacher" ? "教師版" : "家長版"}</button>)}
-					</div>
-					<button className="weekly-care-send" onClick={sendWeeklyCareSummary}>{lineName ? "推播本週摘要到 LINE OA" : "登入 LINE 後推播摘要"}</button>
-					<small className="weekly-care-note">教師／家長版會先推播至你的 LINE，可自行分享給已取得同意的對象。</small>
-				</section>
 			</div>
 			<section className="service-section">
 				<b>帳號服務</b>
@@ -3158,62 +1986,26 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				</div>
 
 				<header className="topbar">
-					<div className="topbar-inner">
-						<div className="brand">
-							<span className="brand-mark">文</span>
-							<div className="brand-copy">
-								<strong>文昌同行</strong>
-								<small>學習路上，與你同行</small>
-							</div>
-						</div>
-						<div className="account">
-							<button
-								className="account-capsule"
-								onClick={lineName ? () => navigateToTab("profile") : login}
-							>
-								<span
-									className="line-status-dot"
-									aria-hidden="true"
-								/>
-								<span>
-									{lineName ? `${lineName}・我的` : "LINE 登入"}
-								</span>
-								<i aria-hidden="true">
-									{lineName?.slice(0, 1) ?? "我"}
-								</i>
-							</button>
+					<div className="brand">
+						<span className="brand-mark">文</span>
+						<div className="brand-copy">
+							<strong>文昌同行</strong>
+							<small>學習路上，與你同行</small>
 						</div>
 					</div>
+					<div className="account">
+						<button className="account-capsule" onClick={lineName ? () => setTab("profile") : login}>
+							<span className="line-status-dot" aria-hidden="true" />
+							<span>{lineName ? `${lineName}・我的` : "LINE 登入"}</span>
+							<i aria-hidden="true">{lineName?.slice(0, 1) ?? "我"}</i>
+						</button>
+					</div>
 				</header>
-				<nav className={`primary-nav ${navVisible ? "is-visible" : "is-hidden"}`} aria-label="主要導覽">
-					<button
-						className={tab === "today" ? "active" : ""}
-						onClick={() => navigateToTab("today")}
-					>
-						<i aria-hidden="true">☀</i>
-						<span>今日</span>
-					</button>
-					<button
-						className={tab === "progress" ? "active" : ""}
-						onClick={() => navigateToTab("progress")}
-					>
-						<i aria-hidden="true">▤</i>
-						<span>進度</span>
-					</button>
-					<button
-						className={tab === "prayer" ? "active" : ""}
-						onClick={() => navigateToTab("prayer")}
-					>
-						<i aria-hidden="true">✦</i>
-						<span>祈福</span>
-					</button>
-					<button
-						className={tab === "profile" ? "active" : ""}
-						onClick={() => navigateToTab("profile")}
-					>
-						<i aria-hidden="true">☺</i>
-						<span>我的</span>
-					</button>
+				<nav aria-label="主要導覽">
+					<button className={tab === "today" ? "active" : ""} onClick={() => setTab("today")}><i aria-hidden="true">⌂</i><span>今日</span></button>
+					<button className={tab === "progress" ? "active" : ""} onClick={() => setTab("progress")}><i aria-hidden="true">▥</i><span>進度</span></button>
+					<button className={tab === "prayer" ? "active" : ""} onClick={() => setTab("prayer")}><i aria-hidden="true">✿</i><span>祈福</span></button>
+					<button className={tab === "profile" ? "active" : ""} onClick={() => setTab("profile")}><i aria-hidden="true">◌</i><span>我的</span></button>
 				</nav>
 				{tab === "today" ? (
 					<>
@@ -3227,115 +2019,23 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				) : (
 					profileView
 				)}
-				{focusPickerTaskIndex !== null &&
-					tasks[focusPickerTaskIndex] && (
-						<div
-							className="focus-mode-backdrop"
-							role="presentation"
-						>
-							<section
-								className="focus-mode-dialog"
-								role="dialog"
-								aria-modal="true"
-								aria-labelledby="focus-mode-title"
-							>
-								<button
-									className="focus-modal-close"
-									onClick={() =>
-										setFocusPickerTaskIndex(null)
-									}
-									aria-label="關閉選擇專注模式"
-								>
-									×
-								</button>
-								<span>靜心開始</span>
-								<h2 id="focus-mode-title">
-									完成這次的
-									<br />
-									<em>完整專注</em>
-								</h2>
-								<p>
-									{tasks[focusPickerTaskIndex].subject}・
-									{tasks[focusPickerTaskIndex].detail}
-								</p>
-								<div className="focus-mode-list">
-									<button onClick={beginFocus}>
-										<b>
-											{tasks[focusPickerTaskIndex].minutes}
-											<small> 分鐘</small>
-										</b>
-										<div>
-											<strong>完成這項任務</strong>
-											<span>完整倒數結束後，系統會自動記錄完成</span>
-										</div>
-										<i>開始 →</i>
-									</button>
-								</div>
-								<small className="focus-mode-note">
-									完整專注每滿 10 分鐘，可獲得 1 枚祈福木牌。
-								</small>
-							</section>
-						</div>
-					)}
+				{focusPickerTaskIndex !== null && tasks[focusPickerTaskIndex] && (
+					<div className="focus-mode-backdrop" role="presentation">
+						<section className="focus-mode-dialog" role="dialog" aria-modal="true" aria-labelledby="focus-mode-title">
+							<button className="focus-modal-close" onClick={() => setFocusPickerTaskIndex(null)} aria-label="關閉選擇專注模式">×</button>
+							<span>靜心開始</span>
+							<h2 id="focus-mode-title">選擇這次的<br /><em>專注節奏</em></h2>
+							<p>{tasks[focusPickerTaskIndex].subject}・{tasks[focusPickerTaskIndex].detail}</p>
+							<div className="focus-mode-list">{focusModes.map((mode) => <button key={mode.minutes} onClick={() => beginFocus(mode.minutes)}><b>{mode.minutes}<small> 分鐘</small></b><div><strong>{mode.label}</strong><span>{mode.detail}</span></div><i>開始 →</i></button>)}</div>
+							<small className="focus-mode-note">完整專注每滿 10 分鐘，可獲得 1 枚祈福木牌。</small>
+						</section>
+					</div>
+				)}
 				{focusIndex !== null && tasks[focusIndex] && (
-					<div
-						className="focus-immersive"
-						role="dialog"
-						aria-modal="true"
-						aria-labelledby="focus-session-title"
-					>
-						<div className="focus-session-top">
-							<span>文昌同行・專注時刻</span>
-							<button onClick={abandonFocus}>先離開</button>
-						</div>
-						<div className="focus-session-content">
-							<p>
-								{focusEnded
-									? "專注時間到"
-									: focusPaused
-										? "先深呼吸，再回到這一題"
-										: `${tasks[focusIndex].subject}・${tasks[focusIndex].detail}`}
-							</p>
-							<h2 id="focus-session-title">{focusTime}</h2>
-							<span className="focus-session-goal">
-								{focusEnded
-									? "正在自動記錄任務完成"
-									: `本次目標・專注 ${focusScheduledMinutes} 分鐘`}
-							</span>
-							<div className="focus-session-progress">
-								<i
-									style={{
-										width: `${Math.max(0, Math.min(100, 100 - (focusSeconds / Math.max(1, focusScheduledMinutes * 60)) * 100))}%`,
-									}}
-								/>
-							</div>
-							<small>
-								{focusEnded
-									? "完整倒數已結束，正在更新今日任務。"
-									: `每滿 10 分鐘可獲得祈福木牌・本次已守住 ${Math.max(0, focusScheduledMinutes - Math.ceil(focusSeconds / 60))} 分鐘`}
-							</small>
-						</div>
-						<div className="focus-session-actions">
-							{focusEnded ? (
-								<span className="focus-confirm">正在記錄完成…</span>
-							) : (
-								<>
-									<button
-										className="focus-confirm"
-										onClick={
-											focusPaused
-												? resumeFocus
-												: pauseFocus
-										}
-									>
-										{focusPaused ? "繼續專注" : "暫停"}
-									</button>
-									<button onClick={abandonFocus}>
-										保留任務，先離開
-									</button>
-								</>
-							)}
-						</div>
+					<div className="focus-immersive" role="dialog" aria-modal="true" aria-labelledby="focus-session-title">
+						<div className="focus-session-top"><span>文昌同行・專注時刻</span><button onClick={abandonFocus}>先離開</button></div>
+						<div className="focus-session-content"><p>{focusEnded ? "專注時間到" : focusPaused ? "先深呼吸，再回到這一題" : `${tasks[focusIndex].subject}・${tasks[focusIndex].detail}`}</p><h2 id="focus-session-title">{focusTime}</h2><span className="focus-session-goal">{focusEnded ? "你完成這段專注了嗎？" : `本次目標・專注 ${focusScheduledMinutes} 分鐘`}</span><div className="focus-session-progress"><i style={{ width: `${Math.max(0, Math.min(100, 100 - (focusSeconds / Math.max(1, focusScheduledMinutes * 60)) * 100))}%` }} /></div><small>{focusEnded ? "完成後會更新任務，並帶你接續下一個讀書步驟。" : `每滿 10 分鐘可獲得祈福木牌・本次已守住 ${Math.max(0, focusScheduledMinutes - Math.ceil(focusSeconds / 60))} 分鐘`}</small></div>
+						<div className="focus-session-actions">{focusEnded ? <><button className="focus-confirm" onClick={finishFocusAndContinue}>完成並接續下一項</button><button onClick={completeFocus}>完成並回到任務</button></> : <><button className="focus-confirm" onClick={focusPaused ? resumeFocus : pauseFocus}>{focusPaused ? "繼續專注" : "暫停"}</button><button onClick={abandonFocus}>保留任務，先離開</button></>}</div>
 					</div>
 				)}
 				{tab === "today" && (
@@ -3351,27 +2051,6 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							alt="加入文昌同行 LINE 官方好友"
 						/>
 					</a>
-				)}
-				{sleepReminderOpen && (
-					<div
-						className="sleep-reminder-backdrop"
-						role="presentation"
-						onMouseDown={() => setSleepReminderOpen(false)}
-					>
-						<section
-							className="sleep-reminder-dialog"
-							role="dialog"
-							aria-modal="true"
-							aria-labelledby="sleep-reminder-title"
-							onMouseDown={(event) => event.stopPropagation()}
-						>
-							<div className="sleep-reminder-moon" aria-hidden="true">☾</div>
-							<span>今晚的溫柔提醒</span>
-							<h2 id="sleep-reminder-title">22:30 前結束複習</h2>
-							<p>讓大腦好好休息。睡得夠，明天才能把今天讀過的內容真正記住。</p>
-							<button onClick={() => setSleepReminderOpen(false)}>知道了，準備收心</button>
-						</section>
-					</div>
 				)}
 			</section>
 		</main>
