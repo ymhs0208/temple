@@ -1,6 +1,7 @@
 import { verifyLineIdToken } from "@/lib/line";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { taipeiDate } from "@/lib/taipei-date";
+import { buildCompletionFlex } from "@/lib/line-reminder";
 
 type CompletionRequest = {
   idToken?: string;
@@ -10,18 +11,6 @@ type CompletionRequest = {
   totalCount?: number;
   taskIndex?: number;
 };
-
-function completionMessage(subject: string, minutes: number, completedCount: number, totalCount: number, displayName: string | null) {
-  const name = displayName ? `${displayName}，` : "";
-  if (completedCount >= totalCount) {
-    return `🎉 ${name}${subject}也完成了！\n\n今天安排的 ${totalCount} 項任務已全部完成。把這份完成感留給自己，現在可以安心休息了。`;
-  }
-  const remaining = totalCount - completedCount;
-  const encouragement = completedCount === 1
-    ? "有開始就很不容易，今天已經踏出第一步。"
-    : "穩穩完成一項又一項，你正在靠近自己的目標。";
-  return `✅ ${name}${subject}完成了！\n這次專注了 ${minutes} 分鐘，今日進度 ${completedCount}/${totalCount}，還剩 ${remaining} 項。\n\n${encouragement}`;
-}
 
 export async function POST(request: Request) {
   try {
@@ -67,7 +56,7 @@ export async function POST(request: Request) {
       headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
         to: user.line_user_id,
-        messages: [{ type: "text", text: completionMessage(body.subject, body.minutes, body.completedCount, body.totalCount, user.display_name) }],
+        messages: [buildCompletionFlex({ subject: body.subject, minutes: body.minutes, completedCount: body.completedCount, totalCount: body.totalCount, displayName: user.display_name })],
       }),
     });
     if (!response.ok) throw new Error(`LINE push failed: ${response.status}`);

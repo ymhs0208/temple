@@ -55,3 +55,20 @@ export function buildWeeklyFlex({ minutes, rate, subjects, period, heading }: {
     [`完成任務累積 ${minutes} 分鐘`, `任務完成率 ${rate}%`, ...subjects.slice(0, 6)],
     "查看完整進度", "/progress", "#7661A8");
 }
+
+export function buildCompletionFlex({ subject, minutes, completedCount, totalCount, displayName }: {
+  subject: string; minutes: number; completedCount: number; totalCount: number; displayName?: string | null;
+}) {
+  const finished = completedCount >= totalCount;
+  return card(
+    finished ? "今日學習完成" : "完成一項，繼續前進",
+    finished ? `${displayName || "同學"}，今天的任務全部完成了。` : `${displayName || "同學"}，${subject} 已完成。`,
+    [
+      `本次專注 ${minutes} 分鐘`,
+      `今日進度 ${completedCount}/${totalCount} 項`,
+      finished ? "🏅 解鎖成就：今日全勤" : `還剩 ${Math.max(0, totalCount - completedCount)} 項任務`,
+      finished ? "現在可以安心休息，明天再繼續。" : "回到今日頁，開始下一項任務。",
+    ],
+    finished ? "查看今日成果" : "開始下一項", "/progress", finished ? "#7661A8" : "#287C64",
+  );
+}
