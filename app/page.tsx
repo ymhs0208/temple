@@ -1515,7 +1515,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const today = (
 		<>
 			<header className="simple-today-heading"><div><p>今日學習</p><h1>{tasks.length === 0 ? "從一個小計畫開始" : pendingIndex >= 0 ? `今天還有 ${tasks.length - completed} 個任務` : completed === tasks.length ? "今天的任務都完成了" : "今天沒有待辦任務"}</h1><span>{name} · 距離目標 {daysLeft} 天</span></div><a href="/goal">調整計畫</a></header>
-			<section className="simple-next-task" aria-label="下一個學習任務"><div><span>{pendingIndex >= 0 ? "建議先完成" : "下一步"}</span><h2>{pendingIndex >= 0 ? tasks[pendingIndex].subject : tasks.length === 0 ? "建立你的今日任務" : completed === tasks.length ? "辛苦了，休息一下吧" : "任務已跳過或延後"}</h2><p>{pendingIndex >= 0 ? `因為它是今天剩餘時間最適合先處理的任務。${tasks[pendingIndex].detail}` : "可以查看學習紀錄，或調整今天的安排。"}</p></div>{pendingIndex >= 0 ? <button onClick={startFocus}>開始 {tasks[pendingIndex].minutes} 分鐘專注 →</button> : <a href={tasks.length > 0 && completed === tasks.length ? "/progress" : "/goal"}>{tasks.length > 0 && completed === tasks.length ? "查看今日成果" : "設定學習計畫"} →</a>}</section>
+			<section className="simple-next-task" aria-label="下一個學習任務"><div><span>{pendingIndex >= 0 ? "建議先完成" : "下一步"}</span><h2>{pendingIndex >= 0 ? tasks[pendingIndex].subject : tasks.length === 0 ? "建立你的今日任務" : completed === tasks.length ? "辛苦了，休息一下吧" : "任務已跳過或延後"}</h2><p>{pendingIndex >= 0 ? `先做這一項，完成後再做下一項。${tasks[pendingIndex].detail}` : "可以查看學習紀錄，或調整今天的安排。"}</p></div>{pendingIndex >= 0 ? <button onClick={startFocus}>開始 {tasks[pendingIndex].minutes} 分鐘專注 →</button> : <a href={tasks.length > 0 && completed === tasks.length ? "/progress" : "/goal"}>{tasks.length > 0 && completed === tasks.length ? "查看今日成果" : "設定學習計畫"} →</a>}</section>
 			{completionFeedback && <section className="task-completion-feedback" aria-live="polite"><div className="task-completion-heading"><span>✓</span><div><small>剛剛完成</small><h2>{completionFeedback.subject}完成</h2></div><button aria-label="關閉完成回饋" onClick={() => setCompletionFeedback(null)}>×</button></div><div className="task-completion-metrics"><div><b>{completionFeedback.completedCount}<small> / {completionFeedback.totalCount}</small></b><span>今日完成</span></div><div><b>{completionFeedback.remainingMinutes}<small> 分鐘</small></b><span>剩餘時間</span></div><div><b>{completionFeedback.streak}<small> 天</small></b><span>連續學習</span></div></div><div className="task-completion-actions"><button onClick={() => { setCompletionFeedback(null); if (pendingIndex >= 0) startFocus(); }}>開始下一項</button><button onClick={() => setCompletionFeedback(null)}>休息一下</button><a href="/progress">查看今日成果</a></div></section>}
 			<section id="today-todos" className="progress-card" aria-labelledby="today-todos-title">
 				<div className="section-heading">
@@ -1604,7 +1604,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					</div>
 				</div>
 			</section>
-			<section className="today-ai-entry" aria-label="AI 學習教練入口"><div className="today-ai-entry-mark" aria-hidden="true">✦</div><div><span>需要不同安排？</span><strong>問 AI 學習教練</strong><p>告訴我剩餘時間，我會依今日任務幫你排下一步。</p></div><div className="today-ai-entry-actions"><a href="/coach">開啟教練</a><small>也可在 LINE 傳「我只有一小時」</small></div></section>
+			<section className="today-ai-entry" aria-label="AI 學習教練入口"><div className="today-ai-entry-mark" aria-hidden="true">✦</div><div><span>不知道先做哪個？</span><strong>請 AI 幫你安排</strong><p>告訴我還有幾分鐘，我會排出今天的下一步。</p></div><div className="today-ai-entry-actions"><a href="/coach">告訴我時間</a><small>也可以在 LINE 傳「我只有一小時」</small></div></section>
 			<section className="today-pilgrimage-recommendation" aria-label="文昌巡禮推薦">
 				<div className="today-pilgrimage-recommendation-icon" aria-hidden="true">⛩</div>
 				<div className="today-pilgrimage-recommendation-copy">
@@ -2053,8 +2053,13 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const quickActions = (
 		<section className="quick-actions">
 			<div className="quick-title">
-				<div><b>功能總覽</b><small>完成今日任務後，還可以從這裡繼續</small></div>
+				<div><b>文昌同行怎麼幫你</b><small>從安排學習到完成回顧，所有功能集中在這裡</small></div>
 				<span>6 個學習工具</span>
+			</div>
+			<div className="feature-highlight-strip" aria-label="產品功能流程">
+				<div><b>① 今天照著做</b><span>AI 依弱科與可用時間排出任務</span></div>
+				<div><b>② 完成就有回饋</b><span>專注、勾選、徽章與學習籤同步累積</span></div>
+				<div><b>③ LINE 會提醒你</b><span>收到今日任務、下一步與每週摘要</span></div>
 			</div>
 			<div className="quick-grid">
 				<button
@@ -2261,9 +2266,9 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const prayerView = (
 		<section id="prayer-simple" className="journey prayer-workspace">
 			<header className="prayer-intro">
-				<p className="eyebrow">✦ 給努力的自己，一點鼓勵</p>
-				<h1>停一下，為自己加油</h1>
-				<p>完成一項任務後簽到；到祈福牆留下祝福，再用木牌換一支學習鼓勵籤。</p>
+				<p className="eyebrow">✦ 完成任務後的學習回饋</p>
+				<h1>簽到、求籤，記下今天的進步</h1>
+				<p>完成任務後可以簽到、留下祝福，或抽一支籤取得下一步學習建議。</p>
 				<div className="prayer-shortcuts" aria-label="祈福頁快速入口">
 					<a href="#prayer-checkin">✓ 今日簽到</a>
 					<a href="#prayer-wish">② 祈福牆</a>
@@ -2660,6 +2665,16 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					</div>
 				)}
 			</section>
+			<section className="learning-culture-bridge" aria-labelledby="learning-culture-bridge-title">
+				<div className="learning-culture-bridge-heading"><span aria-hidden="true">⛩</span><div><small>為什麼放在學習平台？</small><h2 id="learning-culture-bridge-title">文化體驗，最後都回到下一步學習</h2></div></div>
+				<p>祈福不是另外一個遊戲，而是把完成任務後的鼓勵，轉成明確的學習行動。</p>
+				<div className="learning-culture-bridge-steps">
+					<div><b>① 完成任務</b><span>留下今天的學習紀錄</span></div>
+					<div><b>② 簽到／求籤</b><span>取得鼓勵與下一步建議</span></div>
+					<div><b>③ 巡禮探索</b><span>用文化任務累積成就</span></div>
+				</div>
+				<a href="/today">回到今日任務 →</a>
+			</section>
 			<details className="prayer-details prayer-explore">
 				<summary>探索更多 · 學習累積與文昌巡禮</summary>
 			<section className="cultural-reward-card" aria-label="文化化的學習回饋">
@@ -2704,7 +2719,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						location.href = "/pilgrimage";
 					}}
 				>
-					開始文昌巡禮
+					查看巡禮任務
 				</button>
 			</div>
 			</details>
@@ -3077,10 +3092,9 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 							>
 								<img className="line-brand-icon" src="/line-brand-icon.png" alt="LINE" />
 								<span className="account-copy">
-									<b>{lineName ? lineName : "登入 LINE"}</b>
-									<small>{lineName ? "已連結" : "同步學習紀錄"}</small>
+									<b>{lineName ? "已連結" : "LINE 登入"}</b>
+									<small>{lineName ? "LINE 帳號" : "同步學習紀錄"}</small>
 								</span>
-								<i aria-hidden="true">{lineName?.slice(0, 1) ?? "我"}</i>
 							</button>
 						</div>
 				<nav className="header-navigation" aria-label="主要導覽">

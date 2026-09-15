@@ -38,6 +38,25 @@
   box-sizing: border-box;
   overflow-wrap: anywhere;
 }
+#prayer-simple .learning-culture-bridge {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid #d8e5dc;
+  border-radius: 16px;
+  background: #f7fbf6;
+}
+#prayer-simple .learning-culture-bridge-heading { display: flex; align-items: center; gap: 12px; }
+#prayer-simple .learning-culture-bridge-heading > span { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: #e1f0e3; color: #3c7654; font-size: 20px; }
+#prayer-simple .learning-culture-bridge-heading small { color: #668271; font-size: 12px; }
+#prayer-simple .learning-culture-bridge-heading h2 { margin: 3px 0 0; color: #294d3a; font-size: clamp(18px, 2.4vw, 24px); line-height: 1.4; }
+#prayer-simple .learning-culture-bridge > p { margin: 0; color: #526b5b; font-size: 14px; line-height: 1.75; }
+#prayer-simple .learning-culture-bridge-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+#prayer-simple .learning-culture-bridge-steps div { display: grid; gap: 5px; padding: 13px; border: 1px solid #dce9de; border-radius: 11px; background: #fff; }
+#prayer-simple .learning-culture-bridge-steps b { color: #397053; font-size: 13px; }
+#prayer-simple .learning-culture-bridge-steps span { color: #718477; font-size: 12px; line-height: 1.55; }
+#prayer-simple .learning-culture-bridge > a { justify-self: start; color: #3267ba; font-size: 13px; font-weight: 750; text-decoration: none; }
+@media (max-width: 600px) { #prayer-simple .learning-culture-bridge { padding: 18px; } #prayer-simple .learning-culture-bridge-steps { grid-template-columns: 1fr; } }
 #prayer-simple > .daily-fortune-task { border-top: 4px solid #68ab8d !important; }
 #prayer-simple > .wish-card { border-top: 4px solid #e5b75c !important; }
 #prayer-simple > .oracle-card { border-top: 4px solid #9b8cd3 !important; }
