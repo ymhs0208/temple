@@ -1,7 +1,7 @@
 export type ReminderTask = { subject: string; minutes: number };
 export type ReminderKind = "morning" | "evening";
 
-export function learningUrl(path: "/today" | "/progress") {
+export function learningUrl(path: "/today" | "/progress" | "/prayer" | "/pilgrimage") {
   const base = process.env.NEXT_PUBLIC_APP_URL;
   if (base) {
     const url = new URL(path, base);
@@ -32,14 +32,18 @@ function card(title: string, intro: string, lines: string[], label: string, path
     },
   };
 }
-export function buildReminderFlex({ kind, displayName, tasks, pending, dayNumber }: {
+export function buildReminderFlex({ kind, displayName, tasks, pending, dayNumber, weakSubject, completionRate }: {
   kind: ReminderKind; displayName?: string | null; tasks: ReminderTask[]; pending: ReminderTask[];
   dayNumber?: number; weakSubject?: string; completionRate?: number;
 }) {
   const minutes = pending.reduce((sum, task) => sum + task.minutes, 0);
+  const coachHint = weakSubject
+    ? `AI 教練建議：今天先從${weakSubject}開始，${completionRate && completionRate > 0 ? `你已完成 ${completionRate}%，保持節奏。` : "先完成一小段就算開始。"}`
+    : "AI 教練建議：先完成列表中的第一項，降低開始的阻力。";
   return card(kind === "morning" ? "今天，從一件事開始" : "今天還有一點小進度",
     `${displayName || "同學"}，${dayNumber ? `Day ${dayNumber}・` : ""}還有 ${pending.length} 個任務，共 ${minutes} 分鐘。`,
     [`已完成 ${tasks.length - pending.length} / ${tasks.length} 項`,
+      coachHint,
       ...pending.slice(0, 5).map(task => `${task.subject} · ${task.minutes} 分鐘`),
       ...(pending.length > 5 ? ["其餘任務請至網站查看"] : [])],
     kind === "morning" ? "前往今日任務" : "繼續學習", "/today", kind === "morning" ? "#287C64" : "#526BA4");

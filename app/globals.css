@@ -4835,6 +4835,83 @@ button {
 }
 
 /* 桌面主畫面使用連續背景，避免 app 容器形成左右邊框感。 */
+/* LINE 學習通知：窄螢幕改為單欄，避免時間欄位與狀態按鈕互相擠壓。 */
+@media (max-width: 767px) {
+	#account-settings .notification-preference {
+		width: 100%;
+		max-width: 100%;
+		min-width: 0;
+		overflow: hidden;
+		box-sizing: border-box;
+		padding: 16px !important;
+	}
+	#account-settings .notification-heading {
+		align-items: flex-start;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+	#account-settings .notification-heading h2 {
+		min-width: 0;
+		flex: 1 1 150px;
+	}
+	#account-settings .notification-status-actions {
+		width: 100%;
+		margin-left: 0 !important;
+		justify-content: space-between;
+	}
+	#account-settings .notification-status-actions button {
+		min-height: 40px;
+		padding: 8px 12px;
+	}
+	#account-settings .notification-times {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 12px;
+		width: 100%;
+		box-sizing: border-box;
+	}
+	#account-settings .line-notification-kinds {
+		width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+		padding: 12px;
+	}
+	#account-settings .line-notification-kinds label {
+		align-items: flex-start;
+		min-width: 0;
+	}
+	#account-settings .line-notification-kinds span,
+	#account-settings .line-notification-kinds small {
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+	#account-settings .notification-times > label {
+		grid-template-columns: minmax(0, 1fr) minmax(112px, 42%);
+		align-items: center;
+		min-width: 0;
+	}
+	#account-settings .notification-times input[type="time"] {
+		width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+		min-height: 42px;
+	}
+	#account-settings .notification-actions {
+		width: 100%;
+		gap: 8px;
+	}
+	#account-settings .notification-actions button {
+		min-height: 44px;
+		min-width: 0;
+	}
+	#account-settings .notification-timezone {
+		display: block;
+		max-width: 100%;
+		overflow-wrap: anywhere;
+	}
+}
+
+/* 桌面主畫面使用連續背景，避免 app 容器形成左右邊框感。 */
 .story-page {
 	min-height: 100dvh;
 	padding: 24px 18px 50px;

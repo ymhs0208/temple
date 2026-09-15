@@ -3076,7 +3076,10 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 								onClick={lineName ? () => navigateToTab("profile") : login}
 							>
 								<img className="line-brand-icon" src="/line-brand-icon.png" alt="LINE" />
-								<span>{lineName ? `${lineName}・我的` : "LINE 登入"}</span>
+								<span className="account-copy">
+									<b>{lineName ? lineName : "登入 LINE"}</b>
+									<small>{lineName ? "已連結" : "同步學習紀錄"}</small>
+								</span>
 								<i aria-hidden="true">{lineName?.slice(0, 1) ?? "我"}</i>
 							</button>
 						</div>

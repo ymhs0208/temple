@@ -32,9 +32,20 @@ main:has(> .app-shell > .integrated-header),
   color: #63738a; font-size: .75rem; letter-spacing: .01em; line-height: 1.5;
 }
 .app-shell > .topbar.integrated-header .account-capsule {
-  min-height: 44px; padding: 8px 14px; gap: 8px;
+  min-height: 48px; padding: 7px 12px; gap: 9px;
   background: #eef8f2; color: #17613c; border: 1px solid #c6e6d2;
   border-radius: 10px; box-shadow: none; font-size: .875rem; font-weight: 650;
+}
+.app-shell > .topbar.integrated-header .account-copy {
+  display: grid; min-width: 0; gap: 1px; text-align: left; line-height: 1.25;
+}
+.app-shell > .topbar.integrated-header .account-copy b {
+  overflow: hidden; color: #17613c; font-size: .875rem; font-weight: 750;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.app-shell > .topbar.integrated-header .account-copy small {
+  overflow: hidden; color: #56806a; font-size: .6875rem; font-weight: 500;
+  text-overflow: ellipsis; white-space: nowrap;
 }
 .app-shell > .topbar.integrated-header .account-capsule:hover { background: #def1e6; }
 .app-shell > .topbar.integrated-header .line-status-dot { display: none; }
@@ -155,4 +166,6 @@ main:has(> .app-shell > .integrated-header),
   }
   .app-shell > .topbar.integrated-header .header-navigation button span { font-size: inherit; }
   .app-shell > .topbar.integrated-header .header-navigation button i { display: none; }
+  .app-shell > .topbar.integrated-header .account-copy small { display: none; }
+  .app-shell > .topbar.integrated-header .account-copy b { font-size: .8125rem; }
 }
