@@ -720,15 +720,18 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	};
 	useEffect(() => {
 		if (!idToken || localStorage.getItem(PENDING_SYNC_KEY)) return;
-		fetch("/api/progress/load", {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ idToken }),
-		})
-			.then((response) =>
-				response.ok ? response.json() : Promise.reject(),
-			)
-			.then((data) => {
+		let loading = false;
+		const loadRemoteProgress = async () => {
+			if (loading || localStorage.getItem(PENDING_SYNC_KEY)) return;
+			loading = true;
+			try {
+				const response = await fetch("/api/progress/load", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ idToken }),
+				});
+				if (!response.ok) throw new Error("progress load failed");
+				const data = await response.json();
 				if (!data.exists) {
 					void enqueueSync(tasks);
 					return;
@@ -780,8 +783,22 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						);
 				}
 				setSyncStatus("已從雲端還原學習紀錄");
-			})
-			.catch(() => setSyncStatus("雲端紀錄暫時無法讀取"));
+			} catch {
+				setSyncStatus("雲端紀錄暫時無法讀取");
+			} finally {
+				loading = false;
+			}
+		};
+		void loadRemoteProgress();
+		const refreshWhenActive = () => {
+			if (document.visibilityState === "visible") void loadRemoteProgress();
+		};
+		window.addEventListener("focus", refreshWhenActive);
+		document.addEventListener("visibilitychange", refreshWhenActive);
+		return () => {
+			window.removeEventListener("focus", refreshWhenActive);
+			document.removeEventListener("visibilitychange", refreshWhenActive);
+		};
 	}, [idToken]);
 	useEffect(() => {
 		if (!idToken || !ready || !localStorage.getItem(PENDING_SYNC_KEY))
