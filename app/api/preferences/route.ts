@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         evening_time: normalizeTime(eveningTime, "20:30"),
         timezone: "Asia/Taipei",
         updated_at: new Date().toISOString(),
-      });
+      }, { onConflict: "user_id" });
     if (preferenceError) throw preferenceError;
     return Response.json({ ok: true, enabled, morningTime, eveningTime });
   } catch (error) {

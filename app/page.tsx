@@ -346,6 +346,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [notificationKinds, setNotificationKinds] = useState({ morningEnabled: true, eveningEnabled: true, weeklyEnabled: false });
 	const [draftNotificationKinds, setDraftNotificationKinds] = useState(notificationKinds);
 	const [notificationPreferencesReady, setNotificationPreferencesReady] = useState(false);
+	const [notificationPreferencesError, setNotificationPreferencesError] = useState(false);
 	const [showSettlement, setShowSettlement] = useState(false);
 	const [sleepReminderOpen, setSleepReminderOpen] = useState(false);
 	const [focusIndex, setFocusIndex] = useState<number | null>(null);
@@ -839,9 +840,13 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				setDraftMorningTime(data.morningTime ?? "08:00");
 				setDraftEveningTime(data.eveningTime ?? "20:30");
 				setNotificationKinds({ morningEnabled: data.morningEnabled ?? true, eveningEnabled: data.eveningEnabled ?? true, weeklyEnabled: data.weeklyEnabled ?? false });
+				setNotificationPreferencesError(false);
 				setNotificationPreferencesReady(true);
 			})
-			.catch(() => undefined);
+			.catch(() => {
+				setNotificationPreferencesError(true);
+				setNotificationPreferencesReady(false);
+			});
 	}, [idToken]);
 	const daysLeft = Math.max(
 		0,
@@ -2915,7 +2920,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					<small className="notification-timezone">
 						台灣時間・這三類自動通知每天最多兩則。週日回顧取代晚間提醒；需加入 LINE 官方帳號好友，並同步學習紀錄。
 					</small>
-					{lineName && !notificationPreferencesReady && <p role="status">通知設定尚未載入。若持續無法載入，請確認伺服器已完成通知資料庫更新後重新整理。</p>}
+					{lineName && !notificationPreferencesReady && <p role="status">{notificationPreferencesError ? "通知設定載入失敗，請重新整理後再試。" : "通知設定尚未載入…"} <button type="button" onClick={() => window.location.reload()}>重新載入</button></p>}
 					<NotificationPreview />
 					{lineName && (
 						<button

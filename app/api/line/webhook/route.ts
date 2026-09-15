@@ -38,7 +38,7 @@ async function reply(replyToken: string, text: string) {
   });
 }
 
-async function replyFlex(replyToken: string, title: string, intro: string, tasks: Task[], quickReplies: QuickReply[] = []) {
+async function replyFlex(replyToken: string, title: string, intro: string, tasks: Task[], quickReplies: QuickReply[] = [], allowCompletion = true) {
   const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
   if (!accessToken) throw new Error("LINE Messaging API is not configured");
   const bubble = {
@@ -52,7 +52,7 @@ async function replyFlex(replyToken: string, title: string, intro: string, tasks
       ...tasks.slice(0, 5).map((task) => ({ type: "box", layout: "horizontal", spacing: "sm", alignItems: "center", contents: [
         { type: "text", text: task.subject, flex: 1, size: "sm", color: "#243B53", wrap: true },
         { type: "text", text: `${task.minutes} 分鐘`, size: "xs", color: "#287C64", weight: "bold", align: "end" },
-        { type: "button", style: "link", height: "sm", action: { type: "postback", label: "完成", data: `action=complete&taskId=${task.id}`, displayText: `完成${task.subject}` } },
+        ...(allowCompletion ? [{ type: "button", style: "link", height: "sm", action: { type: "postback", label: "完成", data: `action=complete&taskId=${task.id}`, displayText: `完成${task.subject}` } }] : []),
       ] })),
     ] },
     footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "14px", contents: [
@@ -82,7 +82,16 @@ async function replyCompletion(replyToken: string, subject: string, completedCou
     ...(nextTask ? [{ label: `開始${nextTask.subject}`, data: `action=start&taskId=${nextTask.id}` }] : []),
     { label: "休息一下", text: "休息一下" },
     { label: "查看成果", text: "查看進度" },
-  ]);
+  ], false);
+}
+
+async function replyProgress(replyToken: string, doneCount: number, totalCount: number, minutes: number, nextTask?: Task) {
+  const rate = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+  await replyFlex(replyToken, "你的今日進度", `完成率 ${rate}%\n已完成 ${doneCount}/${totalCount} 項・累積 ${minutes} 分鐘${nextTask ? `\n下一步：${nextTask.subject} ${nextTask.minutes} 分鐘` : "\n今天任務已全部完成，辛苦了！"}`, nextTask ? [nextTask] : [], [
+    ...(nextTask ? [{ label: `開始${nextTask.subject}`, data: `action=start&taskId=${nextTask.id}` }] : []),
+    { label: "今天讀什麼", text: "今天讀什麼" },
+    { label: "查看網站進度", text: "查看進度" },
+  ], false);
 }
 
 async function learningContext(lineUserId?: string) {
@@ -179,8 +188,9 @@ async function answer(event: LineEvent) {
   if (command.includes("查看進度") || command.includes("我的進度") || command === "進度") {
     const done = tasks.filter((task) => completed.has(task.id));
     const minutes = done.reduce((sum, task) => sum + task.minutes, 0);
-    const nextStep = done.length === tasks.length && tasks.length ? "今天的任務已圓滿完成，記得好好休息！" : `下一步：${tasks.find((task) => !completed.has(task.id))?.subject ?? "保持節奏"}`;
-    await reply(event.replyToken, `📈 今日進度\n完成 ${done.length}/${tasks.length} 項任務・累積 ${minutes} 分鐘\n\n${nextStep}`);
+    const nextTask = tasks.find((task) => !completed.has(task.id));
+    await saveConversationState(event.source?.userId, "viewing_progress", { completedCount: done.length });
+    await replyProgress(event.replyToken, done.length, tasks.length, minutes, nextTask);
     return;
   }
   if (command.includes("鼓勵") || command.includes("籤") || command.includes("加油")) {
