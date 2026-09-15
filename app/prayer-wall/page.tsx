@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import liff from "@line/liff";
 import { confirmAction } from "../../lib/confirm-action";
+import "./prayer-wall.css";
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
 type Post = {
   id: string;

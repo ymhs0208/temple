@@ -352,6 +352,9 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [focusRewardMinutes, setFocusRewardMinutes] = useState(0);
 	const [focusEndsAt, setFocusEndsAt] = useState<number | null>(null);
 	const [focusPaused, setFocusPaused] = useState(false);
+	const [focusNoiseEnabled, setFocusNoiseEnabled] = useState(false);
+	const [focusNoiseVolume, setFocusNoiseVolume] = useState(0.12);
+	const focusNoiseRef = useRef<{ context: AudioContext; source: AudioBufferSourceNode; gain: GainNode } | null>(null);
 	const [focusEnded, setFocusEnded] = useState(false);
 	const [focusPickerTaskIndex, setFocusPickerTaskIndex] = useState<
 		number | null
@@ -378,6 +381,39 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	useEffect(() => {
 		setHydrated(true);
 	}, []);
+	useEffect(() => {
+		if (!focusNoiseEnabled || focusIndex === null) {
+			focusNoiseRef.current?.source.stop();
+			focusNoiseRef.current?.context.close();
+			focusNoiseRef.current = null;
+			return;
+		}
+		if (focusNoiseRef.current) {
+			focusNoiseRef.current.gain.gain.value = focusNoiseVolume;
+			return;
+		}
+		const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+		if (!AudioContextClass) return;
+		const context = new AudioContextClass();
+		const buffer = context.createBuffer(1, context.sampleRate * 2, context.sampleRate);
+		const data = buffer.getChannelData(0);
+		for (let index = 0; index < data.length; index += 1) data[index] = Math.random() * 2 - 1;
+		const source = context.createBufferSource();
+		const gain = context.createGain();
+		source.buffer = buffer;
+		source.loop = true;
+		gain.gain.value = focusNoiseVolume;
+		source.connect(gain).connect(context.destination);
+		source.start();
+		focusNoiseRef.current = { context, source, gain };
+		return () => {
+			if (focusNoiseRef.current?.source === source) {
+				source.stop();
+				void context.close();
+				focusNoiseRef.current = null;
+			}
+		};
+	}, [focusNoiseEnabled, focusNoiseVolume, focusIndex]);
 	useEffect(() => {
 		if (!ready) return;
 		const showSleepReminderIfDue = () => {
@@ -2387,12 +2423,12 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						location.href = "/prayer-wall";
 					}}
 				>
-					<span>✦</span>
+					<span className="wall-link-icon" aria-hidden="true">✦</span>
 					<div>
 						<b>探索匿名祈福牆</b>
 						<small>匿名留下祝福，看看大家的心願</small>
 					</div>
-					<i>›</i>
+					<i aria-hidden="true">›</i>
 				</button>
 				<small className="wall-safety-note">請保持匿名，不要留下姓名、電話、地址或其他個人資料。</small>
 			</section>
@@ -3111,6 +3147,28 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 									? "完整倒數已結束，正在更新今日任務。"
 									: `每滿 10 分鐘可獲得祈福木牌・本次已守住 ${Math.max(0, focusScheduledMinutes - Math.ceil(focusSeconds / 60))} 分鐘`}
 							</small>
+							<div className="focus-noise-control" aria-label="白噪音控制">
+								<button
+									className={focusNoiseEnabled ? "is-on" : ""}
+									onClick={() => setFocusNoiseEnabled((enabled) => !enabled)}
+									aria-pressed={focusNoiseEnabled}
+								>
+									<span aria-hidden="true">◌</span> 白噪音 {focusNoiseEnabled ? "開啟中" : "關閉"}
+								</button>
+								{focusNoiseEnabled && (
+									<label>
+										音量
+										<input
+											type="range"
+											min="0"
+											max="0.35"
+											step="0.01"
+											value={focusNoiseVolume}
+											onChange={(event) => setFocusNoiseVolume(Number(event.target.value))}
+										/>
+									</label>
+								)}
+							</div>
 						</div>
 						<div className="focus-session-actions">
 							{focusEnded ? (

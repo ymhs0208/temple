@@ -45,6 +45,14 @@
 #prayer-simple > :is(.daily-fortune-task, .wish-card, .oracle-card)::after { display: none !important; }
 #prayer-simple :is(.daily-fortune-task-heading, .wish-card-heading, .oracle-heading) { margin-bottom: 16px; }
 #prayer-simple :is(.daily-fortune-task-heading, .wish-card-heading, .oracle-heading) b { font-size: 21px; }
+#prayer-simple .oracle-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 4px 0 18px; border-bottom: 1px solid #ebe7f5; }
+#prayer-simple .oracle-heading > div:first-child { min-width: 0; }
+#prayer-simple .oracle-heading > div:first-child span { display: block; margin-bottom: 5px; color: #7669a8; font-size: 12px; font-weight: 750; letter-spacing: .08em; }
+#prayer-simple .oracle-heading > div:first-child b { display: block; color: #3e3567; font-size: clamp(20px, 2.4vw, 26px); letter-spacing: -.025em; line-height: 1.35; }
+#prayer-simple .oracle-balance { display: flex; flex: 0 0 auto; align-items: center; gap: 9px; padding: 9px 13px; border: 1px solid #ddd6f2; border-radius: 12px; background: #f7f5fd; box-shadow: none; }
+#prayer-simple .oracle-balance span { color: #776d91; font-size: 12px; }
+#prayer-simple .oracle-balance b { color: #5b4a9a; font-size: 21px; line-height: 1; }
+#prayer-simple .oracle-balance small { font-size: 12px; font-weight: 650; }
 #prayer-simple .daily-fortune-task-heading small { background: #edf6f0; color: #35664c; padding: 5px 10px; border-radius: 8px; }
 #prayer-simple .daily-fortune-verse { margin: 12px 0 20px; padding: 16px; font-size: 16px; }
 #prayer-simple .daily-fortune-task > button { width: 100%; min-height: 48px; background: #3267ba; }
@@ -67,13 +75,18 @@
 #prayer-simple #prayer-wish .wall-link { margin: 0; min-height: 88px; display: flex; align-items: center; gap: 14px; background: #fff; }
 #prayer-simple #prayer-wish .wall-link::before,
 #prayer-simple #prayer-wish .wall-link::after { display: none; }
+#prayer-simple #prayer-wish .wall-link-icon { flex: 0 0 42px; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: #fff5d9; color: #b47b16; font-size: 20px; line-height: 1; }
 #prayer-simple #prayer-wish .wall-link > div { flex: 1; }
 #prayer-simple #prayer-wish .wall-link b { display: block; font-size: 17px; }
 #prayer-simple #prayer-wish .wall-link small { display: block; margin-top: 5px; font-size: 14px; }
+#prayer-simple #prayer-wish .wall-link i { flex: 0 0 auto; margin-left: auto; color: #b47b16; font-size: 24px; font-style: normal; line-height: 1; }
 #prayer-simple #prayer-wish .wall-safety-note { display: block; margin: 9px 4px 0; color: #7a8795; font-size: 12px; line-height: 1.6; }
 #prayer-simple .oracle-exchange { display: flex; align-items: center; gap: 24px; }
 #prayer-simple .oracle-exchange > div:last-child { min-width: 0; flex: 1; }
 #prayer-simple .oracle-exchange button { min-height: 48px; }
+#prayer-simple .oracle-exchange > div:last-child > b { display: block; color: #3e3567; font-size: 17px; }
+#prayer-simple .oracle-exchange > div:last-child > p:not(.oracle-plank-guide) { color: #657187; font-size: 14px; line-height: 1.75; }
+#prayer-simple .oracle-exchange > div:last-child > button { padding-inline: 18px; border-radius: 11px; background: #6656a8; color: #fff; }
 #prayer-simple .oracle-plank-guide { margin: 10px 0 12px; padding: 10px 12px; border-left: 3px solid #c9a65c; border-radius: 0 8px 8px 0; background: #fff9eb; color: #70572b; font-size: 13px; line-height: 1.65; }
 #prayer-simple .oracle-balance { padding: 8px 12px; border-radius: 10px; background: #f2effa; box-shadow: none; }
 #prayer-simple .fortune-sticks { flex-wrap: wrap; }
@@ -96,8 +109,13 @@
 #prayer-simple :is(#prayer-checkin, #prayer-wish, #prayer-oracle) { scroll-margin-top: 100px; }
 #prayer-simple :is(a, button, input, summary):focus-visible { outline: 3px solid #3975c5; outline-offset: 4px; }
 @media (min-width: 900px) {
-  #prayer-simple { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 24px !important; padding-top: 32px !important; }
-  #prayer-simple > .oracle-card { grid-column: 1 / -1 !important; }
+	#prayer-simple { grid-template-columns: minmax(0, 1fr) !important; gap: 24px !important; padding: 32px 28px 112px !important; }
+	#prayer-simple > :is(.prayer-intro, .wish-card, .daily-fortune-task, .oracle-card, .prayer-explore) { grid-column: 1 / -1 !important; grid-row: auto !important; width: 100% !important; box-sizing: border-box; }
+	#prayer-simple > .wish-card { min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+	#prayer-simple > .oracle-card > :is(.oracle-exchange, .oracle-choice, .oracle-drawing, .oracle-result) { width: min(100%, 920px); margin-inline: auto; }
+	#prayer-simple > .oracle-card > .oracle-heading { width: min(100%, 920px); margin-inline: auto; }
+	#prayer-simple #prayer-wish .wall-link { min-height: 72px; }
+	#prayer-simple #prayer-wish .wall-safety-note { margin-left: 58px; }
 }
 @media (max-width: 480px) {
   #prayer-simple { padding: 20px 12px 104px !important; gap: 16px !important; }
@@ -106,4 +124,6 @@
   #prayer-simple .oracle-exchange { flex-direction: column; align-items: stretch; }
   #prayer-simple .oracle-exchange button { width: 100%; }
   #prayer-simple .oracle-result-display { flex-direction: column; }
+	#prayer-simple .oracle-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+	#prayer-simple .oracle-balance { width: 100%; box-sizing: border-box; justify-content: space-between; }
 }
