@@ -87,6 +87,7 @@
 #prayer-simple .oracle-exchange > div:last-child > b { display: block; color: #3e3567; font-size: 17px; }
 #prayer-simple .oracle-exchange > div:last-child > p:not(.oracle-plank-guide) { color: #657187; font-size: 14px; line-height: 1.75; }
 #prayer-simple .oracle-exchange > div:last-child > button { padding-inline: 18px; border-radius: 11px; background: #6656a8; color: #fff; }
+#prayer-simple .oracle-exchange > div:last-child > .oracle-welcome-button { margin: 12px 0 8px; background: #e9ddff; color: #5b4a9a; border: 1px solid #cfc0f2; }
 #prayer-simple .oracle-plank-guide { margin: 10px 0 12px; padding: 10px 12px; border-left: 3px solid #c9a65c; border-radius: 0 8px 8px 0; background: #fff9eb; color: #70572b; font-size: 13px; line-height: 1.65; }
 #prayer-simple .oracle-balance { padding: 8px 12px; border-radius: 10px; background: #f2effa; box-shadow: none; }
 #prayer-simple .fortune-sticks { flex-wrap: wrap; }

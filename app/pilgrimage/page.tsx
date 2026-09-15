@@ -434,7 +434,7 @@ export default function Pilgrimage() {
 				<div role="progressbar" aria-label="歷史碎片收集進度" aria-valuemin={0} aria-valuemax={8} aria-valuenow={unlockedCount}><i style={{ width: `${(unlockedCount / matsus.length) * 100}%`, backgroundColor: "#287c64" }} /></div>
 					</div>
 						<nav className="passport-stamps" aria-label="八站收集護照">
-						{matsus.map((stop, i) => <a key={stop.id} href={`/pilgrimage/${stop.id}`} className={i < unlockedCount ? "collected" : i === unlockedCount ? "current" : ""} aria-label={`第 ${i + 1} 站 ${stop.name}，${i < unlockedCount ? "已收集" : i === unlockedCount ? "下一站" : "待解鎖"}`}><span>{i < unlockedCount ? stop.badge : String(i + 1).padStart(2, "0")}</span><small>{stop.name.split("・")[1]}</small></a>)}
+						{matsus.map((stop, i) => <div key={stop.id} className={`passport-stamp ${i < unlockedCount ? "collected" : i === unlockedCount ? "current" : ""}`} aria-label={`第 ${i + 1} 站 ${stop.name}，${i < unlockedCount ? "已收集" : i === unlockedCount ? "下一站" : "待解鎖"}`}><span>{i < unlockedCount ? stop.badge : String(i + 1).padStart(2, "0")}</span><small>{stop.name.split("・")[1]}</small></div>)}
 					</nav>
 				</section>
 
@@ -609,7 +609,8 @@ export default function Pilgrimage() {
                           <div className="chapter-card-top"><span className="chapter-stamp" aria-hidden="true">{chapter.icon}</span><span className="chapter-state">{unlocked ? "✓ 碎片已收集" : next ? "下一站 · 等你探索" : "故事待解鎖"}</span></div>
                           <small>CHAPTER {String(index + 1).padStart(2, "0")} · {chapter.theme}</small>
                           <h3>{chapter.title}</h3><b>{matsu.name}</b><p>{chapter.prompt}</p>
-                          <a href={`/pilgrimage/${matsu.id}`}>{unlocked ? "閱讀故事與探索小記" : "查看本關任務"} <span aria-hidden="true">→</span></a>
+                          <div className="chapter-card-detail"><span><strong>探索任務</strong>{chapter.mission}</span><span><strong>你會學到</strong>{chapter.knowledge}</span></div>
+                          <a className="chapter-card-status" href={`/pilgrimage/${matsu.id}`}>{unlocked ? "閱讀故事與探索小記" : next ? "查看本關任務" : "查看關卡資訊"} <span aria-hidden="true">→</span></a>
                         </li>;
                       })}
                     </ol>

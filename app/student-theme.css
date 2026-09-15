@@ -129,3 +129,30 @@ body, main:has(.app-shell), .feature-page, .statistics-main {
 @media (prefers-reduced-motion: reduce) {
   .quick-grid button, .task, .today-command-card button { transition: none; }
 }
+
+/* 全站基礎設計規範：功能頁可保留自己的主題色，但共用同一套尺寸與表面語言。 */
+:root {
+  --ui-font: Arial, "Noto Sans TC", "PingFang TC", sans-serif;
+  --ui-ink: #293c52;
+  --ui-muted: #60758a;
+  --ui-border: #dbe4ed;
+  --ui-primary: #3267b6;
+  --ui-success: #408163;
+  --ui-warning: #b47b16;
+  --ui-radius-card: 18px;
+  --ui-radius-control: 11px;
+}
+body, button, input, select, textarea { font-family: var(--ui-font); }
+body :is(h1, h2, h3, h4, p, small, span, label, button, a) { font-style: normal; }
+body :is(h1, h2, h3, h4) { color: var(--ui-ink); line-height: 1.45; }
+body :is(.feature-shell > :is(.form-card, .plan-preview, .coach-card, .coach-evidence, .coach-today, .wall-compose, .daily-feature, .weekly-report), .progress-card, .journey-summary, .learning-calendar, .statistics-chart-card, .statistics-hero, .weekly-report, .collection-overview, .collection-card) {
+  border-color: var(--ui-border);
+  border-radius: var(--ui-radius-card);
+  box-shadow: none;
+}
+body :is(button, input, select, textarea) { border-radius: var(--ui-radius-control); }
+body :is(button, .feature-cta) { min-height: 44px; }
+body :is(.task-status, .completion, .chapter-state) { border-radius: 999px; }
+body :is(.task-status.is-done, .status-success, .is-complete) { color: var(--ui-success); }
+body :is(.task-status.is-pending, .status-pending) { color: var(--ui-muted); }
+body :is(.task-status.is-skipped, .status-skipped) { color: #7a7f86; }

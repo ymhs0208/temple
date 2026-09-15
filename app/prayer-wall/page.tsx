@@ -18,14 +18,20 @@ export default function PrayerWall() {
   const [anonymous, setAnonymous] = useState(true);
   const [idToken, setIdToken] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
-  const load = () =>
-    fetch("/api/prayer-wall")
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const load = () => {
+    setLoading(true);
+    setLoadError(false);
+    return fetch("/api/prayer-wall")
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data) => {
         setPosts(data.posts ?? []);
         setFeatured(data.featured ?? null);
       })
-      .catch(() => setNotice("祈福牆暫時無法載入"));
+      .catch(() => { setLoadError(true); setNotice("祈福牆暫時無法載入"); })
+      .finally(() => setLoading(false));
+  };
   useEffect(() => {
     load();
     liff
@@ -141,7 +147,11 @@ export default function PrayerWall() {
             <b>大家的祈願</b>
             <span>公開內容</span>
           </div>
-          {posts.length ? (
+          {loading ? (
+            <div className="wall-loading-list" aria-label="正在載入祈願"><i /><i /><i /></div>
+          ) : loadError ? (
+            <div className="wall-state"><b>目前無法載入祈福牆</b><p>請確認網路連線後再試一次。</p><button onClick={load}>重新載入</button></div>
+          ) : posts.length ? (
             posts.map((post) => (
               <article key={post.id}>
                 <div>
@@ -164,9 +174,7 @@ export default function PrayerWall() {
               </article>
             ))
           ) : (
-            <div className="empty-wall">
-              還沒有公開祈願。成為第一個留下祝福的人吧。
-            </div>
+            <div className="wall-state empty-wall"><b>還沒有公開祈願</b><p>成為第一個留下祝福的人吧。</p></div>
           )}
         </section>
         <p className="feature-note">

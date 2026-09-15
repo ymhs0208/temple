@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import liff from "@line/liff";
+import "./statistics-page.css";
 
 type Task = { subject: string; minutes: number; detail: string; done: boolean };
 type LearningDay = { date: string; minutes: number };
@@ -25,6 +26,9 @@ export default function StatisticsPage() {
 	const [dailyGoalHours, setDailyGoalHours] = useState(2);
 	const [weakSubject, setWeakSubject] = useState("");
 	const [taskAdjustments, setTaskAdjustments] = useState({ deferred: 0, split: 0, skipped: 0 });
+	const [loading, setLoading] = useState(true);
+	const [loadError, setLoadError] = useState(false);
+	const [reloadKey, setReloadKey] = useState(0);
 
 	useEffect(() => {
 		try {
@@ -37,24 +41,40 @@ export default function StatisticsPage() {
 			if (stored.taskAdjustmentCounts) setTaskAdjustments(stored.taskAdjustmentCounts);
 		} catch {}
 		liff.init({ liffId: LIFF_ID }).then(async () => {
-			if (!liff.isLoggedIn()) return;
+			if (!liff.isLoggedIn()) { setLoading(false); return; }
 			const idToken = liff.getIDToken();
-			if (!idToken) return;
+			if (!idToken) { setLoading(false); return; }
 			const response = await fetch("/api/stats", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idToken }) });
-			if (!response.ok) return;
+			if (!response.ok) { setLoadError(true); setLoading(false); return; }
 			const data = await response.json();
 			setWeeklyMinutes(data.weeklyMinutes ?? 0);
 			setStreakDays(data.streakDays ?? 0);
 			setLearningDays(Array.isArray(data.days) ? data.days : []);
 			setLearningRecords(Array.isArray(data.records) ? data.records : []);
-		}).catch(() => undefined);
-	}, []);
+			setLoading(false);
+		}).catch(() => { setLoadError(true); setLoading(false); });
+	}, [reloadKey]);
 
 	const today = taipeiDate();
 	const doneTasks = tasks.filter((task) => task.done);
 	const todayMinutes = doneTasks.reduce((sum, task) => sum + task.minutes, 0);
 	const completed = doneTasks.length;
 	const displayedWeeklyMinutes = Math.max(0, weeklyMinutes - (learningDays.find((day) => day.date === today)?.minutes ?? 0) + todayMinutes);
+	const chartDays = useMemo(() => Array.from({ length: 7 }, (_, offset) => {
+		const date = new Date();
+		date.setDate(date.getDate() - (6 - offset));
+		const key = taipeiDateFromDate(date);
+		return { date: key, label: new Intl.DateTimeFormat("zh-TW", { weekday: "short", timeZone: "Asia/Taipei" }).format(date), minutes: key === today ? todayMinutes : learningDays.find((day) => day.date === key)?.minutes ?? 0 };
+	}), [learningDays, today, todayMinutes]);
+	const subjectChart = useMemo(() => {
+		const totals = new Map<string, number>();
+		learningRecords.filter((record) => record.date !== today).flatMap((record) => record.tasks.filter((task) => task.done)).forEach((task) => totals.set(task.subject, (totals.get(task.subject) ?? 0) + task.minutes));
+		tasks.filter((task) => task.done).forEach((task) => totals.set(task.subject, (totals.get(task.subject) ?? 0) + task.minutes));
+		return [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+	}, [learningRecords, tasks, today]);
+	const chartMax = Math.max(30, ...chartDays.map((day) => day.minutes));
+	const subjectTotal = subjectChart.reduce((sum, [, minutes]) => sum + minutes, 0);
+	const subjectColors = ["#3267b6", "#4d9275", "#c58a3b", "#8a72b8"];
 	const weeklyReport = useMemo(() => {
 		const now = new Date();
 		const monday = new Date(now);
@@ -100,8 +120,11 @@ export default function StatisticsPage() {
 	};
 
 	return <main className="statistics-main"><section className="feature-shell statistics-page">
+		{loading && <div className="statistics-loading" aria-label="正在載入學習分析"><i /><i /><i /></div>}
+		{loadError && <div className="statistics-error" role="alert"><b>學習分析暫時無法載入</b><span>請確認 LINE 登入與網路連線後再試一次。</span><button onClick={() => { setLoadError(false); setLoading(true); setReloadKey((key) => key + 1); }}>重新載入</button></div>}
 		<header className="statistics-header"><button onClick={() => { location.href = "/"; }}>← 返回今日</button><div><span>STUDY INSIGHTS</span><h1>本週學習分析</h1><p>先看本週狀態，再決定下一步怎麼調整。</p></div></header>
 		<section className="statistics-hero"><div><span>本週專注</span><b>{displayedWeeklyMinutes}<small> 分鐘</small></b><p>{name}</p></div><div><span>連續學習</span><b>{streakDays}<small> 天</small></b><p>持續累積，就是最可靠的進步。</p></div><div><span>今日完成</span><b>{completed}<small> / {tasks.length} 項</small></b><p>已投入 {todayMinutes} 分鐘</p></div></section>
+		<section className="statistics-charts" aria-label="本週學習圖表"><article className="statistics-chart-card"><header><div><span>每日專注</span><h2>這週每天讀了多久？</h2></div><b>{displayedWeeklyMinutes} 分鐘</b></header><div className="statistics-bars" aria-label="最近七天專注分鐘數">{chartDays.map((day) => <div className="statistics-bar-item" key={day.date}><em>{day.minutes ? `${day.minutes}分` : ""}</em><div className="statistics-bar-track"><i style={{ height: `${Math.max(day.minutes ? 8 : 2, (day.minutes / chartMax) * 100)}%` }} /></div><small>{day.label}</small></div>)}</div><p className="chart-caption">柱子越高，代表當天實際完成的專注時間越多。</p></article><article className="statistics-chart-card subject-chart-card"><header><div><span>科目分布</span><h2>時間花在哪裡？</h2></div></header><div className="subject-chart-body"><div className="subject-donut" style={{ background: subjectTotal ? `conic-gradient(${subjectChart.map(([, minutes], index) => `${subjectColors[index]} ${(subjectChart.slice(0, index).reduce((sum, [, value]) => sum + value, 0) / subjectTotal) * 360}deg ${subjectChart.slice(0, index + 1).reduce((sum, [, value]) => sum + value, 0) / subjectTotal * 360}deg`).join(", ")})` : "#e8eef4" }}><strong>{subjectTotal}<small>分鐘</small></strong></div><ul>{subjectChart.length ? subjectChart.map(([subject, minutes], index) => <li key={subject}><i style={{ background: subjectColors[index] }} /><span>{subject}</span><b>{minutes} 分</b></li>) : <li className="empty-chart-note">完成任務後會顯示科目分布</li>}</ul></div></article></section>
 		<section className="weekly-report" aria-labelledby="weekly-report-title"><div className="weekly-report-heading"><div><span>WEEKLY REPORT</span><h2 id="weekly-report-title">本週個人學習報告</h2></div><small>每週一自動重新計算</small></div><div className="weekly-report-metrics"><div><span>任務完成率</span><b>{weeklyReport.completionRate}<small>%</small></b><i style={{ width: `${weeklyReport.completionRate}%` }} /></div><div><span>專注目標進度</span><b>{weeklyReport.focusRate}<small>%</small></b><i style={{ width: `${weeklyReport.focusRate}%` }} /></div><div><span>本週專注</span><b>{displayedWeeklyMinutes}<small> / {weeklyReport.weeklyTargetMinutes} 分</small></b><p>依每日 {dailyGoalHours} 小時目標估算</p></div></div><div className="weekly-report-insight"><span>✦</span><div><small>本週最常卡住的科目</small><b>{weeklyReport.stuckSubject}</b></div><p>{weeklyReport.advice}</p><p>本週任務調整：延後 {taskAdjustments.deferred} 次・拆分 {taskAdjustments.split} 次・跳過 {taskAdjustments.skipped} 次</p></div></section>
 		<section className="learning-calendar statistics-calendar" aria-label="行事曆式學習紀錄"><div className="calendar-header"><div><p>學習行事曆</p><b>{calendar.monthLabel}</b></div><div className="calendar-controls"><button aria-label="上個月" onClick={() => setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}>‹</button><button className="calendar-today" onClick={() => setCalendarMonth(new Date())}>本月</button><button aria-label="下個月" onClick={() => setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}>›</button></div></div><div className="calendar-legend"><span><i className="legend-done" />完成學習</span><span><i className="legend-today" />今天</span><b>{calendar.activeDays} 天已累積</b></div><div className="calendar-weekdays">{["一", "二", "三", "四", "五", "六", "日"].map((day) => <span key={day}>{day}</span>)}</div><div className="calendar-grid">{calendar.cells.map((cell, index) => cell ? <button type="button" key={cell.date} className={`calendar-day ${cell.minutes ? "has-learning" : ""} ${cell.isToday ? "is-today" : ""} ${cell.isFuture ? "is-future" : ""}`} onClick={() => setSelectedDate(cell.date)}><b>{cell.day}</b>{cell.minutes ? <small>{cell.minutes} 分</small> : <i>{cell.isToday ? "今天" : ""}</i>}</button> : <span key={`blank-${index}`} />)}</div><p className="calendar-note">點選日期即可查看當天的任務完成紀錄。</p></section>
 		<section className="statistics-actions"><button onClick={share}><span>↗</span><div><b>分享我的成果</b><small>把本週努力分享給朋友</small></div></button><button onClick={() => { location.href = "/badges"; }}><span>🏅</span><div><b>我的學習徽章</b><small>查看已解鎖的成就</small></div></button></section>

@@ -93,6 +93,7 @@ type SavedPlan = {
 	morningTime?: string;
 	eveningTime?: string;
 	oracleTickets?: number;
+	oracleWelcomeGranted?: boolean;
 	oraclePlanksSpent?: number;
 	oracleResultId?: number;
 	dailyFortuneTask?: DailyFortuneTask;
@@ -295,7 +296,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		[],
 	);
 	const [wish, setWish] = useState("");
-	const [oracleTickets, setOracleTickets] = useState(0);
+	const [oracleTickets, setOracleTickets] = useState(1);
 	const [oraclePlanksSpent, setOraclePlanksSpent] = useState(0);
 	const [oracleStage, setOracleStage] = useState<OracleStage>("idle");
 	const [selectedStick, setSelectedStick] = useState<number | null>(null);
@@ -322,6 +323,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	const [idToken, setIdToken] = useState<string | null>(null);
 	const [lineName, setLineName] = useState<string | null>(null);
 	const [syncStatus, setSyncStatus] = useState("");
+	const [completionFeedback, setCompletionFeedback] = useState<{ subject: string; completedCount: number; totalCount: number; remainingMinutes: number; streak: number } | null>(null);
 	const [ready, setReady] = useState(false);
 	const [weeklyMinutes, setWeeklyMinutes] = useState(0);
 	const [streakDays, setStreakDays] = useState(0);
@@ -366,6 +368,8 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	} | null>(null);
 	const previousAchievementCount = useRef<number | null>(null);
 	const [hydrated, setHydrated] = useState(false);
+	const [onboardingOpen, setOnboardingOpen] = useState(false);
+	const [onboardingStep, setOnboardingStep] = useState(0);
 	const syncQueue = useRef(Promise.resolve(true));
 	const navigateToTab = (nextTab: Tab) => {
 		setTab(nextTab);
@@ -381,6 +385,19 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 	useEffect(() => {
 		setHydrated(true);
 	}, []);
+	useEffect(() => {
+		if (hydrated && !localStorage.getItem("wenchang-onboarding-complete")) setOnboardingOpen(true);
+	}, [hydrated]);
+	const onboardingSteps = [
+		{ icon: "✓", title: "今日", detail: "安排今天的學習任務，開始專注並直接勾選完成。" },
+		{ icon: "▥", title: "進度", detail: "查看專注時間、完成率與最近的學習趨勢。" },
+		{ icon: "✦", title: "祈福", detail: "完成簽到、求一支學習籤，也能到匿名祈福牆留下祝福。" },
+		{ icon: "⛩", title: "巡禮", detail: "到合作宮廟掃描 QR Code，探索故事並收藏文化碎片。" },
+	] as const;
+	const finishOnboarding = () => {
+		localStorage.setItem("wenchang-onboarding-complete", "true");
+		setOnboardingOpen(false);
+	};
 	useEffect(() => {
 		if (!focusNoiseEnabled || focusIndex === null) {
 			focusNoiseRef.current?.source.stop();
@@ -470,7 +487,10 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 						})),
 					);
 				if (typeof data.oracleTickets === "number")
-					setOracleTickets(data.oracleTickets);
+					setOracleTickets(data.oracleWelcomeGranted ? data.oracleTickets : data.oracleTickets + 1);
+				if (!data.oracleWelcomeGranted) {
+					localStorage.setItem("wenchang-mvp", JSON.stringify({ ...data, oracleWelcomeGranted: true, oracleTickets: (data.oracleTickets ?? 0) + 1 }));
+				}
 				if (typeof data.oraclePlanksSpent === "number")
 					setOraclePlanksSpent(data.oraclePlanksSpent);
 				if (typeof data.oracleResultId === "number")
@@ -555,6 +575,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				wishes,
 				wishReflections,
 				oracleTickets,
+				oracleWelcomeGranted: true,
 				oraclePlanksSpent,
 				oracleResultId,
 				dailyFortuneTask,
@@ -1104,6 +1125,12 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		setSelectedStick(null);
 		setOracleResultId(null);
 	};
+	const startWelcomeOracle = () => {
+		if (oracleTickets < 1) return;
+		setOracleStage("choosing");
+		setSelectedStick(null);
+		setOracleResultId(null);
+	};
 	const drawFortune = () => {
 		if (selectedStick === null || oracleTickets < 1) return;
 		setOracleTickets((current) => current - 1);
@@ -1267,6 +1294,13 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 			);
 			void enqueueSync(next);
 			return next;
+		});
+		setCompletionFeedback({
+			subject: completedTask.subject,
+			completedCount,
+			totalCount: tasks.length,
+			remainingMinutes: tasks.reduce((sum, task, index) => sum + (index !== focusIndex && !task.done && !task.skipped ? task.minutes : 0), 0),
+			streak: Math.max(1, streakDays),
 		});
 		setSyncStatus(task.done ? `「${task.subject}」已恢復為未完成。` : `「${task.subject}」已直接標記完成。`);
 	};
@@ -1450,11 +1484,17 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 		return { key, label: new Intl.DateTimeFormat("zh-TW", { weekday: "short", timeZone: "Asia/Taipei" }).format(date), minutes: record?.minutes ?? 0 };
 	});
 	const chartMaxMinutes = Math.max(30, ...weeklyChartData.map((day) => day.minutes));
+	const todayTaskEntries = tasks
+		.map((task, index) => ({ task, index }))
+		.sort(({ task: a }, { task: b }) => {
+			const rank = (item: Task) => item.done ? 3 : item.skipped ? 4 : item.subject === (pendingIndex >= 0 ? tasks[pendingIndex]?.subject : "") ? 0 : 1;
+			return rank(a) - rank(b);
+		});
 	const today = (
 		<>
-			<header className="simple-today-heading"><div><p>今日學習</p><h1>{tasks.length === 0 ? "從一個小計畫開始" : pendingIndex >= 0 ? "先完成眼前這一件事" : completed === tasks.length ? "今天的任務都完成了" : "今天沒有待辦任務"}</h1><span>{name} · 距離目標 {daysLeft} 天</span></div><a href="/goal">調整計畫</a></header>
-			<section className="simple-next-task" aria-label="下一個學習任務"><div><span>{pendingIndex >= 0 ? "接下來做" : "下一步"}</span><h2>{pendingIndex >= 0 ? tasks[pendingIndex].subject : tasks.length === 0 ? "建立你的今日任務" : completed === tasks.length ? "辛苦了，休息一下吧" : "任務已跳過或延後"}</h2><p>{pendingIndex >= 0 ? tasks[pendingIndex].detail : "可以查看學習紀錄，或調整今天的安排。"}</p></div>{pendingIndex >= 0 ? <button onClick={startFocus}>開始 {tasks[pendingIndex].minutes} 分鐘專注 →</button> : <a href={tasks.length > 0 && completed === tasks.length ? "/progress" : "/goal"}>{tasks.length > 0 && completed === tasks.length ? "查看今日成果" : "設定學習計畫"} →</a>}</section>
-			<section className="today-ai-entry" aria-label="AI 學習教練入口"><div className="today-ai-entry-mark" aria-hidden="true">✦</div><div><span>今天不知道先做什麼？</span><strong>問 AI 學習教練</strong><p>告訴我剩餘時間，我會依今日任務幫你排下一步。</p></div><div className="today-ai-entry-actions"><a href="/coach">開啟教練</a><small>也可在 LINE 傳「我只有一小時」</small></div></section>
+			<header className="simple-today-heading"><div><p>今日學習</p><h1>{tasks.length === 0 ? "從一個小計畫開始" : pendingIndex >= 0 ? `今天還有 ${tasks.length - completed} 個任務` : completed === tasks.length ? "今天的任務都完成了" : "今天沒有待辦任務"}</h1><span>{name} · 距離目標 {daysLeft} 天</span></div><a href="/goal">調整計畫</a></header>
+			<section className="simple-next-task" aria-label="下一個學習任務"><div><span>{pendingIndex >= 0 ? "建議先完成" : "下一步"}</span><h2>{pendingIndex >= 0 ? tasks[pendingIndex].subject : tasks.length === 0 ? "建立你的今日任務" : completed === tasks.length ? "辛苦了，休息一下吧" : "任務已跳過或延後"}</h2><p>{pendingIndex >= 0 ? `因為它是今天剩餘時間最適合先處理的任務。${tasks[pendingIndex].detail}` : "可以查看學習紀錄，或調整今天的安排。"}</p></div>{pendingIndex >= 0 ? <button onClick={startFocus}>開始 {tasks[pendingIndex].minutes} 分鐘專注 →</button> : <a href={tasks.length > 0 && completed === tasks.length ? "/progress" : "/goal"}>{tasks.length > 0 && completed === tasks.length ? "查看今日成果" : "設定學習計畫"} →</a>}</section>
+			{completionFeedback && <section className="task-completion-feedback" aria-live="polite"><div className="task-completion-heading"><span>✓</span><div><small>剛剛完成</small><h2>{completionFeedback.subject}完成</h2></div><button aria-label="關閉完成回饋" onClick={() => setCompletionFeedback(null)}>×</button></div><div className="task-completion-metrics"><div><b>{completionFeedback.completedCount}<small> / {completionFeedback.totalCount}</small></b><span>今日完成</span></div><div><b>{completionFeedback.remainingMinutes}<small> 分鐘</small></b><span>剩餘時間</span></div><div><b>{completionFeedback.streak}<small> 天</small></b><span>連續學習</span></div></div><div className="task-completion-actions"><button onClick={() => { setCompletionFeedback(null); if (pendingIndex >= 0) startFocus(); }}>開始下一項</button><button onClick={() => setCompletionFeedback(null)}>休息一下</button><a href="/progress">查看今日成果</a></div></section>}
 			<section id="today-todos" className="progress-card" aria-labelledby="today-todos-title">
 				<div className="section-heading">
 					<div>
@@ -1478,7 +1518,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 				</div>
 						<div className="today-task-list">
 					<div className="tasks">{tasks.length === 0 && <p>還沒有任務，先設定每天可讀的時間與科目。</p>}
-					{tasks.map((task, index) => (
+					{todayTaskEntries.map(({ task, index }) => (
 						<div
 							className={`task ${task.done ? "done" : ""} ${task.skipped ? "skipped" : ""} ${index === pendingIndex ? "is-next" : ""}`}
 							key={`${task.subject}-${index}`}
@@ -1542,6 +1582,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					</div>
 				</div>
 			</section>
+			<section className="today-ai-entry" aria-label="AI 學習教練入口"><div className="today-ai-entry-mark" aria-hidden="true">✦</div><div><span>需要不同安排？</span><strong>問 AI 學習教練</strong><p>告訴我剩餘時間，我會依今日任務幫你排下一步。</p></div><div className="today-ai-entry-actions"><a href="/coach">開啟教練</a><small>也可在 LINE 傳「我只有一小時」</small></div></section>
 			<section className="today-pilgrimage-recommendation" aria-label="文昌巡禮推薦">
 				<div className="today-pilgrimage-recommendation-icon" aria-hidden="true">⛩</div>
 				<div className="today-pilgrimage-recommendation-copy">
@@ -2468,6 +2509,11 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 								每 3 枚木牌可兌換 1
 								次求籤機會；籤詩將依你親自選取的籤枝揭曉。
 							</p>
+							{oracleTickets > 0 && (
+								<button className="oracle-welcome-button" onClick={startWelcomeOracle}>
+									首次贈送・免費求一籤
+								</button>
+							)}
 							<button
 								onClick={exchangeOracleTicket}
 								disabled={availablePlanks < 3}
@@ -3059,6 +3105,23 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
 					prayerView
 				) : (
 					profileView
+				)}
+				{onboardingOpen && (
+					<div className="onboarding-backdrop" role="presentation">
+						<section className="onboarding-dialog" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+							<div className="onboarding-progress" aria-label={`引導第 ${onboardingStep + 1} 步，共 ${onboardingSteps.length} 步`}>
+								{onboardingSteps.map((_, index) => <i key={index} className={index === onboardingStep ? "active" : index < onboardingStep ? "done" : ""} />)}
+							</div>
+							<span className="onboarding-kicker">文昌同行・開始使用</span>
+							<div className="onboarding-icon" aria-hidden="true">{onboardingSteps[onboardingStep].icon}</div>
+							<h2 id="onboarding-title">{onboardingSteps[onboardingStep].title}</h2>
+							<p>{onboardingSteps[onboardingStep].detail}</p>
+							<div className="onboarding-actions">
+								<button className="onboarding-skip" onClick={finishOnboarding}>先跳過</button>
+								{onboardingStep < onboardingSteps.length - 1 ? <button className="onboarding-next" onClick={() => setOnboardingStep((step) => step + 1)}>下一步 →</button> : <button className="onboarding-next" onClick={finishOnboarding}>開始使用</button>}
+							</div>
+						</section>
+					</div>
 				)}
 				{focusPickerTaskIndex !== null &&
 					tasks[focusPickerTaskIndex] && (

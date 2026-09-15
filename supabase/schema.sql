@@ -42,6 +42,13 @@ create table if not exists public.user_companion_states (
   wish_reflections jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
+-- LINE 對話狀態：讓 webhook 能記住使用者正在看任務、規劃時間或剛完成任務。
+create table if not exists public.line_conversation_states (
+  line_user_id text primary key references public.users(line_user_id) on delete cascade,
+  state text not null default 'idle',
+  payload jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
 
 -- The browser never accesses these tables directly. The server verifies a LINE ID token,
 -- then uses the service-role key for the narrowly scoped sync endpoint.
@@ -51,6 +58,7 @@ alter table public.daily_tasks enable row level security;
 alter table public.task_completions enable row level security;
 alter table public.energy enable row level security;
 alter table public.user_companion_states enable row level security;
+alter table public.line_conversation_states enable row level security;
 
 -- The server calls this function with the service-role key. It serializes a
 -- user's writes and commits the plan, tasks, completions, and energy together.

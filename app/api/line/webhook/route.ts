@@ -7,7 +7,11 @@ type LineEvent = {
   replyToken?: string;
   source?: { userId?: string };
   message?: { type?: string; text?: string };
+  postback?: { data?: string };
 };
+
+type Task = { id: string; subject: string; minutes: number; task_type: string };
+type QuickReply = { label: string; text?: string; data?: string };
 
 const today = () => taipeiDate();
 
@@ -34,7 +38,7 @@ async function reply(replyToken: string, text: string) {
   });
 }
 
-async function replyFlex(replyToken: string, title: string, intro: string, tasks: { subject: string; minutes: number; task_type: string }[]) {
+async function replyFlex(replyToken: string, title: string, intro: string, tasks: Task[], quickReplies: QuickReply[] = []) {
   const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
   if (!accessToken) throw new Error("LINE Messaging API is not configured");
   const bubble = {
@@ -45,9 +49,10 @@ async function replyFlex(replyToken: string, title: string, intro: string, tasks
     ] },
     body: { type: "box", layout: "vertical", spacing: "md", paddingAll: "18px", contents: [
       { type: "text", text: intro, size: "sm", color: "#40536B", wrap: true },
-      ...tasks.slice(0, 5).map((task) => ({ type: "box", layout: "horizontal", spacing: "md", contents: [
+      ...tasks.slice(0, 5).map((task) => ({ type: "box", layout: "horizontal", spacing: "sm", alignItems: "center", contents: [
         { type: "text", text: task.subject, flex: 1, size: "sm", color: "#243B53", wrap: true },
-        { type: "text", text: `${task.minutes} 分鐘`, size: "sm", color: "#287C64", weight: "bold", align: "end" },
+        { type: "text", text: `${task.minutes} 分鐘`, size: "xs", color: "#287C64", weight: "bold", align: "end" },
+        { type: "button", style: "link", height: "sm", action: { type: "postback", label: "完成", data: `action=complete&taskId=${task.id}`, displayText: `完成${task.subject}` } },
       ] })),
     ] },
     footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "14px", contents: [
@@ -55,10 +60,29 @@ async function replyFlex(replyToken: string, title: string, intro: string, tasks
       { type: "button", style: "link", action: { type: "uri", label: "查看完整進度", uri: learningUrl("/progress") } },
     ] },
   };
+  const message: Record<string, unknown> = { type: "flex", altText: `${title}・${intro}`.slice(0, 400), contents: bubble };
+  if (quickReplies.length) message.quickReply = { items: quickReplies.slice(0, 13).map((item) => ({ type: "action", action: item.data ? { type: "postback", label: item.label, data: item.data, displayText: item.label } : { type: "message", label: item.label, text: item.text ?? item.label } })) };
   await fetch("https://api.line.me/v2/bot/message/reply", {
     method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ replyToken, messages: [{ type: "flex", altText: `${title}・${intro}`.slice(0, 400), contents: bubble }] }),
+    body: JSON.stringify({ replyToken, messages: [message] }),
   });
+}
+
+async function saveConversationState(userId: string | undefined, state: string, payload: Record<string, unknown> = {}) {
+  if (!userId) return;
+  try {
+    await supabaseAdmin().from("line_conversation_states").upsert({ line_user_id: userId, state, payload, updated_at: new Date().toISOString() }, { onConflict: "line_user_id" });
+  } catch (error) {
+    console.warn("LINE conversation state was not saved", error);
+  }
+}
+
+async function replyCompletion(replyToken: string, subject: string, completedCount: number, totalCount: number, completedMinutes: number, nextTask?: Task) {
+  await replyFlex(replyToken, "完成一項，繼續累積", `✅ ${subject} 已完成！\n今日完成 ${completedCount}/${totalCount} 項・累積 ${completedMinutes} 分鐘${nextTask ? `\n下一步建議：${nextTask.subject} ${nextTask.minutes} 分鐘` : "\n今天任務已圓滿完成，辛苦了！"}`, nextTask ? [nextTask] : [], [
+    ...(nextTask ? [{ label: `開始${nextTask.subject}`, data: `action=start&taskId=${nextTask.id}` }] : []),
+    { label: "休息一下", text: "休息一下" },
+    { label: "查看成果", text: "查看進度" },
+  ]);
 }
 
 async function learningContext(lineUserId?: string) {
@@ -96,20 +120,30 @@ function helpText() {
 }
 
 async function answer(event: LineEvent) {
-  if (event.type !== "message" || event.message?.type !== "text" || !event.replyToken) return;
-  const command = event.message.text?.trim().replace(/\s+/g, "") ?? "";
+  if (!event.replyToken) return;
+  const postback = event.type === "postback" ? new URLSearchParams(event.postback?.data ?? "") : null;
+  if (postback?.get("action") === "start") {
+    await saveConversationState(event.source?.userId, "focus_started", { taskId: postback.get("taskId") });
+    await reply(event.replyToken, "專注已準備好 ✦\n請在網站開啟倒數，完成後回到 LINE 點選完成任務。\n" + learningUrl("/today"));
+    return;
+  }
+  if (event.type !== "message" || event.message?.type !== "text") {
+    if (postback?.get("action") !== "complete") return;
+  }
+  const command = event.message?.text?.trim().replace(/\s+/g, "") ?? "";
   const context = await learningContext(event.source?.userId);
   if (!context || !context.plan) {
     await reply(event.replyToken, "歡迎來到文昌同行 ✦\n請先開啟 LIFF 建立學習計畫，之後我就能依你的任務提供建議。\n\n" + helpText());
     return;
   }
   const { tasks, completed, plan } = context;
-	const completionMatch = command.match(/^(?:我)?(?:已)?(?:完成|打卡)(.+)$/);
-	if (completionMatch) {
-		const requestedSubject = completionMatch[1].replace(/(任務|作業|了|啦)$/g, "");
-		const target = tasks.find((task) => !completed.has(task.id) && task.subject.replace(/\s+/g, "").includes(requestedSubject));
+	const completionMatch = postback?.get("action") === "complete" ? null : command.match(/^(?:我)?(?:已)?(?:完成|打卡)(.+)$/);
+	const requestedTaskId = postback?.get("taskId");
+	if (requestedTaskId || completionMatch) {
+		const requestedSubject = completionMatch?.[1].replace(/(任務|作業|了|啦)$/g, "") ?? "";
+		const target = tasks.find((task) => !completed.has(task.id) && (requestedTaskId ? task.id === requestedTaskId : task.subject.replace(/\s+/g, "").includes(requestedSubject)));
 		if (!target) {
-			await reply(event.replyToken, `找不到尚未完成的「${requestedSubject}」任務。\n\n傳「今天讀什麼」可查看目前任務。`);
+			await reply(event.replyToken, requestedTaskId ? "這項任務已完成或已經過期。傳「今天讀什麼」可查看最新任務。" : `找不到尚未完成的「${requestedSubject}」任務。\n\n傳「今天讀什麼」可查看目前任務。`);
 			return;
 		}
 		const db = supabaseAdmin();
@@ -118,17 +152,28 @@ async function answer(event: LineEvent) {
 		const completedCount = completed.size + 1;
 		const completedMinutes = tasks.filter((task) => completed.has(task.id) || task.id === target.id).reduce((sum, task) => sum + task.minutes, 0);
 		const nextTask = tasks.find((task) => !completed.has(task.id) && task.id !== target.id);
-		await reply(event.replyToken, `✅ 已完成 ${target.subject}・${target.minutes} 分鐘！\n\n📈 今日進度 ${completedCount}/${tasks.length} 項・累積 ${completedMinutes} 分鐘\n\n${nextTask ? `下一步：${nextTask.subject} ${nextTask.minutes} 分鐘` : "今天任務已圓滿完成，辛苦了！"}`);
+		await saveConversationState(event.source?.userId, "after_task_complete", { taskId: target.id, nextTaskId: nextTask?.id ?? null });
+		await replyCompletion(event.replyToken, target.subject, completedCount, tasks.length, completedMinutes, nextTask);
 		return;
 	}
   if (command.includes("今天讀什麼") || command.includes("今日任務")) {
-    if (tasks.length) await replyFlex(event.replyToken, "今天，從一件事開始", `弱科優先：${plan.weak_subject}。先完成第一項就很棒！`, tasks.filter((task) => !completed.has(task.id)));
+    await saveConversationState(event.source?.userId, "viewing_today_tasks");
+    if (tasks.length) await replyFlex(event.replyToken, "今天，從一件事開始", `弱科優先：${plan.weak_subject}。先完成第一項就很棒！`, tasks.filter((task) => !completed.has(task.id)), [
+      { label: "我有 15 分鐘", text: "我有 15 分鐘" },
+      { label: "我有 30 分鐘", text: "我有 30 分鐘" },
+      { label: "我只有一小時", text: "我只有一小時" },
+      { label: "查看進度", text: "查看進度" },
+    ]);
     else await reply(event.replyToken, "今天還沒有任務。請先在文昌同行建立或調整你的學習計畫。");
     return;
   }
   if (command.includes("只有") || command.includes("剩") || command.includes("小時") || command.includes("分鐘")) {
+    await saveConversationState(event.source?.userId, "planning_time", { source: command });
     const selected = oneHourPlan(tasks, completed, command);
-    await replyFlex(event.replyToken, "為你排好這段時間", "今天不用一次完成全部，先完成這份安排就好。", selected);
+    await replyFlex(event.replyToken, "為你排好這段時間", "今天不用一次完成全部，先完成這份安排就好。完成後可直接點卡片下方的「完成」按鈕。", selected, [
+      { label: "查看進度", text: "查看進度" },
+      { label: "我有更多時間", text: "我有一小時" },
+    ]);
     return;
   }
   if (command.includes("查看進度") || command.includes("我的進度") || command === "進度") {
