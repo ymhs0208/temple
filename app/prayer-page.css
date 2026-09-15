@@ -105,6 +105,45 @@
 #prayer-simple .oracle-result-actions .oracle-start-action:disabled { background: #edf1f5; color: #7a8795; border-color: #dce5ed; }
 #prayer-simple .oracle-result-display { min-width: 0; max-width: 100%; }
 #prayer-simple .oracle-lot-paper { min-width: 0; max-width: 100%; box-sizing: border-box; }
+#prayer-simple .oracle-result { position: relative; }
+#prayer-simple .oracle-result::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: #f6d77c;
+  filter: blur(34px);
+  opacity: .28;
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: oracle-result-glow 2.2s ease-in-out infinite alternate;
+}
+#prayer-simple .oracle-result-display {
+  overflow: hidden;
+  padding-top: 18px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: start;
+}
+#prayer-simple .oracle-result-display,
+#prayer-simple .oracle-result-actions { position: relative; z-index: 1; }
+#prayer-simple .oracle-result-stick { margin-top: 0; transform: rotate(-6deg); z-index: 0; }
+#prayer-simple .oracle-lot-paper { position: relative; z-index: 1; min-width: 0; }
+#prayer-simple .oracle-result-stick::before { top: -9px; }
+#prayer-simple .oracle-lot-paper { border-radius: 5px 18px 7px 16px; background-image: linear-gradient(105deg, #fff8dc 0%, #fff3c9 52%, #fffbe8 100%), repeating-linear-gradient(0deg, #b8893a08 0 1px, transparent 1px 4px); box-shadow: 0 14px 26px #8d672433, inset 0 0 0 7px #fffbe9, inset 0 0 20px #c6962b18; animation: oracle-paper-settle .65s .18s cubic-bezier(.2,.8,.2,1) both; }
+#prayer-simple .oracle-lot-paper h2 { font-size: clamp(17px, 2vw, 21px); letter-spacing: .03em; }
+#prayer-simple .oracle-result .oracle-verse { padding: 12px 10px; border-top: 1px solid #e8ce8d; border-bottom: 1px solid #e8ce8d; font-size: clamp(14px, 1.8vw, 17px); line-height: 2; letter-spacing: .08em; }
+#prayer-simple .oracle-action { background: linear-gradient(135deg, #edf6ee, #f8fbf0); box-shadow: inset 3px 0 #5b956f; }
+@keyframes oracle-result-glow { from { opacity: .2; transform: translateX(-50%) scale(.88); } to { opacity: .4; transform: translateX(-50%) scale(1.12); } }
+@keyframes oracle-paper-settle { from { opacity: 0; transform: translateY(20px) rotate(2deg) scale(.94); } to { opacity: 1; transform: translateY(0) rotate(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { #prayer-simple .oracle-result::before, #prayer-simple .oracle-lot-paper { animation: none; } }
+@media (max-width: 600px) {
+  #prayer-simple .oracle-result-display { display: block; padding-inline: 0; }
+  #prayer-simple .oracle-result-stick { display: none; }
+}
 #prayer-simple .prayer-explore { grid-column: 1 / -1; margin: 0; }
 #prayer-simple .prayer-explore > :is(.cultural-reward-card, .empty-panel) { margin: 12px 0; padding: 20px; background: #f6f8fb; border: 1px solid #e2e9f0; border-radius: 16px; box-shadow: none; }
 #prayer-simple :is(#prayer-checkin, #prayer-wish, #prayer-oracle) { scroll-margin-top: 100px; }
