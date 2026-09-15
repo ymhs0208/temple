@@ -9,7 +9,7 @@ export async function POST(request: Request) {
       idToken?: string;
       kind?: "morning" | "evening";
     };
-    if (!body.idToken || !body.kind)
+    if (!body.idToken || !["morning", "evening"].includes(body.kind ?? ""))
       return Response.json({ error: "資料不完整" }, { status: 400 });
     const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
     if (!accessToken) throw new Error("LINE OA 尚未設定");
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
     const { data: plan } = await db
       .from("study_plans")
-      .select("id")
+      .select("id, weak_subject, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -58,6 +58,9 @@ export async function POST(request: Request) {
       );
     const done = new Set(completions?.map((item) => item.task_id));
     const pending = tasks.filter((task) => !done.has(task.id));
+    if (body.kind === "evening" && !pending.length) return Response.json({ ok: true, skipped: true });
+    const dayNumber = plan.created_at ? Math.max(1, Math.floor((Date.now() - new Date(plan.created_at).getTime()) / 86400000) + 1) : undefined;
+    const completionRate = tasks.length ? Math.round((done.size / tasks.length) * 100) : 0;
     const push = await fetch("https://api.line.me/v2/bot/message/push", {
       method: "POST",
       headers: {
@@ -66,7 +69,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         to: identity.userId,
-        messages: [buildReminderFlex({ kind: body.kind, displayName: identity.displayName, tasks, pending })],
+        messages: [buildReminderFlex({ kind: body.kind!, displayName: identity.displayName, tasks, pending, dayNumber, weakSubject: plan.weak_subject, completionRate })],
       }),
     });
     if (!push.ok) throw new Error("LINE OA 推播失敗");

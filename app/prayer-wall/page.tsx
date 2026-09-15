@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import liff from "@line/liff";
+import { confirmAction } from "../../lib/confirm-action";
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
 type Post = {
   id: string;
@@ -83,14 +84,13 @@ export default function PrayerWall() {
         </button>
         <section className="feature-hero wall-hero">
           <span className="feature-kicker">WENCHANG PRAYER WALL</span>
-          <h1>
-            把祈願留在牆上，
-            <br />
-            <em>讓努力彼此照亮。</em>
-          </h1>
+          <h1>寫下今天的祈願</h1>
           <p>
-            每則公開內容都會經過基本安全檢查；你可匿名發文，也能協助檢舉不當內容。
+            留下一句祝福，也看看其他學習夥伴正在努力什麼。你可以選擇匿名發布。
           </p>
+          <small className="wall-privacy-note">
+            為保護自己，請不要填寫姓名、電話、地址、社群帳號或其他個人資料。
+          </small>
       </section>
       {featured && (
         <section className="daily-feature" aria-label="每日精選正向祈願">
@@ -112,7 +112,7 @@ export default function PrayerWall() {
           <div className="card-title">
             <span>✦</span>
             <div>
-              <b>寫下今日祈願</b>
+              <b>新增一則祈願</b>
               <small>2–120 字；每位使用者每分鐘可發送一則</small>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function PrayerWall() {
               />{" "}
               匿名發佈
             </label>
-            <button onClick={post}>送出祈願</button>
+            <button onClick={post}>{idToken ? "發布祈願" : "登入 LINE 後發布"}</button>
           </div>
           {notice && <p className="unlock-notice">{notice}</p>}
         </section>
@@ -151,11 +151,9 @@ export default function PrayerWall() {
                 </div>
                 <p>{post.message}</p>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (
-                      window.confirm(
-                        "確定要檢舉這則祈願嗎？\n累積三次檢舉後，內容將自動隱藏。",
-                      )
+                      await confirmAction({ title: "檢舉這則祈願？", message: "請確認內容確實不適當。累積三次檢舉後，內容將自動隱藏。", confirmLabel: "確認檢舉", cancelLabel: "取消", danger: true })
                     )
                       report(post.id);
                   }}

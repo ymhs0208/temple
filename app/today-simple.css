@@ -1,0 +1,68 @@
+.app-shell:has(#today-simple) > .incense-smoke-wrapper { display:none; }
+#today-simple { display:flex; flex-direction:column; gap:24px; width:100%; max-width:960px; margin:auto; padding:32px 24px 104px; grid-column:1/-1; min-width:0; }
+#today-simple > * { width:100%; min-width:0; margin:0; }
+#today-simple .simple-today-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; background:none; border:0; box-shadow:none; }
+#today-simple .simple-today-heading p { margin:0 0 8px; color:#526e8b; font-size:14px; }
+#today-simple h1 { font-size:clamp(24px,3.3vw,32px); line-height:1.45; color:#263b51; margin:0 0 10px; letter-spacing:normal; }
+#today-simple .simple-today-heading span { font-size:13px; color:#687b8f; }
+#today-simple a { text-decoration:none; color:#3267b6; }
+#today-simple .simple-today-heading > a { display:flex; align-items:center; justify-content:center; flex-shrink:0; min-height:44px; padding:8px 12px; font-size:14px; border-radius:10px; border:1px solid #d5e1ef; background:#fff; }
+#today-simple .simple-next-task { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:28px; background:#eef5ff; border:1px solid #d2e3f8; border-radius:18px; }
+#today-simple .simple-next-task > div > span { display:block; font-size:13px; color:#3b6ea6; margin-bottom:8px; font-weight:700; }
+#today-simple .simple-next-task h2 { font-size:24px; color:#263b51; line-height:1.5; margin:0; }
+#today-simple .simple-next-task p { font-size:16px; line-height:1.7; color:#57718d; margin:8px 0 0; }
+#today-simple .simple-next-task > :is(button,a) { display:flex; align-items:center; justify-content:center; min-height:52px; flex-shrink:0; border:0; border-radius:12px; padding:14px 22px; background:#3267b6; color:#fff; font-size:16px; font-weight:700; box-shadow:none; }
+#today-simple .today-ai-entry { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:14px; padding:16px 18px; border:1px solid #d8e4f2; border-radius:16px; background:#f5f9ff; }
+#today-simple .today-ai-entry-mark { display:grid; place-items:center; width:42px; height:42px; border-radius:12px; background:#e2edff; color:#3267b6; font-size:22px; }
+#today-simple .today-ai-entry span { display:block; color:#63778c; font-size:13px; }
+#today-simple .today-ai-entry strong { display:block; margin-top:2px; color:#244f83; font-size:17px; }
+#today-simple .today-ai-entry p { margin:3px 0 0; color:#587089; font-size:14px; line-height:1.5; }
+#today-simple .today-ai-entry-actions { display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+#today-simple .today-ai-entry-actions a { display:inline-flex; align-items:center; min-height:44px; padding:10px 15px; border-radius:10px; background:#3267b6; color:#fff; font-size:14px; font-weight:700; }
+#today-simple .today-ai-entry-actions small { color:#718399; font-size:12px; text-align:right; }
+#today-simple .simple-next-task button::before,#today-simple .simple-next-task button::after { display:none !important; }
+#today-simple :is(button,a,summary):focus-visible { outline:3px solid #4382d4; outline-offset:3px; }
+#today-simple #today-todos { width:100%; max-width:none; margin:0; padding:24px !important; border-radius:18px !important; }
+#today-simple #today-todos h2 { font-size:20px !important; margin:0; }
+#today-simple #today-todos .section-heading { display:flex; align-items:start; justify-content:space-between; gap:12px; }
+#today-simple #today-todos .completion { flex-shrink:0; color:#536d85; background:transparent; padding:4px 0 !important; font-size:13px; }
+#today-simple #today-todos .todo-instruction { font-size:14px; }
+#today-simple #today-todos .progress-track { margin:18px 0 12px !important; }
+#today-simple #today-todos .task-overview { margin-bottom:16px !important; }
+#today-simple #today-todos .today-task-list { padding:0; border:0; }
+#today-simple #today-todos .task { display:grid; grid-template-columns:44px minmax(0,1fr) 60px 44px !important; column-gap:12px; row-gap:4px; min-height:94px; padding:18px 0 !important; border-radius:0 !important; background:#fff !important; }
+#today-simple #today-todos .task.is-next { background:#fff !important; }
+#today-simple #today-todos .task .check { grid-column:1 !important; grid-row:1 !important; align-self:center; }
+#today-simple #today-todos .task .task-copy { grid-column:2 !important; grid-row:1 !important; text-align:left; display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-height:44px; }
+#today-simple #today-todos .task-copy b { font-size:16px; }
+#today-simple #today-todos .task-copy small:not(.task-status) { font-size:14px; }
+#today-simple #today-todos .task-status { font-size:12px !important; margin:0 !important; color:#62768c; border:0 !important; padding:0 !important; }
+#today-simple #today-todos .task .minutes { grid-column:3 !important; grid-row:1 !important; font-size:16px; justify-self:end; }
+#today-simple #today-todos .task .task-adjust { grid-column:4 !important; grid-row:1 !important; align-self:center; }
+#today-simple #today-todos .task:has(.task-adjust-menu) { z-index:40 !important; }
+#today-simple #today-todos .task-adjust-menu { z-index:50 !important; right:0; top:calc(100% - 10px); background:#fff; border:1px solid #c6d7ea; border-radius:12px; padding:6px; }
+#today-simple :is(.simple-study-note,.simple-more-tools) { padding:0; border:1px solid #dfe7f0; border-radius:14px; background:#fff; }
+#today-simple :is(.simple-study-note,.simple-more-tools) > summary { cursor:pointer; padding:18px 20px; min-height:56px; font-size:14px; font-weight:700; color:#47617b; }
+#today-simple summary small { margin-left:12px; font-size:13px; font-weight:400; color:#6e8093; }
+#today-simple .simple-study-note > div { padding:0 20px 20px; }
+#today-simple .simple-study-note p { font-size:14px; line-height:1.8; color:#62768c; margin:0 0 16px; }
+#today-simple .simple-study-note p b { display:block; color:#385570; font-size:14px; }
+#today-simple .simple-study-note :is(button,a) { display:inline-flex; align-items:center; min-height:44px; border:1px solid #d2e0ef; border-radius:10px; padding:10px 14px; background:#f5f8fc; color:#3267b6; font-size:14px; box-shadow:none; margin:0 10px 8px 0; }
+#today-simple .simple-more-tools .quick-actions { width:100%; max-width:none; margin:0; padding:0 20px 20px; background:transparent !important; border:0 !important; box-shadow:none !important; }
+#today-simple .quick-title { display:none; }
+#today-simple .quick-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+#today-simple .quick-grid button { min-width:0; padding:16px; border:1px solid #e0e8f1; background:#f7f9fc; border-radius:12px; box-shadow:none !important; transform:none !important; }
+#today-simple .quick-grid button::before,#today-simple .quick-grid button::after { display:none !important; }
+#today-simple .quick-grid b { font-size:14px; }
+#today-simple .quick-grid small { font-size:13px; line-height:1.6; }
+#today-simple .simple-line-link { display:block; font-size:14px; padding:16px 20px; border-top:1px solid #e5ecf4; line-height:1.7; }
+#today-simple .simple-sync-status { color:#426580; font-size:14px; line-height:1.7; }
+#today-simple .today-pilgrimage-recommendation { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:16px; padding:18px 20px; border:1px solid #cfe0ef; border-left:4px solid #3267b6; border-radius:16px; background:linear-gradient(110deg,#f3f8ff,#fffdf4); }
+#today-simple .today-pilgrimage-recommendation-icon { display:grid; place-items:center; width:48px; height:48px; border-radius:14px; background:#e7f0ff; font-size:25px; }
+#today-simple .today-pilgrimage-recommendation-copy { min-width:0; }
+#today-simple .today-pilgrimage-recommendation-copy span { display:block; color:#61768b; font-size:13px; margin-bottom:4px; }
+#today-simple .today-pilgrimage-recommendation-copy strong { display:block; color:#254d78; font-size:17px; }
+#today-simple .today-pilgrimage-recommendation-copy p { margin:4px 0 0; color:#587089; font-size:14px; line-height:1.65; }
+#today-simple .today-pilgrimage-recommendation > a { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:10px 15px; border-radius:10px; background:#3267b6; color:#fff; font-size:14px; font-weight:700; white-space:nowrap; }
+@media(max-width:650px) { #today-simple .today-pilgrimage-recommendation { grid-template-columns:auto minmax(0,1fr); gap:10px 12px; padding:16px; } #today-simple .today-pilgrimage-recommendation-icon { width:40px; height:40px; font-size:21px; } #today-simple .today-pilgrimage-recommendation-copy strong { font-size:16px; } #today-simple .today-pilgrimage-recommendation-copy p { grid-column:1 / -1; font-size:13px; } #today-simple .today-pilgrimage-recommendation > a { grid-column:1 / -1; justify-content:center; width:100%; } }
+@media(max-width:650px) { #today-simple { padding:24px 16px 100px; gap:20px; } #today-simple .simple-today-heading { align-items:flex-start; flex-wrap:wrap; } #today-simple .simple-next-task { flex-direction:column; align-items:stretch; gap:20px; padding:22px; } #today-simple .today-ai-entry { grid-template-columns:auto minmax(0,1fr); } #today-simple .today-ai-entry-actions { grid-column:1 / -1; align-items:stretch; } #today-simple .today-ai-entry-actions small { text-align:left; } #today-simple #today-todos { padding:20px 16px !important; } #today-simple #today-todos .task { grid-template-columns:40px minmax(0,1fr) 40px !important; column-gap:6px; } #today-simple #today-todos .task .check { align-self:start; } #today-simple #today-todos .task .minutes { grid-column:2 !important; grid-row:2 !important; justify-self:start; font-size:14px; } #today-simple #today-todos .task .task-adjust { grid-column:3 !important; grid-row:1 !important; align-self:start; } #today-simple .quick-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } #today-simple summary small { display:block; margin:6px 0 0 18px; } }

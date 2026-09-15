@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { taipeiDate } from "@/lib/taipei-date";
+import { learningUrl } from "@/lib/line-reminder";
 
 type LineEvent = {
   type?: string;
@@ -30,6 +31,33 @@ async function reply(replyToken: string, text: string) {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ replyToken, messages: [{ type: "text", text: text.slice(0, 4900) }] }),
+  });
+}
+
+async function replyFlex(replyToken: string, title: string, intro: string, tasks: { subject: string; minutes: number; task_type: string }[]) {
+  const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
+  if (!accessToken) throw new Error("LINE Messaging API is not configured");
+  const bubble = {
+    type: "bubble",
+    header: { type: "box", layout: "vertical", backgroundColor: "#287C64", paddingAll: "18px", contents: [
+      { type: "text", text: "文昌同行・AI 學習教練", size: "xs", color: "#DDF5E8" },
+      { type: "text", text: title, size: "xl", weight: "bold", color: "#FFFFFF", margin: "sm" },
+    ] },
+    body: { type: "box", layout: "vertical", spacing: "md", paddingAll: "18px", contents: [
+      { type: "text", text: intro, size: "sm", color: "#40536B", wrap: true },
+      ...tasks.slice(0, 5).map((task) => ({ type: "box", layout: "horizontal", spacing: "md", contents: [
+        { type: "text", text: task.subject, flex: 1, size: "sm", color: "#243B53", wrap: true },
+        { type: "text", text: `${task.minutes} 分鐘`, size: "sm", color: "#287C64", weight: "bold", align: "end" },
+      ] })),
+    ] },
+    footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "14px", contents: [
+      { type: "button", style: "primary", color: "#287C64", action: { type: "uri", label: "開始今天學習", uri: learningUrl("/today") } },
+      { type: "button", style: "link", action: { type: "uri", label: "查看完整進度", uri: learningUrl("/progress") } },
+    ] },
+  };
+  await fetch("https://api.line.me/v2/bot/message/reply", {
+    method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ replyToken, messages: [{ type: "flex", altText: `${title}・${intro}`.slice(0, 400), contents: bubble }] }),
   });
 }
 
@@ -94,12 +122,13 @@ async function answer(event: LineEvent) {
 		return;
 	}
   if (command.includes("今天讀什麼") || command.includes("今日任務")) {
-    await reply(event.replyToken, tasks.length ? `📚 今天推薦\n${taskLines(tasks, completed)}\n\n弱科優先：${plan.weak_subject}。先完成第一項就很棒！` : "今天還沒有任務。請先在文昌同行建立或調整你的學習計畫。");
+    if (tasks.length) await replyFlex(event.replyToken, "今天，從一件事開始", `弱科優先：${plan.weak_subject}。先完成第一項就很棒！`, tasks.filter((task) => !completed.has(task.id)));
+    else await reply(event.replyToken, "今天還沒有任務。請先在文昌同行建立或調整你的學習計畫。");
     return;
   }
   if (command.includes("只有") || command.includes("剩") || command.includes("小時") || command.includes("分鐘")) {
     const selected = oneHourPlan(tasks, completed, command);
-    await reply(event.replyToken, `⏱ 精簡版安排\n${selected.map((task, index) => `${index + 1}. ${task.subject} ${task.minutes} 分鐘｜${task.task_type}`).join("\n")}\n\n今天不用一次完成全部，先完成這份安排就好。`);
+    await replyFlex(event.replyToken, "為你排好這段時間", "今天不用一次完成全部，先完成這份安排就好。", selected);
     return;
   }
   if (command.includes("查看進度") || command.includes("我的進度") || command === "進度") {

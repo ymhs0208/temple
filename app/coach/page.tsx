@@ -113,7 +113,7 @@ export default function CoachPage() {
         <header className="feature-hero coach-hero">
           <span className="feature-kicker">AI STUDY COACH</span>
           <h1>你的 AI<br /><em>學習軍師</em></h1>
-          <p>把今天的時間與卡關告訴軍師，得到可立即執行的學習下一步。</p>
+          <p>告訴我你現在卡在哪裡，我會給你一個可以立刻開始的下一步。</p>
           <div className="coach-orbit">✦<small>PLAN</small></div>
         </header>
 
@@ -123,22 +123,32 @@ export default function CoachPage() {
           <span>今日可用 <b>{plan.hours ?? 2} 小時</b></span>
         </section>
 
-				<section className="coach-evidence" aria-label="教練使用的今日資料">
+        <section className="coach-evidence" aria-label="教練使用的今日資料">
 					<div><span>已完成</span><b>{completedTasks.length} 項・{completedMinutes} 分</b></div>
 					<div><span>待回流錯題</span><b>{dueWeakQuestions.length} 題</b></div>
 					<div><span>弱點題庫</span><b>{weakQuestions.length} 題</b></div>
 					<p>教練只根據這些真實進度、考試倒數與弱科安排下一步。</p>
 				</section>
 
+				<section className="coach-proactive" aria-label="每日主動學習服務">
+					<div className="coach-proactive-mark">🔔</div>
+					<div>
+						<span>每日主動服務</span>
+						<b>今天先做 {plan.weak ?? "最需要加強的科目"}</b>
+						<p>{dueWeakQuestions.length ? `昨天有 ${dueWeakQuestions.length} 題錯題需要回流，建議先安排 20 分鐘複習。` : remaining.length ? `今天還有 ${remaining.length} 項任務，先從最重要的一項開始。` : "今日任務已完成，安排好休息吧。"}</p>
+					</div>
+					<button onClick={() => void askCoach("請根據今天的學習資料，安排我現在最適合開始的下一步。")} disabled={loading}>{loading ? "安排中…" : "開始學習"}</button>
+				</section>
+
         <section className="coach-card">
-					<div className="card-title"><span>✦</span><div><b>今天的下一步怎麼排？</b><small>教練會綜合倒數、弱科、錯題與已完成內容；不會自動變更你的計畫。</small></div></div>
-					<button className="coach-auto-plan" onClick={() => void askCoach("請根據我今天的真實進度，給我最優先的下一步安排。")} disabled={loading}>依今天資料產出下一步 <span>→</span></button>
+					<div className="card-title"><span>✦</span><div><b>先決定你現在要解決什麼</b><small>教練只會根據你的真實進度給建議，不會自動修改計畫。</small></div></div>
+					<button className="coach-auto-plan" onClick={() => void askCoach("請根據我今天的真實進度，給我最優先的下一步安排。")} disabled={loading}>根據今天進度安排下一步 <span>→</span></button>
           <div className="coach-prompts">
             {prompts.map((prompt) => <button key={prompt} onClick={() => void askCoach(prompt)} disabled={loading}>{prompt}</button>)}
           </div>
           <label className="coach-input-label" htmlFor="coach-question">你的問題</label>
           <textarea id="coach-question" value={message} onChange={(event) => setMessage(event.target.value)} maxLength={500} placeholder="例如：我只剩一小時，要先讀哪一科？" />
-          <button className="feature-cta" onClick={() => void askCoach()} disabled={loading}>{loading ? "軍師正在安排…" : "請軍師給我建議"}<span>›</span></button>
+          <button className="feature-cta" onClick={() => void askCoach()} disabled={loading}>{loading ? "正在整理建議…" : "詢問學習教練"}<span>›</span></button>
         </section>
 
         <section className="coach-today">

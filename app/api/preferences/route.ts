@@ -28,12 +28,15 @@ export async function GET(request: Request) {
     const { db, user } = await resolveUser(idToken);
     const { data, error } = await db
       .from("user_preferences")
-      .select("notifications_enabled, morning_time, evening_time, timezone")
+      .select("notifications_enabled, morning_time, evening_time, timezone, morning_enabled, evening_enabled, weekly_enabled")
       .eq("user_id", user.id)
       .maybeSingle();
     if (error) throw error;
     return Response.json({
       enabled: data?.notifications_enabled ?? true,
+      morningEnabled: data?.morning_enabled ?? true,
+      eveningEnabled: data?.evening_enabled ?? true,
+      weeklyEnabled: data?.weekly_enabled ?? false,
       morningTime: normalizeTime(data?.morning_time, "08:00"),
       eveningTime: normalizeTime(data?.evening_time, "20:30"),
       timezone: data?.timezone ?? "Asia/Taipei",
@@ -48,16 +51,21 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { idToken, enabled, morningTime, eveningTime } =
+    const { idToken, enabled, morningTime, eveningTime, morningEnabled = true, eveningEnabled = true, weeklyEnabled = false } =
       (await request.json()) as {
         idToken?: string;
         enabled?: boolean;
         morningTime?: string;
         eveningTime?: string;
+        morningEnabled?: boolean;
+        eveningEnabled?: boolean;
+        weeklyEnabled?: boolean;
       };
     if (
       !idToken ||
       typeof enabled !== "boolean" ||
+      [morningEnabled, eveningEnabled, weeklyEnabled].some(value => typeof value !== "boolean") ||
+      morningTime?.slice(0, 5) === eveningTime?.slice(0, 5) ||
       !timePattern.test(morningTime ?? "") ||
       !timePattern.test(eveningTime ?? "")
     )
@@ -68,6 +76,9 @@ export async function POST(request: Request) {
       .upsert({
         user_id: user.id,
         notifications_enabled: enabled,
+        morning_enabled: morningEnabled,
+        evening_enabled: eveningEnabled,
+        weekly_enabled: weeklyEnabled,
         morning_time: normalizeTime(morningTime, "08:00"),
         evening_time: normalizeTime(eveningTime, "20:30"),
         timezone: "Asia/Taipei",

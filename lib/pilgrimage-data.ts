@@ -113,6 +113,20 @@ export const pilgrimageStops: PilgrimageStop[] = [
 		highlight: "從海線到山城，七媽齊聚，完成一段難得的信仰記憶。",
 		visitTip: "掃描最後一塊碎片後，回到主頁完成歷史問答，開啟隱藏故事。",
 	},
+	{
+		id: "story_8",
+		name: "關帝廟・台中南天宮",
+		district: "臺中市東區",
+		badge: "南",
+		story: "台中南天宮於民國四十一年建廟，主祀關帝聖君；民國七十三年完成高達一百四十六尺的聖帝大神像，成為臺中東區醒目的城市地標。這一站邀請你從忠義、守信與地方公益的故事，思考學習路上如何把承諾一步步做到。",
+		insight: "歷史碎片 8/8：把忠義化成每天都能做到的小行動。",
+		color: "indigo",
+		address: "臺中市東區自由路三段 309 號",
+		openHours: "建議參拜 06:00–22:00",
+		coordinates: { lat: 24.1437, lng: 120.6853 },
+		highlight: "從宏偉的關帝聖像出發，思考守信如何成為自己的學習力量。",
+		visitTip: "在不妨礙參拜的位置觀察建築尺度，寫下一個今天願意守住的承諾。",
+	},
 ];
 
 export const pilgrimageCodes = pilgrimageStops.map(

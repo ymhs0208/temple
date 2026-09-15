@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import liff from "@line/liff";
+import { UnlockReveal } from "./unlock-reveal";
+import { pilgrimageChapters } from "@/lib/pilgrimage-chapters";
+import "./pilgrimage-redesign.css";
 
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || "2011050459-8bPHPFCw";
 const taipeiDate = (date = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(date);
@@ -14,7 +17,7 @@ const matsus = [
 		district: "臺中州",
 		badge: "萬",
 		story: "萬春宮身為 1917 年七媽會的主辦方之一，見證了這場百年難得一見的宗教盛事。",
-		insight: "歷史碎片 1/7：萬春宮的香火延續至今。",
+		insight: "歷史碎片 1/8：萬春宮的香火延續至今。",
 		color: "rose",
 		address: "臺中市中區成功路 212 號",
 		openHours: "建議參拜 06:00–22:00",
@@ -26,7 +29,7 @@ const matsus = [
 		district: "臺中州",
 		badge: "樂",
 		story: "旱溪媽祖以慈悲庇佑地方，當年也一同駐駕於台中市區，賜福黎民。",
-		insight: "歷史碎片 2/7：收集到旱溪媽的祝福。",
+		insight: "歷史碎片 2/8：收集到旱溪媽的祝福。",
 		color: "vermilion",
 		address: "臺中市東區旱溪街 48 號",
 		openHours: "建議參拜 04:00–22:00",
@@ -38,7 +41,7 @@ const matsus = [
 		district: "嘉義廳",
 		badge: "奉",
 		story: "搭乘火車遠道而來的新港媽，為當年的台中帶來了無比的熱鬧與安定。",
-		insight: "歷史碎片 3/7：感受鐵道與信仰的結合。",
+		insight: "歷史碎片 3/8：感受鐵道與信仰的結合。",
 		color: "gold",
 		address: "嘉義縣新港鄉新民路 53 號",
 		openHours: "建議參拜 04:00–23:00",
@@ -50,7 +53,7 @@ const matsus = [
 		district: "嘉義廳",
 		badge: "朝",
 		story: "北港朝天宮的香火鼎盛，當年參與七媽會更是轟動全台。",
-		insight: "歷史碎片 4/7：重溫百年前的萬人空巷。",
+		insight: "歷史碎片 4/8：重溫百年前的萬人空巷。",
 		color: "jade",
 		address: "雲林縣北港鎮中山路 178 號",
 		openHours: "建議參拜 04:00–23:00",
@@ -62,7 +65,7 @@ const matsus = [
 		district: "臺中州",
 		badge: "南",
 		story: "彰化南瑤宮媽祖也是七媽會的重要貴賓，共同守護中部子民。",
-		insight: "歷史碎片 5/7：信仰跨越了縣市的界線。",
+		insight: "歷史碎片 5/8：信仰跨越了縣市的界線。",
 		color: "violet",
 		address: "彰化縣彰化市南瑤路 43 號",
 		openHours: "建議參拜 04:00–22:00",
@@ -74,7 +77,7 @@ const matsus = [
 		district: "臺中州",
 		badge: "天",
 		story: "鹿港天后宮歷史悠久，當年其陣頭與儀仗為七媽會增添了無數光彩。",
-		insight: "歷史碎片 6/7：傳統陣頭的百年記憶。",
+		insight: "歷史碎片 6/8：傳統陣頭的百年記憶。",
 		color: "blue",
 		address: "彰化縣鹿港鎮中山路 430 號",
 		openHours: "建議參拜 05:00–22:00",
@@ -86,15 +89,27 @@ const matsus = [
 		district: "臺中州",
 		badge: "元",
 		story: "海線的梧棲媽祖也受邀來到山線，促成了山海媽祖齊聚一堂的佳話。",
-		insight: "歷史碎片 7/7：山海會聚的奇蹟。",
+		insight: "歷史碎片 7/8：山海會聚的奇蹟。",
 		color: "cyan",
 		address: "臺中市梧棲區梧棲路 140 號",
 		openHours: "建議參拜 05:00–22:00",
 		coordinates: { lat: 24.2536, lng: 120.5304 },
 	},
+	{
+		id: "story_8",
+		name: "關帝廟・台中南天宮",
+		district: "臺中市東區",
+		badge: "南",
+		story: "台中南天宮主祀關帝聖君，民國七十三年完成高達一百四十六尺的聖帝大神像，成為臺中東區醒目的城市地標。",
+		insight: "歷史碎片 8/8：把忠義化成每天都能做到的小行動。",
+		color: "indigo",
+		address: "臺中市東區自由路三段 309 號",
+		openHours: "建議參拜 06:00–22:00",
+		coordinates: { lat: 24.1437, lng: 120.6853 },
+	},
 ];
 
-// 預先設定好分佈在各地的 7 個實體 QR Code 代碼
+// 預先設定好分佈在各地的 8 個實體 QR Code 代碼
 const validPhysicalQRCodes = [
 	"QR01",
 	"QR02",
@@ -103,6 +118,7 @@ const validPhysicalQRCodes = [
 	"QR05",
 	"QR06",
 	"QR07",
+	"QR08",
 ];
 
 type BarcodeDetectorInstance = {
@@ -202,7 +218,7 @@ export default function Pilgrimage() {
 	};
 	const shareJourney = async () => {
 		const text = isAllCollected
-			? "我已完成「1917 七媽會・台中萬春宮」七站巡禮，收集所有百年歷史碎片！"
+			? "我已完成「1917 七媽會・台中萬春宮」八站巡禮，收集所有文化歷史碎片！"
 			: `我正在進行「1917 七媽會・台中萬春宮」巡禮，已收集 ${unlockedCount}/${matsus.length} 塊歷史碎片。`;
 		try {
 			if (navigator.share) await navigator.share({ title: "1917 七媽會巡禮", text });
@@ -230,7 +246,7 @@ export default function Pilgrimage() {
 	};
 	const shareCertificate = async () => {
 		if (!certificate) return;
-		const text = `${certificate.name} 已完成「1917 七媽會・台中萬春宮」七站巡禮。完成證書：${certificate.number}`;
+		const text = `${certificate.name} 已完成「1917 七媽會・台中萬春宮」八站巡禮。完成證書：${certificate.number}`;
 		try { if (navigator.share) await navigator.share({ title: "1917 七媽會完成證書", text }); else await navigator.clipboard.writeText(text); } catch {}
 	};
 
@@ -337,7 +353,7 @@ export default function Pilgrimage() {
 		const normalized = qrCodeFromValue(code);
 
 		if (!validPhysicalQRCodes.includes(normalized)) {
-			setNotice("這不是本次活動的碎片碼。可使用 QR01 至 QR07 進行測試。");
+			setNotice("這不是本次活動的碎片碼。可使用 QR01 至 QR08 進行測試。");
 			return;
 		}
 
@@ -348,7 +364,7 @@ export default function Pilgrimage() {
 
 		const expectedCode = validPhysicalQRCodes[unlockedCount];
 		if (!expectedCode) {
-			setNotice("七塊碎片都已收集完成，快去完成最終歷史問答吧！");
+			setNotice("八塊碎片都已收集完成，快去完成最終歷史問答吧！");
 			return;
 		}
 		if (normalized !== expectedCode) {
@@ -366,6 +382,7 @@ export default function Pilgrimage() {
 		// ✅ 解鎖成功時，開啟過關知識彈窗
 		setRewardMatsu(newlyUnlockedMatsu);
 		setShowRewardModal(true);
+		setScannerOpen(false);
 
 		const plan = JSON.parse(localStorage.getItem("matsu-1917-mvp") ?? "{}");
 		localStorage.setItem(
@@ -391,7 +408,7 @@ export default function Pilgrimage() {
 	};
 
 	return (
-		<main className="feature-page">
+		<main id="pilgrimage-adventure" className="feature-page">
 			<div className="feature-shell pilgrimage-shell">
 				<button
 					className="back-link"
@@ -400,35 +417,33 @@ export default function Pilgrimage() {
 					← 返回
 				</button>
 
-				<section className="feature-hero temple-hero">
+				<section className="feature-hero temple-hero" aria-label="七媽會文化巡禮">
 					<div className="temple-hero-content">
 						<div className="temple-hero-label"><span>⛩</span> 1917 七媽會・台中萬春宮</div>
-						<p className="temple-hero-eyebrow">百年香火匯聚，從第一站開始尋回記憶</p>
-						<h1>尋找七媽蹤跡，<em>收集百年歷史碎片。</em></h1>
-						<p className="temple-hero-description">掃描活動現場 QR Code，依序解鎖 1917 年七媽會的專屬故事。集滿七塊碎片，即可開啟隱藏劇情。</p>
-						<div className="temple-hero-meta"><span>七座宮廟</span><i /> <span>七段故事</span><i /> <span>一場時空巡禮</span></div>
+						<p className="temple-hero-eyebrow">你的文化探索護照</p>
+					<h1>走進八座宮廟，<br /><em>帶走不一樣的發現。</em></h1>
+						<p className="temple-hero-description">每一站，發現一個地方、解鎖一段故事。依序完成現場掃碼，收集八塊碎片，再挑戰最終問答。</p>
+						<div className="temple-hero-meta"><span>08 座宮廟</span><i /> <span>08 個探索任務</span><i /> <span>01 份完成證書</span></div>
 					</div>
 				</section>
 
 				<section className="ritual-progress pilgrimage-progress-card" aria-label="巡禮進度與參與方式">
 					<div className="ritual-progress-summary">
-						<span>歷史碎片收集進度</span>
+						<span>我的巡禮護照</span>
 						<b>{unlockedCount}<small> / {matsus.length} 塊</small></b>
-						<div><i style={{ width: `${(unlockedCount / matsus.length) * 100}%`, backgroundColor: "#a855f7" }} /></div>
+				<div role="progressbar" aria-label="歷史碎片收集進度" aria-valuemin={0} aria-valuemax={8} aria-valuenow={unlockedCount}><i style={{ width: `${(unlockedCount / matsus.length) * 100}%`, backgroundColor: "#287c64" }} /></div>
 					</div>
-					<div className="pilgrimage-steps" aria-label="巡禮參與方式">
-						<div><span>01</span><b>查看下一站</b><small>依導覽前往指定宮廟</small></div>
-						<div><span>02</span><b>掃描現場 QR Code</b><small>依序解鎖專屬歷史故事</small></div>
-						<div><span>03</span><b>集滿七塊碎片</b><small>完成問答，開啟隱藏劇情</small></div>
-						<button type="button" onClick={() => scanCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>前往掃描</button>
-					</div>
+						<nav className="passport-stamps" aria-label="八站收集護照">
+						{matsus.map((stop, i) => <a key={stop.id} href={`/pilgrimage/${stop.id}`} className={i < unlockedCount ? "collected" : i === unlockedCount ? "current" : ""} aria-label={`第 ${i + 1} 站 ${stop.name}，${i < unlockedCount ? "已收集" : i === unlockedCount ? "下一站" : "待解鎖"}`}><span>{i < unlockedCount ? stop.badge : String(i + 1).padStart(2, "0")}</span><small>{stop.name.split("・")[1]}</small></a>)}
+					</nav>
 				</section>
 
+				<div className="pilgrimage-action-grid">
 				<section className="pilgrimage-guide" aria-labelledby="pilgrimage-guide-title">
 					<div className="pilgrimage-guide-heading">
 						<div>
-							<span>七媽會・實體巡禮地圖</span>
-							<h2 id="pilgrimage-guide-title">沿著七座宮廟，收集百年記憶</h2>
+							<span>01 · 出發前</span>
+							<h2 id="pilgrimage-guide-title">{nextMatsu ? "下一站，往這裡走" : "八站足跡，已收集齊全"}</h2>
 						</div>
 						<button type="button" onClick={requestLocation}>⌖ 顯示距離</button>
 					</div>
@@ -443,36 +458,39 @@ export default function Pilgrimage() {
 								<button type="button" onClick={() => openNavigation(nextMatsu)}>前往導航 ↗</button>
 							</>
 						) : (
-							<div><span>巡禮完成</span><b>七塊歷史碎片已全數收集</b><small>回到任一宮廟，重溫這段百年故事。</small></div>
+							<div><span>巡禮完成</span><b>八塊歷史碎片已全數收集</b><small>回到任一宮廟，重溫這段文化故事。</small></div>
 						)}
 					</div>
 					{locationMessage && <p className="location-message">{locationMessage}</p>}
-					<ol className="pilgrimage-map">
+					<details className="adventure-travel travel-directory">
+						<summary><span className="travel-summary-icon" aria-hidden="true">⌖</span><span className="travel-summary-copy"><b>八站地址與交通資訊</b><small>查看各站位置，開啟地圖規劃路線</small></span><span className="travel-chevron" aria-hidden="true">⌄</span></summary>
+						<div className="travel-directory-intro"><span>依巡禮順序排列 · 共 8 站</span><small>跨縣市旅程，可分次完成</small></div>
+						<ol className="travel-stop-list">
 						{matsus.map((matsu, index) => {
 							const completed = index < unlockedCount;
 							const distance = userLocation ? distanceFrom(userLocation, matsu.coordinates).toFixed(1) : null;
 							return (
 								<li key={matsu.id} className={completed ? "completed" : index === unlockedCount ? "next" : ""}>
-									<div className="map-stop-number">{completed ? "✓" : index + 1}</div>
-									<div className="map-stop-details">
-										<b>{matsu.name}</b>
-										<small>{matsu.address}</small>
-										<span>{matsu.openHours}{distance ? ` · 約 ${distance} 公里` : ""}</span>
+									<div className="travel-stop-number" aria-label={`第 ${index + 1} 站`}>{String(index + 1).padStart(2, "0")}</div>
+									<div className="travel-stop-copy">
+										<div className="travel-stop-title"><b>{matsu.name}</b><span>{completed ? "✓ 已收集" : index === unlockedCount ? "下一站" : "待探索"}</span></div>
+										<p>{matsu.address}</p>
+										<small>{matsu.openHours}</small>
+										{distance && <small className="travel-distance">距目前位置約 {distance} 公里（直線）</small>}
 									</div>
-									<button type="button" aria-label={`導航至${matsu.name}`} onClick={() => openNavigation(matsu)}>導航 ↗</button>
+									<button className="travel-navigate" type="button" aria-label={`開啟地圖導航至${matsu.name}`} onClick={() => openNavigation(matsu)}>地圖導航 <span aria-hidden="true">↗</span></button>
 								</li>
 							);
 						})}
-					</ol>
+					</ol></details>
 					<p className="guide-note">距離為直線估算；實際路線、交通與開放時間請以宮廟公告及導航服務為準。</p>
 				</section>
 
-				{/* ✅ DOM 完全保留原始結構，不加上任何額外標籤或 inline-style 干擾 */}
 				<section className="scan-card" ref={scanCardRef}>
 					<div className="card-title">
 						<span>🔍</span>
 						<div>
-							<b>尋找與掃描</b>
+					<b>{nextMatsu ? "02 · 抵達後，收下碎片" : "八站掃碼已完成"}</b>
 							<small>
 								掃描現場 QR Code；無法開啟相機時，也可手動輸入。
 							</small>
@@ -480,6 +498,7 @@ export default function Pilgrimage() {
 					</div>
 					<div className="code-row">
 						<input
+							aria-label="現場碎片代碼"
 							value={code}
 							onChange={(event) => setCode(event.target.value)}
 							placeholder="例如 QR01"
@@ -578,150 +597,27 @@ export default function Pilgrimage() {
 					)}
 				</section>
 
-				<section
-					className="temple-route"
-					aria-label="碎片地圖"
-					style={{
-						display: "grid",
-						gridTemplateColumns: "repeat(12, 1fr)", // 切成 12 欄網格
-						gap: "8px", // 縮小間距以容納更多方塊
-						marginTop: "24px",
-						marginBottom: "24px",
-					}}
-				>
-					{matsus.map((matsu, index) => {
-						const isStoryUnlocked = index < unlockedCount;
+				</div>
+				<section className="adventure-chapters" aria-labelledby="chapter-list-title">
+                    <header><span className="chapter-eyebrow">YOUR JOURNEY · 八站章節</span><h2 id="chapter-list-title">下一段故事，等你親自發現</h2><p>先看每站的探索主題；現場掃碼後，即可閱讀完整故事並寫下小記。</p></header>
+                    <ol className="adventure-chapter-grid">
+                      {matsus.map((matsu, index) => {
+                        const chapter = pilgrimageChapters[index];
+                        const unlocked = index < unlockedCount;
+                        const next = index === unlockedCount;
+                        return <li key={matsu.id} className={unlocked ? "is-collected" : next ? "is-next" : ""}>
+                          <div className="chapter-card-top"><span className="chapter-stamp" aria-hidden="true">{chapter.icon}</span><span className="chapter-state">{unlocked ? "✓ 碎片已收集" : next ? "下一站 · 等你探索" : "故事待解鎖"}</span></div>
+                          <small>CHAPTER {String(index + 1).padStart(2, "0")} · {chapter.theme}</small>
+                          <h3>{chapter.title}</h3><b>{matsu.name}</b><p>{chapter.prompt}</p>
+                          <a href={`/pilgrimage/${matsu.id}`}>{unlocked ? "閱讀故事與探索小記" : "查看本關任務"} <span aria-hidden="true">→</span></a>
+                        </li>;
+                      })}
+                    </ol>
+                    <aside className="adventure-finale"><span aria-hidden="true">✦</span><div><h3>終章 · 拼起你的巡禮記憶</h3><p>集滿八塊碎片後，完成歷史問答，領取並分享你的巡禮證書。</p><small>{isAllCollected ? "八塊碎片已集滿，請在下方開始最終問答。" : `再收集 ${8 - unlockedCount} 塊碎片，就能開啟終章。`}</small></div></aside>
+                </section>
 
-						// 🌟 核心排版邏輯：前 3 個佔 4 欄 (上排)，後 4 個佔 3 欄 (下排)
-						const gridColumnSpan = index < 3 ? "span 4" : "span 3";
-
-						// 活潑可愛的 Q 版專屬配色
-						const bgColors = [
-							"#ffe4e6",
-							"#ffedd5",
-							"#fef9c3",
-							"#e0e7ff",
-							"#e0f2fe",
-							"#ede9fe",
-							"#fae8ff",
-						];
-						const textColors = [
-							"#be123c",
-							"#c2410c",
-							"#a16207",
-							"#3b82f6",
-							"#0369a1",
-							"#6d28d9",
-							"#a21caf",
-						];
-
-						return (
-							<button
-								key={matsu.id}
-								onClick={() =>
-									isStoryUnlocked &&
-									(location.href = `/pilgrimage/${matsu.id}`)
-								}
-								disabled={!isStoryUnlocked}
-								style={{
-									gridColumn: gridColumnSpan,
-									display: "flex",
-									flexDirection: "column",
-									alignItems: "center",
-									justifyContent: "center",
-									padding: "10px 4px", // 縮小左右內距
-									backgroundColor: isStoryUnlocked
-										? bgColors[index]
-										: "#f3f4f6",
-									border: `2px solid ${isStoryUnlocked ? bgColors[index] : "#e5e7eb"}`,
-									borderRadius: "16px", // 縮小一點圓角比例
-									opacity: isStoryUnlocked ? 1 : 0.7,
-									cursor: isStoryUnlocked
-										? "pointer"
-										: "not-allowed",
-									boxShadow:
-										selectedMatsuId === matsu.id
-											? "inset 0 4px 6px rgba(0,0,0,0.1)"
-											: "0 2px 4px rgba(0,0,0,0.05)",
-									transform:
-										selectedMatsuId === matsu.id
-											? "scale(0.94)"
-											: "scale(1)",
-									transition: "all 0.2s ease",
-								}}
-							>
-								<span
-									style={{
-										display: "flex",
-										alignItems: "center",
-										justifyContent: "center",
-										width: "36px", // 縮小圓形徽章
-										height: "36px",
-										borderRadius: "50%",
-										backgroundColor: isStoryUnlocked
-											? "#ffffff"
-											: "#d1d5db",
-										color: isStoryUnlocked
-											? textColors[index]
-											: "#9ca3af",
-										fontSize: "1.1rem",
-										fontWeight: "bold",
-										marginBottom: "6px",
-										boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-									}}
-								>
-									{isStoryUnlocked ? matsu.badge : "?"}
-								</span>
-								<div
-									style={{
-										textAlign: "center",
-										width: "100%",
-									}}
-								>
-									<small
-										style={{
-											display: "block",
-											color: isStoryUnlocked
-												? textColors[index]
-												: "#6b7280",
-											marginBottom: "2px",
-											fontSize: "0.65rem",
-											fontWeight: "bold",
-										}}
-									>
-										碎片 {index + 1}
-									</small>
-									<b
-										style={{
-											color: isStoryUnlocked
-												? textColors[index]
-												: "#9ca3af",
-											fontSize: "0.75rem", // 縮小字體以適應一行 4 個
-											lineHeight: "1.3",
-											display: "block",
-										}}
-									>
-										{/* 將「台中媽・萬春宮」自動斷行，保持排版整齊 */}
-										{isStoryUnlocked ? (
-											<>
-												{matsu.name.split("・")[0]}
-												<br />
-												{matsu.name.split("・")[1]}
-											</>
-										) : (
-											<>
-												尚待
-												<br />
-												尋找
-											</>
-										)}
-									</b>
-								</div>
-							</button>
-						);
-					})}
-				</section>
-
+				<details className="pilgrimage-memory">
+					<summary>回看最近收集的故事</summary>
 				<section
 					className={`culture-card temple-story ${selectedMatsu.color}`}
 				>
@@ -755,6 +651,7 @@ export default function Pilgrimage() {
 					</div>
 				</section>
 
+				</details>
 				{isAllCollected && (
 					<section
 						className="badge-card"
@@ -776,7 +673,7 @@ export default function Pilgrimage() {
 										marginBottom: "8px",
 									}}
 								>
-									✨ 恭喜集滿七塊歷史碎片！
+									✨ 恭喜集滿八塊歷史碎片！
 								</h2>
 								<p
 									style={{
@@ -928,7 +825,7 @@ export default function Pilgrimage() {
 								>
 									🎉 解鎖隱藏故事！
 								</h2>
-								{certificate && <section className="pilgrimage-certificate" aria-label="1917 七媽會完成證書"><span>1917 七媽會・台中萬春宮</span><h3>巡禮完成證書</h3><p>茲證明</p><b>{certificate.name}</b><p>已完成七站歷史碎片巡禮，並通過最終問答。</p><small>發證日期　{new Intl.DateTimeFormat("zh-TW", { dateStyle: "long", timeZone: "Asia/Taipei" }).format(new Date(certificate.issuedAt))}</small><i>完成序號　{certificate.number}</i><div><button onClick={shareCertificate}>分享證書 ↗</button><button onClick={() => window.print()}>保存為 PDF</button></div></section>}
+								{certificate && <section className="pilgrimage-certificate" aria-label="1917 七媽會完成證書"><span>1917 七媽會・台中萬春宮</span><h3>巡禮完成證書</h3><p>茲證明</p><b>{certificate.name}</b><p>已完成八站歷史碎片巡禮，並通過最終問答。</p><small>發證日期　{new Intl.DateTimeFormat("zh-TW", { dateStyle: "long", timeZone: "Asia/Taipei" }).format(new Date(certificate.issuedAt))}</small><i>完成序號　{certificate.number}</i><div><button onClick={shareCertificate}>分享證書 ↗</button><button onClick={() => window.print()}>保存為 PDF</button></div></section>}
 
 								{/* 🌟 放入你生成的精美圖片 */}
 								<img
@@ -960,122 +857,13 @@ export default function Pilgrimage() {
 						)}
 					</section>
 				)}
-				{showCertificate && certificate && <div className="certificate-backdrop" role="presentation" onMouseDown={() => setShowCertificate(false)}><section className="certificate-dialog" role="dialog" aria-modal="true" aria-label="巡禮完成證書" onMouseDown={(event) => event.stopPropagation()}><button className="quiz-close" aria-label="關閉完成證書" onClick={() => setShowCertificate(false)}>×</button><h2>🎉 解鎖隱藏故事！</h2><section className="pilgrimage-certificate" aria-label="1917 七媽會完成證書"><span>1917 七媽會・台中萬春宮</span><h3>巡禮完成證書</h3><p>茲證明</p><b>{certificate.name}</b><p>已完成七站歷史碎片巡禮，並通過最終問答。</p><small>發證日期　{new Intl.DateTimeFormat("zh-TW", { dateStyle: "long", timeZone: "Asia/Taipei" }).format(new Date(certificate.issuedAt))}</small><i>完成序號　{certificate.number}</i><div><button onClick={shareCertificate}>分享證書 ↗</button><button onClick={() => window.print()}>保存為 PDF</button></div></section></section></div>}
+				{showCertificate && certificate && <div className="certificate-backdrop" role="presentation" onMouseDown={() => setShowCertificate(false)}><section className="certificate-dialog" role="dialog" aria-modal="true" aria-label="巡禮完成證書" onMouseDown={(event) => event.stopPropagation()}><button className="quiz-close" aria-label="關閉完成證書" onClick={() => setShowCertificate(false)}>×</button><h2>🎉 解鎖隱藏故事！</h2><section className="pilgrimage-certificate" aria-label="1917 七媽會完成證書"><span>1917 七媽會・台中萬春宮</span><h3>巡禮完成證書</h3><p>茲證明</p><b>{certificate.name}</b><p>已完成八站歷史碎片巡禮，並通過最終問答。</p><small>發證日期　{new Intl.DateTimeFormat("zh-TW", { dateStyle: "long", timeZone: "Asia/Taipei" }).format(new Date(certificate.issuedAt))}</small><i>完成序號　{certificate.number}</i><div><button onClick={shareCertificate}>分享證書 ↗</button><button onClick={() => window.print()}>保存為 PDF</button></div></section></section></div>}
 
 				<p className="feature-note">
-					展示用代碼：QR01 ～ QR07。請依序輸入，才能體驗完整的巡禮解鎖流程。
+					展示用代碼：QR01 ～ QR08。請依序輸入，才能體驗完整的巡禮解鎖流程。
 				</p>
 
-				{/* ✅ 絕對安全的彈出視窗：放在最底層且脫離文件流，絕不干擾 Grid 或 Flex */}
-				{showRewardModal && rewardMatsu && (
-					<div
-						style={{
-							position: "fixed",
-							top: 0,
-							left: 0,
-							right: 0,
-							bottom: 0,
-							backgroundColor: "rgba(0,0,0,0.5)",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-							zIndex: 9999,
-							padding: "20px",
-						}}
-					>
-						<div
-							style={{
-								backgroundColor: "#fff",
-								padding: "24px",
-								borderRadius: "24px",
-								width: "100%",
-								maxWidth: "340px",
-								textAlign: "center",
-								border: "4px solid #fde68a",
-								boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-							}}
-						>
-							<h2
-								style={{
-									fontSize: "1.4rem",
-									fontWeight: "bold",
-									color: "#b45309",
-									marginBottom: "16px",
-								}}
-							>
-								✨ 恭喜解鎖！
-							</h2>
-							<div
-								style={{
-									fontSize: "2.5rem",
-									width: "72px",
-									height: "72px",
-									lineHeight: "72px",
-									margin: "0 auto 12px",
-									backgroundColor: "#fef3c7",
-									borderRadius: "50%",
-									color: "#d97706",
-									border: "2px solid #fde68a",
-								}}
-							>
-								{rewardMatsu.badge}
-							</div>
-							<h3
-								style={{
-									fontSize: "1.25rem",
-									fontWeight: "bold",
-									color: "#374151",
-									marginBottom: "12px",
-								}}
-							>
-								{rewardMatsu.name}
-							</h3>
-
-							<div
-								style={{
-									backgroundColor: "#e0f2fe",
-									padding: "16px",
-									borderRadius: "16px",
-									color: "#1e3a8a",
-									marginBottom: "24px",
-									fontSize: "0.95rem",
-									textAlign: "left",
-									lineHeight: "1.6",
-								}}
-							>
-								<b
-									style={{
-										display: "block",
-										marginBottom: "6px",
-									}}
-								>
-									💡 歷史碎片：
-								</b>
-								{rewardMatsu.story}
-							</div>
-
-							<button
-								onClick={() => (location.href = `/pilgrimage/${rewardMatsu.id}`)}
-								style={{
-									backgroundColor: "#f59e0b",
-									color: "white",
-									padding: "12px 32px",
-									borderRadius: "999px",
-									fontWeight: "bold",
-									border: "none",
-									fontSize: "1rem",
-									cursor: "pointer",
-									width: "100%",
-									boxShadow:
-										"0 4px 6px rgba(245, 158, 11, 0.25)",
-								}}
-							>
-								閱讀完整故事
-							</button>
-							<button onClick={() => setShowRewardModal(false)} style={{ marginTop: "10px", border: "none", background: "transparent", color: "#8a7756", fontSize: "0.9rem", cursor: "pointer" }}>稍後再看</button>
-						</div>
-					</div>
-				)}
+				{showRewardModal && rewardMatsu && <UnlockReveal stopId={rewardMatsu.id} collected={unlockedCount} onDismiss={() => setShowRewardModal(false)} />}
 			</div>
 		</main>
 	);
