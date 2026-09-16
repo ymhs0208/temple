@@ -1,0 +1,33 @@
+.statistics-page .statistics-charts { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); gap: 18px; }
+.statistics-page .statistics-loading { display: grid; gap: 14px; padding: 24px; border: 1px solid #dbe4ed; border-radius: 18px; background: #fff; }
+.statistics-page .statistics-loading i { display: block; height: 70px; border-radius: 12px; background: linear-gradient(100deg,#f0f3f7 30%,#fafcff 45%,#f0f3f7 60%); background-size: 300% 100%; animation: statistics-skeleton 1.3s ease-in-out infinite; }
+.statistics-page .statistics-error { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; padding: 16px 18px; border: 1px solid #e6caca; border-radius: 14px; background: #fff7f7; color: #744949; }
+.statistics-page .statistics-error b { font-size: 14px; }
+.statistics-page .statistics-error span { flex: 1; min-width: 200px; font-size: 13px; }
+.statistics-page .statistics-error button { min-height: 40px; padding: 8px 13px; border: 1px solid #c98f8f; border-radius: 9px; background: #fff; color: #8b4e4e; }
+@keyframes statistics-skeleton { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.statistics-page .statistics-chart-card { min-width: 0; padding: 22px; border: 1px solid #dbe4ed; border-radius: 18px; background: #fff; }
+.statistics-page .statistics-chart-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.statistics-page .statistics-chart-card header span { color: #63778c; font-size: 13px; }
+.statistics-page .statistics-chart-card h2 { margin: 5px 0 0; color: #294762; font-size: 19px; }
+.statistics-page .statistics-chart-card header > b { color: #3267b6; font-size: 16px; white-space: nowrap; }
+.statistics-page .statistics-bars { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: end; gap: 10px; height: 190px; margin-top: 20px; padding: 0 4px; border-bottom: 1px solid #dce6ef; }
+.statistics-page .statistics-bar-item { display: flex; flex-direction: column; align-items: center; justify-content: end; min-width: 0; height: 100%; gap: 5px; }
+.statistics-page .statistics-bar-item em { min-height: 17px; color: #3267b6; font-size: 11px; font-style: normal; }
+.statistics-page .statistics-bar-track { display: flex; align-items: end; width: 100%; height: 135px; }
+.statistics-page .statistics-bar-track i { display: block; width: 100%; min-height: 2px; border-radius: 7px 7px 2px 2px; background: linear-gradient(180deg, #6ea5d7, #3267b6); }
+.statistics-page .statistics-bar-item small { color: #657b90; font-size: 12px; }
+.statistics-page .chart-caption { margin: 14px 0 0; color: #6a7e91; font-size: 13px; line-height: 1.6; }
+.statistics-page .subject-chart-body { display: flex; align-items: center; gap: 22px; margin-top: 25px; }
+.statistics-page .subject-donut { display: grid; flex: 0 0 142px; width: 142px; height: 142px; place-items: center; border-radius: 50%; }
+.statistics-page .subject-donut::before { content: ""; position: absolute; width: 94px; height: 94px; border-radius: 50%; background: #fff; }
+.statistics-page .subject-donut { position: relative; }
+.statistics-page .subject-donut strong { position: relative; z-index: 1; color: #294762; font-size: 25px; text-align: center; }
+.statistics-page .subject-donut strong small { display: block; color: #718399; font-size: 11px; font-weight: 500; }
+.statistics-page .subject-chart-body ul { display: grid; flex: 1; gap: 12px; min-width: 0; padding: 0; margin: 0; list-style: none; }
+.statistics-page .subject-chart-body li { display: grid; grid-template-columns: 10px minmax(0,1fr) auto; align-items: center; gap: 8px; color: #52687e; font-size: 13px; }
+.statistics-page .subject-chart-body li i { width: 10px; height: 10px; border-radius: 3px; }
+.statistics-page .subject-chart-body li b { color: #294762; font-size: 13px; }
+.statistics-page .subject-chart-body .empty-chart-note { display: block; line-height: 1.7; }
+@media (max-width: 800px) { .statistics-page .statistics-charts { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .statistics-page .statistics-chart-card { padding: 18px; } .statistics-page .statistics-bars { gap: 5px; height: 165px; } .statistics-page .subject-chart-body { align-items: flex-start; flex-direction: column; } .statistics-page .subject-donut { align-self: center; } }

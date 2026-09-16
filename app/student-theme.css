@@ -1,0 +1,158 @@
+/* Shared student theme: friendly colour, readable text and flat controls. */
+.app-shell > .prayer-workspace {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px;
+  width: min(100%, 1120px); max-width: 1120px; padding: 24px 16px 36px;
+  margin: 0 auto; align-items: start;
+}
+.prayer-workspace > .prayer-intro { grid-column: 1 / -1; padding: 24px; border-radius: 22px; background: #eaf2ff; }
+.prayer-workspace .prayer-intro h1 { margin: 8px 0; font-size: clamp(28px, 4vw, 40px); }
+.prayer-intro > p:last-of-type { color: #4b627d; font-size: 14px; line-height: 1.7; }
+.prayer-workspace .prayer-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(4px, 1.5vw, 10px); margin-top: 20px; width: 100%; max-width: 480px; }
+.prayer-shortcuts a { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 0; min-height: 44px; padding: 10px clamp(2px, 1vw, 16px); border: 1px solid #c8d9ef; border-radius: 12px; color: #285791; background: white; font-size: clamp(12px, 3vw, 14px); font-weight: 700; white-space: nowrap; text-decoration: none; }
+.prayer-shortcuts a:hover { background: #f4f8ff; }
+.app-shell > .prayer-workspace > :is(.daily-fortune-task,.cultural-reward-card,.oracle-card,.wish-card,.empty-panel) {
+  width: 100%; min-width: 0; max-width: none; margin: 0; padding: clamp(18px, 2.5vw, 28px);
+  border: 1px solid #dce5ef; border-radius: 20px; background: #fff; box-shadow: none;
+  scroll-margin-top: 24px;
+}
+.prayer-workspace :is(.daily-fortune-task-heading,.oracle-heading,.wish-card-heading,.checkin-milestones-heading,.cultural-reward-heading) { flex-wrap: wrap; gap: 12px; }
+.prayer-workspace :is(.daily-fortune-task-heading,.oracle-heading,.wish-card-heading) b { font-size: 20px; line-height: 1.4; color: #293c52; }
+.prayer-workspace p { line-height: 1.75; }
+.prayer-workspace :is(small,.daily-fortune-note,.cultural-reward-note,.daily-fortune-feedback,.prayer-empty) { font-size: 12px; line-height: 1.7; color: #526479; }
+.prayer-workspace .daily-fortune-verse { font-size: 15px; background: #edf7f1; padding: 14px; border-radius: 12px; color: #34654c; }
+.prayer-workspace .daily-classic { background: #f5f8fc; padding: 16px; border-radius: 12px; }
+.prayer-workspace .daily-classic strong { font-size: 17px; line-height: 1.8; }
+.prayer-workspace .checkin-milestones ol, .prayer-workspace .cultural-scene-path { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.prayer-workspace .checkin-milestones li, .prayer-workspace .cultural-scene-path li { min-width: 0; padding: 12px; background: #f5f8fc; border-radius: 12px; }
+.prayer-workspace .cultural-proof { gap: 8px; }
+.prayer-workspace .cultural-proof > div { padding: 12px 6px; background: #edf7f1; }
+.prayer-workspace .cultural-proof b { font-size: 24px; }
+.prayer-workspace .oracle-exchange { gap: 18px; }
+.prayer-workspace .oracle-exchange p { font-size: 14px; }
+.prayer-workspace .wish-composer { display: flex; flex-wrap: wrap; gap: 10px; }
+.prayer-workspace .wish-composer input { flex: 1 1 180px; width: auto; min-width: 0; min-height: 48px; font-size: 16px; background: #f5f8fc; border: 1px solid #cbd9e8; border-radius: 12px; padding: 12px; }
+.prayer-workspace button { min-height: 44px; font-size: 14px; }
+.prayer-workspace :is(.daily-fortune-task > button,.wish-composer button,.oracle-exchange button) { background: #3267ba; color: white; border: 0; border-radius: 12px; padding: 12px 16px; box-shadow: none; }
+.prayer-workspace button:disabled { background: #edf1f5; color: #59697a; cursor: default; }
+.prayer-workspace .ema-board { grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); }
+.prayer-workspace .ema-plaque { background: #fff4d8; border: 1px solid #ead6a7; box-shadow: none; animation: none; }
+.prayer-workspace .ema-plaque p { overflow-wrap: anywhere; font-size: 14px; }
+.prayer-workspace .empty-panel { text-align: left; }
+.prayer-workspace .empty-panel p { font-size: 14px; }
+@media (min-width: 800px) {
+  .app-shell > .prayer-workspace { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 28px 24px 48px; }
+  .prayer-workspace > .empty-panel { grid-column: 1 / -1; }
+}
+@media (max-width: 420px) {
+  .prayer-workspace .checkin-milestones ol, .prayer-workspace .cultural-scene-path { grid-template-columns: 1fr; }
+  .prayer-workspace .oracle-exchange { flex-direction: column; align-items: stretch; }
+  .prayer-workspace .oracle-tube { align-self: center; }
+}
+:root { --ink: #293c52; --muted: #5c6b7b; --temple-red: #3267ba; --gold: #a66c13; --paper: #fffdf7; }
+body, main:has(.app-shell), .feature-page, .statistics-main {
+  background: #f5f8fc !important;
+  color: #293c52;
+}
+.app-shell {
+  background: #f5f8fc !important;
+  box-shadow: none !important;
+}
+.incense-smoke-wrapper { display: none; }
+.app-shell > .topbar {
+  background: #e8f2ff !important;
+  border: 0 !important;
+  border-bottom: 1px solid #ccdff4 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.app-shell > .topbar .brand-copy strong { color: #264b7b; }
+.app-shell > .topbar .brand-copy small { color: #526980; font-size: 11px; letter-spacing: .02em; }
+.app-shell > .topbar .brand-mark { background: #3267ba; color: white; box-shadow: none; }
+.app-shell > .topbar .account-capsule { color: #264b7b; background: white; border-color: #bed2ea; }
+.app-shell > .hero {
+  background: #fffdf7 !important;
+  border: 1px solid #e7dfc9;
+  border-radius: 24px;
+  box-shadow: none !important;
+  min-height: 0;
+  padding: clamp(22px, 4vw, 38px);
+  margin-top: 20px;
+}
+.hero h1, .journey h1, .feature-hero h1, .badge-hero h1 { color: #293c52; font-weight: 750; letter-spacing: -.025em; }
+.hero .eyebrow { color: #34674f; font-size: 13px; letter-spacing: .04em; }
+.hero .countdown { color: #536479; }
+.hero-orb { display: none; }
+.app-shell > .hero > .exam-mode-card { background: #fff2cc; border: 1px solid #ebd28f; box-shadow: none; }
+.exam-mode-card > p, .exam-mode-footer > span { color: #695522; font-size: 12px; line-height: 1.7; }
+.app-shell > .today-command-card { background: #eaf5ef; border-color: #bed9cb; box-shadow: none; }
+.today-command-card span { color: #36614c; font-size: 12px; }
+.today-command-card b { white-space: normal; line-height: 1.55; }
+.today-command-card small { color: #4c685b; font-size: 12px; }
+.app-shell > .today-command-card button, .feature-cta { background: #3267ba; color: white; box-shadow: none; min-height: 48px; }
+.app-shell > .today-command-card button:hover, .feature-cta:hover { background: #25549d; }
+.app-shell:has(.today-task-list) .progress-card { background: #fff !important; box-shadow: none !important; border-color: #dbe4ed !important; }
+.app-shell:has(.today-task-list) .progress-track span { background: #4a9473; }
+.app-shell:has(.today-task-list) .task-overview > span { background: #f2f6fb; border: 0; color: #506279; font-size: 13px; }
+.app-shell:has(.today-task-list) .today-task-list .task,
+.app-shell:has(.today-task-list) .today-task-list .task:hover { background: #fff !important; border-color: #dbe4ed !important; box-shadow: none !important; transform: none !important; }
+.app-shell:has(.today-task-list) .task-copy b { font-size: 16px; color: #293c52; }
+.app-shell:has(.today-task-list) .task-copy small:not(.task-status) { font-size: 13px; color: #526479; white-space: normal; line-height: 1.6; }
+.app-shell:has(.today-task-list) .task-copy .task-status { font-size: 12px !important; color: #526479; }
+.app-shell:has(.today-task-list) .task-focus { background: #edf4ff; border-color: #c6d9f0; color: #2c5891; min-height: 44px; }
+.app-shell:has(.today-task-list) .task-focus:disabled { background: #f1f4f5; color: #606e77; }
+.app-shell:has(.today-task-list) .task .task-adjust { width: 30px; min-height: 44px; background: #fff; border-color: #dbe4ed; color: #526479; }
+.quick-actions { background: #fff; border-color: #dbe4ed; box-shadow: none; }
+.quick-title b { color: #293c52; }
+.quick-title small { color: #526479; font-size: 12px; }
+.quick-grid button { box-shadow: none !important; }
+.quick-grid button:nth-child(3n + 1) { background: #edf4ff !important; border-color: #d4e3f6; }
+.quick-grid button:nth-child(3n + 2) { background: #edf7f1 !important; border-color: #d2e7da; }
+.quick-grid button:nth-child(3n) { background: #fff6df !important; border-color: #ebdfbc; }
+.quick-grid small { font-size: 12px !important; color: #526479; }
+.quick-grid b { font-size: 14px !important; }
+.app-shell > nav.primary-nav { background: #fff !important; border-color: #d2dfed; }
+.app-shell > nav.primary-nav button.active { background: #e5efff !important; color: #285ba6 !important; box-shadow: none !important; }
+.app-shell > nav.primary-nav button span { font-size: 12px; }
+.journey em, .feature-hero h1 em { color: #3267ba; }
+.journey-summary > div, .achievement-metrics > div { background: #edf4ff; border-color: #d4e3f6; }
+.feature-hero p, .badge-hero > p:last-child { font-size: 14px; line-height: 1.75; }
+.form-card, .plan-preview, .coach-card, .wall-compose { box-shadow: none; border-color: #dbe4ed; }
+:where(button, a, summary, input, select, textarea):focus-visible { outline: 3px solid #3267ba; outline-offset: 3px; }
+@media (min-width: 1100px) {
+  .app-shell > .progress-card .today-task-list[open] .tasks { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .app-shell > .today-command-card { flex-direction: column; align-items: stretch; }
+  .app-shell > .today-command-card button { width: 100%; }
+  .quick-title { flex-wrap: wrap; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quick-grid button, .task, .today-command-card button { transition: none; }
+}
+
+/* 全站基礎設計規範：功能頁可保留自己的主題色，但共用同一套尺寸與表面語言。 */
+:root {
+  --ui-font: Arial, "Noto Sans TC", "PingFang TC", sans-serif;
+  --ui-ink: #293c52;
+  --ui-muted: #60758a;
+  --ui-border: #dbe4ed;
+  --ui-primary: #3267b6;
+  --ui-success: #408163;
+  --ui-warning: #b47b16;
+  --ui-radius-card: 18px;
+  --ui-radius-control: 11px;
+}
+body, button, input, select, textarea { font-family: var(--ui-font); }
+body :is(h1, h2, h3, h4, p, small, span, label, button, a) { font-style: normal; }
+body :is(h1, h2, h3, h4) { color: var(--ui-ink); line-height: 1.45; }
+body :is(.feature-shell > :is(.form-card, .plan-preview, .coach-card, .coach-evidence, .coach-today, .wall-compose, .daily-feature, .weekly-report), .progress-card, .journey-summary, .learning-calendar, .statistics-chart-card, .statistics-hero, .weekly-report, .collection-overview, .collection-card) {
+  border-color: var(--ui-border);
+  border-radius: var(--ui-radius-card);
+  box-shadow: none;
+}
+body :is(button, input, select, textarea) { border-radius: var(--ui-radius-control); }
+body :is(button, .feature-cta) { min-height: 44px; }
+body :is(.task-status, .completion, .chapter-state) { border-radius: 999px; }
+body :is(.task-status.is-done, .status-success, .is-complete) { color: var(--ui-success); }
+body :is(.task-status.is-pending, .status-pending) { color: var(--ui-muted); }
+body :is(.task-status.is-skipped, .status-skipped) { color: #7a7f86; }

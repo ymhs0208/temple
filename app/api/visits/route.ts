@@ -1,0 +1,11 @@
+import { verifyLineIdToken } from "@/lib/line";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+
+async function userForToken(idToken?: string) {
+  if (!idToken) throw new Error("Missing identity");
+  const identity = await verifyLineIdToken(idToken); const db = supabaseAdmin();
+  const { data: user, error } = await db.from("users").upsert({ line_user_id: identity.userId, display_name: identity.displayName }, { onConflict: "line_user_id" }).select("id").single();
+  if (error || !user) throw error ?? new Error("User unavailable"); return { db, userId: user.id };
+}
+export async function GET(request: Request) { try { const idToken = request.headers.get("x-line-id-token") ?? undefined; const { db, userId } = await userForToken(idToken); const { data, error } = await db.from("temple_visits").select("temple_code").eq("user_id", userId).order("visited_at"); if (error) throw error; const { data: companion } = await db.from("user_companion_states").select("pilgrimage_state").eq("user_id", userId).maybeSingle(); return Response.json({ visits: data.map(row => row.temple_code), pilgrimageState: companion?.pilgrimage_state ?? {} }); } catch { return Response.json({ error: "Temple visits unavailable" }, { status: 500 }); } }
+export async function POST(request: Request) { try { const { idToken, code, pilgrimageState } = await request.json() as { idToken?: string; code?: string; pilgrimageState?: unknown }; const { db, userId } = await userForToken(idToken); if (pilgrimageState && typeof pilgrimageState === "object") { const { error } = await db.from("user_companion_states").upsert({ user_id: userId, pilgrimage_state: pilgrimageState, updated_at: new Date().toISOString() }, { onConflict: "user_id" }); if (error) throw error; } if (code) { const templeCode = code.trim().toUpperCase(); if (templeCode.length < 4) return Response.json({ error: "Invalid code" }, { status: 400 }); const { error } = await db.from("temple_visits").upsert({ user_id: userId, temple_code: templeCode }, { onConflict: "user_id,temple_code", ignoreDuplicates: true }); if (error) throw error; } return Response.json({ ok: true }); } catch { return Response.json({ error: "Temple visits unavailable" }, { status: 500 }); } }

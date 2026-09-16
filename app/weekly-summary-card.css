@@ -1,0 +1,32 @@
+#account-settings .weekly-summary-panel { padding:clamp(20px,3vw,30px); border:1px solid #d8e4dc; border-radius:20px; background:#fff; min-width:0; grid-column:1/-1; }
+#account-settings .weekly-summary-panel header > span { font-size:13px; color:#54735f; }
+#account-settings .weekly-summary-panel h2 { margin:8px 0; font-size:24px; }
+#account-settings .weekly-summary-panel p { font-size:14px; line-height:1.8; margin:12px 0; }
+#account-settings .weekly-summary-panel fieldset { border:0; padding:0; margin:24px 0 12px; min-width:0; }
+#account-settings .weekly-summary-panel legend { margin-bottom:12px; font-size:15px; font-weight:700; }
+#account-settings .weekly-version-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+#account-settings .weekly-version-options label { display:flex; gap:10px; align-items:center; padding:16px 12px; border:1px solid #dce4dd; border-radius:12px; cursor:pointer; min-width:0; }
+#account-settings .weekly-version-options label.selected { background:#edf6ef; border-color:#3b8059; }
+#account-settings .weekly-version-options input { width:18px; height:18px; flex-shrink:0; accent-color:#34744f; }
+#account-settings .weekly-version-options span { display:grid; gap:6px; min-width:0; }
+#account-settings .weekly-version-options b { font-size:15px; }
+#account-settings .weekly-version-options small { font-size:12px; line-height:1.6; color:#5f7166; }
+#account-settings .weekly-role-actions { margin-top:16px !important; padding:14px !important; border:1px solid #dbe7df !important; border-radius:12px; background:#f8fbf8; }
+#account-settings .weekly-role-actions > div { display:flex; flex-wrap:wrap; gap:10px; }
+#account-settings .weekly-role-actions label { display:flex; align-items:center; gap:8px; min-height:40px; padding:8px 12px; border:1px solid #cfe0d3; border-radius:9px; background:#fff; cursor:pointer; }
+#account-settings .weekly-role-actions input { accent-color:#34744f; }
+#account-settings .weekly-summary-panel button { min-height:48px; padding:12px 18px; border-radius:12px; font-size:15px; font-weight:700; width:100%; cursor:pointer; }
+#account-settings .weekly-preview-button { background:#f0f6f2; border:1px solid #c0d7c7; color:#316a49; }
+#account-settings .weekly-confirm-button { background:#2f7350; border:0; color:white; margin-top:16px; }
+#account-settings .weekly-summary-panel button:disabled { opacity:.6; cursor:default; }
+#account-settings .weekly-real-preview { margin-top:20px; padding:22px; border:1px solid #dbe2da; border-radius:16px; background:#fafcf9; }
+#account-settings .weekly-real-preview h3 { font-size:20px; margin:8px 0 16px; }
+#account-settings .weekly-real-preview dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+#account-settings .weekly-real-preview dt { font-size:13px; color:#617466; }
+#account-settings .weekly-real-preview dd { margin:6px 0 0; font-size:28px; color:#315c40; font-weight:750; }
+#account-settings .weekly-real-preview small, #account-settings .weekly-hint { font-size:12px; line-height:1.8; color:#617466; }
+#account-settings .weekly-real-preview ul { padding-left:20px; font-size:14px; line-height:1.9; }
+#account-settings .weekly-privacy { padding:12px 14px; border-radius:10px; background:#f6f7fa; color:#526576; }
+#account-settings .weekly-status { color:#365f48; overflow-wrap:anywhere; }
+#account-settings .weekly-summary-panel :is(button,input):focus-visible { outline:3px solid #6d91c2; outline-offset:3px; }
+@media(max-width:600px) { #account-settings .weekly-version-options { grid-template-columns:1fr; } #account-settings .weekly-real-preview { padding:18px; } }

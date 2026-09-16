@@ -1,0 +1,1025 @@
+/* Site-wide layout contract, loaded after legacy component styles. */
+#today-todos {
+    padding: clamp(20px, 3vw, 32px) !important;
+    background: #fff !important;
+    border: 1px solid #dbe4ed !important;
+    border-radius: 20px !important;
+    box-shadow: none !important;
+}
+#today-todos .section-heading {
+    align-items: center;
+    gap: 16px;
+}
+#today-todos .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #56718a;
+}
+#today-todos h2 {
+    font-size: 28px !important;
+    color: #263d53;
+}
+#today-todos .todo-instruction {
+    margin: 6px 0 0;
+    color: #526479;
+    font-size: 13px;
+    line-height: 1.6;
+}
+#today-todos .completion {
+    background: #eaf5ef;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px !important;
+    font-size: 13px;
+    color: #30664d;
+}
+#today-todos .progress-track {
+    height: 5px !important;
+    margin: 22px 0 12px !important;
+}
+#today-todos .progress-track span {
+    background: #498f71;
+}
+#today-todos .task-overview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px !important;
+    margin: 0 0 20px !important;
+}
+#today-todos .task-overview > span {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    font-size: 13px;
+}
+#today-todos .today-task-list {
+    margin: 0;
+    padding: 16px 0 0;
+    border-top: 1px solid #e2e9f0;
+}
+#today-todos .today-task-list summary {
+    font-size: 13px;
+    letter-spacing: 0;
+    margin-bottom: 16px;
+    min-height: 32px;
+    cursor: pointer;
+}
+#today-todos .tasks {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+}
+#today-todos .task,
+#today-todos .task:hover {
+    grid-template-columns: 44px 36px minmax(0, 1fr) 64px 100px 44px !important;
+    gap: 12px;
+    min-height: 112px;
+    padding: 18px 12px !important;
+    align-items: center;
+    border: 0 !important;
+    border-bottom: 1px solid #e3eaf0 !important;
+    border-radius: 0;
+    background: #fff !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+#today-todos .task:last-child {
+    border-bottom: 0 !important;
+}
+#today-todos .task.is-next {
+    background: #f2f8ff !important;
+    border-radius: 12px;
+}
+#today-todos .task .check {
+    width: 44px !important;
+    height: 44px !important;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    position: relative;
+    isolation: isolate;
+}
+#today-todos .task .check::before {
+    content: "";
+    position: absolute;
+    inset: 9px;
+    border: 1.5px solid #9fb3c6;
+    border-radius: 7px;
+    background: #fff;
+    z-index: -1;
+}
+#today-todos .task .check.checked::before {
+    background: #408163;
+    border-color: #408163;
+}
+#today-todos .task .check::after,
+#today-todos .task .task-copy::after {
+    display: none !important;
+}
+#today-todos .subject-dot {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    color: #7890a6;
+    font-size: 13px;
+    font-weight: 700;
+}
+#today-todos .task-copy {
+    min-width: 0;
+    box-shadow: none !important;
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0;
+}
+#today-todos .task-copy b {
+    font-size: 17px;
+    line-height: 1.5;
+}
+#today-todos .task-copy small:not(.task-status) {
+    font-size: 13px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    color: #526479;
+}
+#today-todos .task-status {
+    margin-top: 6px !important;
+    font-size: 12px !important;
+    background: transparent !important;
+}
+#today-todos .minutes {
+    font-size: 20px;
+    color: #36516a;
+}
+#today-todos .minutes small {
+    margin-left: 3px;
+    font-size: 12px;
+}
+#today-todos .task-focus {
+    min-height: 44px;
+    padding: 10px;
+    font-size: 13px;
+    border-radius: 10px;
+}
+#today-todos .task-adjust {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+}
+#today-todos .task.done .task-focus,
+#today-todos .task.skipped .task-focus {
+    visibility: hidden;
+}
+#today-todos .task.skipped {
+    opacity: 1;
+}
+#today-todos .task.skipped .task-copy small {
+    text-decoration: none;
+}
+#today-todos .task-adjust-menu {
+    top: calc(100% - 12px);
+    right: 12px;
+    width: 170px;
+    box-shadow: none;
+    border-color: #b8c9d9;
+}
+#today-todos .task-adjust-menu button {
+    min-height: 44px;
+    font-size: 13px;
+}
+@media (max-width: 650px) {
+    #today-todos .section-heading {
+        align-items: flex-start;
+    }
+    #today-todos h2 {
+        font-size: 24px !important;
+    }
+    #today-todos .subject-dot {
+        display: none;
+    }
+    #today-todos .task,
+    #today-todos .task:hover {
+        grid-template-columns: 44px minmax(0, 1fr) 44px !important;
+        gap: 8px;
+        padding: 16px 4px !important;
+    }
+    #today-todos .task .check {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: start;
+    }
+    #today-todos .task .task-copy {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    #today-todos .task .minutes {
+        grid-column: 2;
+        grid-row: 2;
+        justify-self: start;
+        font-size: 17px;
+    }
+    #today-todos .task .task-focus {
+        grid-column: 2 / 4;
+        grid-row: 3;
+        justify-self: stretch;
+        margin: 0;
+    }
+    #today-todos .task .task-adjust {
+        grid-column: 3;
+        grid-row: 1;
+        align-self: start;
+    }
+    #today-todos .task.done .task-focus,
+    #today-todos .task.skipped .task-focus {
+        display: none;
+    }
+}
+:root {
+    --page-width: 1120px;
+    --page-gap: clamp(16px, 2vw, 24px);
+}
+.feature-page .feature-shell,
+.statistics-main .feature-shell {
+    width: 100% !important;
+    max-width: var(--page-width) !important;
+    margin: 0 auto;
+    padding: 24px clamp(16px, 4vw, 40px) 64px !important;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--page-gap);
+    align-items: start;
+    overflow: visible;
+}
+.feature-shell > * {
+    min-width: 0;
+    grid-column: auto;
+    grid-row: auto;
+    margin: 0;
+    max-width: none;
+}
+.feature-shell > :is(.feature-hero, .badge-hero, .statistics-header) {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 0;
+    padding: 26px;
+    border-radius: 20px;
+    background: #eaf2ff;
+    box-shadow: none;
+}
+.feature-shell > .temple-hero {
+    background: #294b51 url("/wanchun-1917-hero.png") center/cover;
+}
+.feature-shell > .temple-hero h1 {
+    color: #fff;
+}
+.feature-shell > .temple-hero p {
+    color: #fff9ea;
+}
+.feature-shell .feature-hero h1,
+.badge-hero h1,
+.statistics-header h1 {
+    font-size: clamp(26px, 4vw, 38px);
+    line-height: 1.35;
+}
+.feature-shell .feature-hero p {
+    width: 100%;
+    max-width: 65ch;
+    font-size: 14px;
+    line-height: 1.75;
+}
+.feature-shell :is(.goal-orbit, .coach-orbit, .badge-hero-seal) {
+    display: none;
+}
+.feature-shell > .back-link {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-height: 44px;
+    border: 1px solid #cbd9e8 !important;
+    background: #fff !important;
+    color: #325a8c;
+    box-shadow: none !important;
+    border-radius: 12px !important;
+}
+.feature-shell
+    :is(
+        .form-card,
+        .plan-preview,
+        .coach-card,
+        .coach-evidence,
+        .coach-today,
+        .wall-compose,
+        .daily-feature,
+        .pilgrimage-guide,
+        .scan-card,
+        .weekly-report,
+        .learning-calendar,
+        .achievement-metrics > div
+    ) {
+    padding: clamp(16px, 2.5vw, 24px);
+    background: #fff;
+    border: 1px solid #dbe4ed;
+    border-radius: 18px;
+    box-shadow: none;
+    min-width: 0;
+}
+.feature-shell :is(p, small),
+.profile-page :is(p, small) {
+    line-height: 1.7;
+}
+.feature-shell small,
+.profile-page small {
+    font-size: 12px;
+}
+.feature-shell button,
+.profile-page button {
+    min-height: 44px;
+    font-size: 14px;
+}
+.feature-shell :is(input:not([type="checkbox"]), select, textarea),
+.profile-page :is(input:not([type="checkbox"]), select) {
+    min-width: 0;
+    max-width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+    border-radius: 10px;
+    border-color: #cbd9e8;
+}
+.feature-shell textarea {
+    min-height: 130px;
+    resize: vertical;
+}
+.feature-shell .card-title {
+    align-items: start;
+    gap: 12px;
+}
+.feature-shell .card-title b {
+    font-size: 18px;
+}
+.feature-shell .two-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.goal-shell .editable-task {
+    grid-template-columns: 4px minmax(0, 1fr) 65px 44px;
+    gap: 8px;
+}
+.goal-shell .editable-task > div {
+    min-width: 0;
+}
+.goal-shell .editable-task input {
+    width: 100%;
+}
+.goal-shell > :is(.custom-tip, .feature-cta) {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+.coach-page .coach-prompts {
+    display: grid;
+    gap: 8px;
+}
+.coach-page .coach-prompts button {
+    text-align: left;
+    padding: 12px;
+    line-height: 1.6;
+}
+.coach-page .coach-answer {
+    padding: 24px;
+    background: #edf7f1;
+    border-radius: 18px;
+}
+.coach-page .coach-answer p {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 15px;
+}
+.coach-page .coach-context {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.wall-shell .wall-compose {
+    order: 0;
+}
+.wall-shell .wall-list article {
+    background: white;
+    border: 1px solid #dbe4ed;
+    border-radius: 16px;
+    padding: 18px;
+}
+.wall-shell .wall-list article p {
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+.wall-shell .wall-list article button {
+    position: static;
+    margin-left: auto;
+    display: block;
+}
+.wall-shell .compose-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.pilgrimage-shell :is(.pilgrimage-guide-heading, .next-stop-card) {
+    flex-wrap: wrap;
+    gap: 14px;
+}
+.pilgrimage-shell .pilgrimage-map {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+.pilgrimage-shell .pilgrimage-map li {
+    min-width: 0;
+    padding: 14px;
+}
+.pilgrimage-shell .map-stop-details {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.pilgrimage-shell .temple-route {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+}
+.pilgrimage-shell .temple-route > button {
+    grid-column: auto !important;
+}
+.badge-shell .badge-gallery {
+    display: grid;
+    width: 100%;
+    max-width: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+.badge-shell .learning-medal {
+    padding: 22px 12px;
+    background: #fff;
+}
+.badge-shell .medal-copy b {
+    font-size: 16px;
+}
+.badge-shell .medal-copy em,
+.badge-shell .medal-copy small {
+    font-size: 12px;
+    line-height: 1.65;
+}
+.statistics-page :is(.statistics-hero, .weekly-report-metrics) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+.statistics-page .statistics-hero > div {
+    padding: 20px 14px;
+    min-width: 0;
+}
+.statistics-page .statistics-hero p {
+    font-size: 13px;
+}
+.learning-calendar .calendar-header {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.learning-calendar .calendar-controls {
+    display: flex;
+    gap: 6px;
+}
+.learning-calendar .calendar-controls button {
+    min-width: 44px;
+    min-height: 44px;
+}
+.learning-calendar .calendar-day {
+    min-width: 0;
+    min-height: 48px;
+}
+.app-shell > :is(.progress-workspace, .profile-page) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--page-gap);
+    width: 100%;
+    max-width: var(--page-width);
+    padding: 24px 16px 40px;
+    margin: auto;
+}
+:is(.progress-workspace, .profile-page) > * {
+    margin: 0;
+    min-width: 0;
+    max-width: none;
+}
+.profile-page .account-list {
+    background: #fff;
+    border: 1px solid #dbe4ed;
+    border-radius: 18px;
+    padding: 20px;
+}
+.profile-page .account-list > div {
+    padding: 14px 0;
+}
+.profile-page .notification-heading,
+.profile-page .care-audience {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.profile-page .service-section {
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #dbe4ed;
+    border-radius: 18px;
+}
+.profile-page .service-section button {
+    padding: 16px 0;
+    width: 100%;
+}
+.profile-page .service-section strong {
+    font-size: 16px;
+}
+.profile-page .profile-identity {
+    background: #eaf2ff !important;
+    color: #294f7d;
+    border: 1px solid #cbddef;
+    box-shadow: none !important;
+}
+.profile-page .profile-identity :is(b, small, i) {
+    color: #294f7d;
+}
+.profile-page :is(.notification-preference, .weekly-care-card, .privacy-card) {
+    background: #f4f8fc !important;
+    border: 1px solid #dbe4ed;
+    box-shadow: none !important;
+}
+.profile-page h1 em {
+    color: #3267ba !important;
+}
+.feature-shell > .feature-note {
+    margin-top: 8px;
+    color: #526479;
+    font-size: 12px;
+}
+.app-shell:has(.today-task-list) .progress-card {
+    z-index: auto !important;
+}
+.app-shell > nav.primary-nav {
+    z-index: 60 !important;
+}
+.app-shell
+    :is(
+        .focus-mode-backdrop,
+        .focus-immersive,
+        .daily-checkin-backdrop,
+        .checkin-ceremony,
+        .calendar-record-backdrop,
+        .sleep-reminder-backdrop,
+        .badge-unlock-backdrop
+    ) {
+    z-index: 200 !important;
+}
+[role="dialog"] {
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+}
+@media (min-width: 800px) {
+    .goal-shell {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    .coach-page > .feature-shell {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .coach-page
+        .feature-shell
+        > :is(.coach-context, .coach-proactive, .coach-answer, .feature-note) {
+        grid-column: 1 / -1;
+    }
+    .wall-shell {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    .wall-shell > :is(.wall-list, .feature-note) {
+        grid-column: 1 / -1;
+    }
+    .wall-shell .wall-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .wall-shell .wall-list-title {
+        grid-column: 1 / -1;
+    }
+    .badge-shell .badge-gallery {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .pilgrimage-shell .pilgrimage-map {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .app-shell > .progress-workspace {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .progress-workspace > :is(.eyebrow, h1, .journey-summary, .empty-panel) {
+        grid-column: 1 / -1;
+    }
+}
+@media (max-width: 560px) {
+    .feature-shell .two-fields,
+    .statistics-page .statistics-hero,
+    .statistics-page .weekly-report-metrics {
+        grid-template-columns: 1fr;
+    }
+    .goal-shell .editable-task {
+        grid-template-columns: 4px minmax(0, 1fr) 44px;
+    }
+    .goal-shell .editable-task > div {
+        grid-column: 2 / -1;
+    }
+    .goal-shell .editable-task > label {
+        grid-column: 2;
+    }
+    .goal-shell .editable-task > button {
+        grid-column: 3;
+    }
+    .feature-shell .code-row {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .feature-shell .code-row input {
+        flex: 1 1 160px;
+    }
+    .feature-shell .code-row button {
+        flex: 1 1 100px;
+    }
+}
+#account-settings {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 1120px;
+    padding: 32px 20px 110px;
+    color: #24364b;
+}
+#account-settings > * {
+    grid-column: auto;
+    grid-row: auto;
+    min-width: 0;
+    margin: 0;
+}
+#account-settings .settings-intro {
+    padding: 0 0 8px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+#account-settings .settings-intro .eyebrow {
+    color: #376bb0;
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0 0 10px;
+}
+#account-settings h1 {
+    margin: 0 0 12px;
+    font-size: clamp(28px, 4vw, 38px);
+    line-height: 1.25;
+    letter-spacing: -0.03em;
+}
+#account-settings h2 {
+    margin: 0;
+    color: #24364b;
+    font-size: 18px;
+    line-height: 1.5;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+#account-settings p {
+    color: #526477;
+    font-size: 14px;
+    line-height: 1.8;
+    margin: 8px 0;
+}
+#account-settings small {
+    color: #526477;
+    font-size: 13px;
+    line-height: 1.7;
+}
+#account-settings
+    > :is(
+        .account-list,
+        .notification-preference,
+        .weekly-care-card,
+        .service-section,
+        .privacy-card
+    ) {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px;
+    background: #fff !important;
+    border: 1px solid #dce5ef;
+    border-radius: 20px;
+    box-shadow: none !important;
+    width: auto;
+    align-self: stretch;
+}
+#account-settings .profile-identity {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    gap: 16px;
+    padding: 24px;
+    border-radius: 20px;
+    background: #edf4ff !important;
+    align-items: center;
+}
+#account-settings .profile-identity > span {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: #d5e5ff;
+    color: #315e9a;
+    font-size: 23px;
+    box-shadow: none;
+}
+#account-settings .profile-identity b {
+    display: block;
+    font-size: 20px;
+    overflow-wrap: anywhere;
+}
+#account-settings .profile-identity small {
+    display: block;
+    margin-top: 6px;
+}
+#account-settings .profile-identity i {
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    background: #fff;
+}
+#account-settings .account-list > div {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 12px 0;
+    background: transparent !important;
+    border: 0;
+    border-bottom: 1px solid #edf1f5;
+    border-radius: 0;
+    box-shadow: none !important;
+    min-height: 0;
+}
+#account-settings > section::before,
+#account-settings > section::after {
+    display: none !important;
+}
+#account-settings .notification-preference {
+    align-items: stretch;
+    text-align: left;
+    justify-content: flex-start;
+}
+#account-settings .notification-login-notice {
+    background: #f2f6fb;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 400;
+}
+#account-settings .notification-timezone {
+    border: 0;
+    padding: 0;
+    text-align: left;
+}
+#account-settings .account-list > div:last-child {
+    border: 0;
+    padding-bottom: 0;
+}
+#account-settings .account-list span {
+    font-size: 14px;
+    color: #526477;
+    flex-shrink: 0;
+}
+#account-settings .account-list b {
+    color: #24364b;
+    font-size: 15px;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+#account-settings .notification-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0;
+}
+#account-settings .notification-status-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: #f0f4f8;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+#account-settings .notification-sync-state {
+    font-size: 13px;
+    color: #526477;
+    background: transparent;
+    padding: 0;
+}
+#account-settings button {
+    box-shadow: none !important;
+    font-size: 14px;
+    min-height: 44px;
+    letter-spacing: 0;
+}
+#account-settings button:focus-visible {
+    outline: 3px solid #397bd2;
+    outline-offset: 3px;
+}
+#account-settings
+    :is(.notification-login, .weekly-care-send, .notification-actions .save) {
+    width: 100%;
+    background: #315fbe;
+    color: #fff;
+    border: 1px solid #315fbe;
+    border-radius: 10px;
+    padding: 12px 16px;
+    white-space: normal;
+}
+#account-settings :is(.notification-login, .weekly-care-send):hover {
+    background: #254d9e;
+}
+#account-settings .notification-timezone {
+    margin: 0;
+}
+#account-settings .notification-times,
+#account-settings .notification-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+}
+#account-settings .notification-times fieldset {
+    grid-column: 1 / -1;
+}
+#account-settings .notification-times label {
+    min-width: 0;
+}
+#account-settings .notification-times input {
+    width: 100%;
+    min-width: 0;
+}
+#account-settings .weekly-care-card > div:first-child {
+    display: block;
+}
+#account-settings .care-audience {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    background: #f0f4f8;
+    border-radius: 12px;
+}
+#account-settings .care-audience button {
+    padding: 8px 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #526477;
+    border-radius: 8px;
+}
+#account-settings .care-audience button.selected {
+    background: #fff;
+    color: #315fbe;
+    border-color: #c9d8ed;
+}
+#account-settings .weekly-care-note {
+    margin: 0;
+}
+#account-settings .service-section {
+    gap: 4px;
+}
+#account-settings .service-section h2 {
+    margin-bottom: 8px;
+}
+#account-settings .service-section button {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 16px;
+    gap: 12px;
+    align-items: center;
+    text-align: left;
+    background: transparent;
+    border-radius: 0;
+    border: 0;
+    border-bottom: 1px solid #edf1f5;
+    padding: 16px 0;
+}
+#account-settings .service-section button:last-child {
+    border-bottom: 0;
+}
+#account-settings .service-section button:hover {
+    background: #f5f8fc;
+}
+#account-settings .service-section button > span {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #edf4ff;
+    color: #315fbe;
+}
+#account-settings .service-section button:nth-of-type(2) > span {
+    background: #fff5d9;
+    color: #876112;
+}
+#account-settings .service-section button:nth-of-type(3) > span {
+    background: #e8f6ef;
+    color: #267353;
+}
+#account-settings .service-section strong {
+    display: block;
+    font-size: 15px;
+    color: #24364b;
+}
+#account-settings .service-section small {
+    display: block;
+    margin-top: 4px;
+}
+#account-settings .privacy-card {
+    background: #f0f7f4 !important;
+    border-color: #d8e8df;
+    justify-content: center;
+}
+#account-settings .privacy-card p {
+    margin: 0;
+}
+#account-settings .logout-button {
+    justify-self: start;
+    color: #a44040;
+    background: transparent;
+    border: 1px solid #e1caca;
+    padding: 10px 18px;
+    border-radius: 10px;
+}
+@media (min-width: 800px) {
+    #account-settings {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+        padding-top: 40px;
+    }
+    #account-settings
+        > :is(.settings-intro, .profile-identity, .reminder-status) {
+        grid-column: 1 / -1;
+    }
+    #account-settings .account-list {
+        grid-column: 1;
+        grid-row: 3;
+    }
+    #account-settings .service-section {
+        grid-column: 1;
+        grid-row: 4;
+    }
+    #account-settings .notification-preference {
+        grid-column: 2;
+        grid-row: 3;
+    }
+    #account-settings .weekly-care-card {
+        grid-column: 2;
+        grid-row: 4;
+    }
+    #account-settings .privacy-card {
+        grid-column: 1 / -1;
+    }
+}
+@media (max-width: 479px) {
+    #account-settings {
+        padding: 20px 8px 40px;
+        gap: 16px;
+    }
+    #account-settings
+        > :is(
+            .account-list,
+            .notification-preference,
+            .weekly-care-card,
+            .service-section,
+            .privacy-card
+        ) {
+        padding: 16px;
+    }
+    #account-settings .profile-identity {
+        padding: 20px;
+        grid-template-columns: 48px minmax(0, 1fr);
+        gap: 12px;
+    }
+    #account-settings .profile-identity > span {
+        width: 48px;
+        height: 48px;
+    }
+    #account-settings .profile-identity > i {
+        grid-column: 2;
+        justify-self: start;
+    }
+}

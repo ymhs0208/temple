@@ -1,0 +1,239 @@
+/* Scoped editorial journey: no layout overrides on dialogs. */
+:is(#pilgrimage-adventure,#pilgrimage-story), :is(#pilgrimage-adventure,#pilgrimage-story) * { font-family: var(--font-geist-sans), Arial, "Noto Sans TC", sans-serif !important; font-style: normal !important; text-shadow: none !important; }
+#pilgrimage-adventure .temple-hero-eyebrow { color: #f2dfba !important; }
+#pilgrimage-adventure .temple-hero-label { background: #142c29d9 !important; color: #ffe2a1 !important; border: 1px solid #d9bc745e; }
+#pilgrimage-adventure .ritual-progress-summary { display: block !important; visibility: visible !important; min-width: 0; color: #31563d; }
+#pilgrimage-adventure .pilgrimage-progress-card > .ritual-progress-summary { height: auto !important; overflow: visible !important; background: none !important; margin: 0 !important; padding: 0 !important; }
+#pilgrimage-adventure .ritual-progress-summary > span { font-size: 14px !important; color: #42644f !important; }
+#pilgrimage-adventure .ritual-progress-summary > b { float: none !important; display: block; font-size: 36px !important; margin: 12px 0; }
+#pilgrimage-adventure .ritual-progress-summary > b small { font-size: 15px !important; }
+#pilgrimage-story .story-hero { box-shadow: none !important; }
+#pilgrimage-story .story-hero :is(p,span), #pilgrimage-story .story-hero .chapter-eyebrow { color: #526c5c !important; opacity: 1 !important; font-size: 13px !important; }
+#pilgrimage-adventure .scan-card input { min-height: 48px !important; height: 48px !important; padding: 12px !important; font-size: 16px !important; }
+#pilgrimage-adventure .scan-card button { min-height: 48px !important; height: auto !important; padding: 12px 18px !important; }
+#pilgrimage-adventure, #pilgrimage-story { background: #f6f5ef; color: #263f3b; min-height: 100dvh; }
+#pilgrimage-adventure .pilgrimage-shell, #pilgrimage-story .story-shell { width: 100%; max-width: 1120px; padding: 24px 24px 100px; margin: auto; box-sizing: border-box; }
+#pilgrimage-adventure .temple-hero { padding: clamp(24px,5vw,56px) !important; background: linear-gradient(90deg,rgba(7,25,28,.94) 0%,rgba(7,25,28,.82) 55%,rgba(7,25,28,.3) 100%), url("/wanchun-1917-hero.png") center / cover no-repeat, #10282b !important; border: 1px solid #766744 !important; border-radius: 24px !important; box-shadow: none !important; min-height: 0 !important; overflow: hidden; }
+#pilgrimage-adventure .temple-hero::before, #pilgrimage-adventure .temple-hero::after { display: none !important; }
+#pilgrimage-adventure .temple-hero-content { max-width: 780px; position: relative; }
+#pilgrimage-adventure .temple-hero-label { color: #376451; font-size: 14px; }
+#pilgrimage-adventure .temple-hero h1 { font-size: clamp(30px,5vw,52px) !important; line-height: 1.3 !important; color: #fff9eb !important; letter-spacing: -.04em; }
+#pilgrimage-adventure .temple-hero h1 em { color: #f5d58c !important; font-style: normal !important; background: none !important; }
+#pilgrimage-adventure .temple-hero-description { font-size: 16px; line-height: 1.85; max-width: 640px; color: #f5eee1 !important; }
+#pilgrimage-adventure .temple-hero-meta { flex-wrap: wrap; gap: 12px; color: #ffe4ad !important; font-size: 14px; }
+#pilgrimage-adventure .temple-hero-meta span { color: inherit !important; }
+#pilgrimage-adventure .temple-hero-meta i { background: #e5c681 !important; }
+@media (max-width: 540px) {
+  #pilgrimage-adventure .temple-hero { background: linear-gradient(180deg,rgba(7,25,28,.76),rgba(7,25,28,.93)), url("/wanchun-1917-hero.png") 65% center / cover no-repeat, #10282b !important; }
+}
+#pilgrimage-adventure :is(.pilgrimage-progress-card,.pilgrimage-guide,.scan-card,.temple-story) { margin-top: 24px; border: 1px solid #dce4de; border-radius: 20px; box-shadow: none !important; background: #fff; padding: 24px; min-width: 0; }
+#pilgrimage-adventure .pilgrimage-progress-card { display: grid; grid-template-columns: minmax(150px, .65fr) minmax(0,2fr); gap: 24px; }
+#pilgrimage-adventure .ritual-progress-summary b { color: #287c64; font-size: 36px; }
+#pilgrimage-adventure .pilgrimage-steps { gap: 12px; }
+#pilgrimage-adventure .pilgrimage-steps small { font-size: 13px; line-height: 1.6; }
+#pilgrimage-adventure .pilgrimage-steps button { background: #287c64; color: white; border-radius: 12px; min-height: 46px; }
+#pilgrimage-adventure .next-stop-card { border: 1px solid #cbded3; background: #eef6f0; border-radius: 14px; box-shadow: none; }
+#pilgrimage-adventure .adventure-travel summary { padding: 18px 0; cursor: pointer; font-weight: 700; font-size: 14px; }
+#pilgrimage-adventure .adventure-chapters { margin-top: 36px; }
+#pilgrimage-adventure .adventure-chapters > header { margin-bottom: 22px; }
+#pilgrimage-adventure .adventure-chapters h2 { font-size: clamp(24px,3vw,32px); line-height: 1.4; margin: 8px 0; }
+#pilgrimage-adventure .adventure-chapters p { font-size: 15px; line-height: 1.85; color: #5b6b66; }
+.chapter-eyebrow { font-size: 12px; font-weight: 750; color: #537764; letter-spacing: .05em; }
+#pilgrimage-adventure .adventure-chapter-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; }
+#pilgrimage-adventure .adventure-chapter-grid > li { min-width: 0; display: flex; flex-direction: column; padding: 22px; background: white; border: 1px solid #dce4de; border-radius: 20px; }
+#pilgrimage-adventure .adventure-chapter-grid > .is-next { border: 2px solid #428768; background: #f3faf4; }
+#pilgrimage-adventure .chapter-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 24px; }
+#pilgrimage-adventure .chapter-stamp { display: grid; place-items: center; width: 52px; height: 56px; border: 1px solid #d6b66e; border-radius: 14px 14px 4px 4px; background: #faf2db; color: #856126; font-size: 26px; }
+#pilgrimage-adventure .is-collected .chapter-stamp { background: #e6f3eb; color: #287c64; border-color: #8db8a2; }
+#pilgrimage-adventure .chapter-state { font-size: 12px; color: #4a6759; font-weight: 700; }
+#pilgrimage-adventure .adventure-chapter-grid small { font-size: 12px; line-height: 1.7; color: #60796a; }
+#pilgrimage-adventure .adventure-chapter-grid h3 { font-size: 22px; line-height: 1.45; margin: 8px 0; color: #294c3d; }
+#pilgrimage-adventure .adventure-chapter-grid b { font-size: 14px; color: #566c61; }
+#pilgrimage-adventure .adventure-chapter-grid a { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-top: auto; padding-top: 16px; min-height: 44px; border-top: 1px solid #e4eae5; color: #287c64; font-size: 14px; font-weight: 700; text-decoration: none; }
+#pilgrimage-adventure .adventure-finale { display: flex; align-items: center; gap: 24px; background: #f6edd7; padding: 24px; border-radius: 20px; border: 1px solid #e4d6b4; }
+#pilgrimage-adventure .adventure-finale > span { font-size: 42px; color: #9e7c35; }
+#pilgrimage-adventure .adventure-finale h3 { font-size: 22px; margin: 0; }
+#pilgrimage-adventure .adventure-finale small { font-size: 14px; color: #75612f; }
+#pilgrimage-adventure .adventure-finale > div { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; min-width: 0; }
+#pilgrimage-adventure .adventure-finale h3 { margin: 0 !important; line-height: 1.5; }
+#pilgrimage-adventure .adventure-finale p { margin: 0 !important; line-height: 1.85; }
+#pilgrimage-adventure .adventure-finale small { display: block; margin: 4px 0 0 !important; padding-top: 14px; border-top: 1px solid #d9c99f; width: 100%; line-height: 1.75; }
+#pilgrimage-story .story-shell { max-width: 850px; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+#pilgrimage-story .story-hero { text-align: left; padding: 32px; background: #e9f0e7; border: 1px solid #d8e2d4; border-radius: 22px; }
+#pilgrimage-story .story-hero::before, #pilgrimage-story .story-hero::after { display: none; }
+#pilgrimage-story .story-hero h1 { font-size: clamp(28px,5vw,44px); color: #244b3f; line-height: 1.35; }
+#pilgrimage-story .story-hero strong { font-size: 16px; line-height: 1.8; color: #4c6757; }
+#pilgrimage-story .story-mark { margin: 18px 0; box-shadow: none; background: #faf2db; color: #856126; border: 1px solid #d6b66e; }
+#pilgrimage-story :is(.story-reading,.story-visit,.story-tip,.chapter-journal,.chapter-preview-mission) { padding: 24px; margin-top: 20px; background: #fff; border: 1px solid #dde5de; border-radius: 18px; box-shadow: none; }
+#pilgrimage-story :is(.story-reading,.chapter-journal,.chapter-preview-mission) p { font-size: 16px; line-height: 1.95; color: #40564b; }
+#pilgrimage-story .story-reading blockquote { font-style: normal; font-size: 16px; background: #f5f1e5; border-left: 3px solid #c9ad6c; padding: 16px; margin: 24px 0 0; }
+#pilgrimage-story .chapter-journal h2 { font-size: 25px; margin: 8px 0; }
+#pilgrimage-story .chapter-journal label { display: block; margin: 16px 0 10px; font-size: 15px; line-height: 1.7; }
+#pilgrimage-story .chapter-journal .chapter-check { display: flex; align-items: center; gap: 12px; padding: 12px; background: #edf6f0; border-radius: 10px; }
+#pilgrimage-story .chapter-check input { width: 22px; height: 22px; accent-color: #287c64; flex-shrink: 0; }
+#pilgrimage-story .chapter-journal textarea { box-sizing: border-box; width: 100%; min-height: 130px; resize: vertical; font: inherit; padding: 14px; border: 1px solid #bccdc0; border-radius: 12px; background: #fcfdfb; }
+#pilgrimage-story .chapter-journal-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+#pilgrimage-story button { min-height: 44px; padding: 12px 18px; border-radius: 10px; box-shadow: none; }
+#pilgrimage-story .chapter-journal button { background: #287c64; color: white; border: 0; }
+#pilgrimage-story .chapter-journal small { font-size: 13px; line-height: 1.7; color: #5b7063; }
+#pilgrimage-story .story-locked { text-align: left; padding-top: 48px; }
+#pilgrimage-story .story-locked h1 { font-size: clamp(28px,5vw,42px); }
+#pilgrimage-story .story-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+#pilgrimage-story .story-actions button { flex: 1 1 220px; }
+:is(#pilgrimage-adventure,#pilgrimage-story) :is(a,button,summary,input,textarea):focus-visible { outline: 3px solid #34806a; outline-offset: 4px; }
+@media (max-width: 850px) {
+  #pilgrimage-adventure .adventure-chapter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  #pilgrimage-adventure .pilgrimage-progress-card { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 540px) {
+  #pilgrimage-adventure .pilgrimage-shell, #pilgrimage-story .story-shell { padding: 20px 14px 90px; }
+  #pilgrimage-adventure .adventure-chapter-grid { grid-template-columns: minmax(0,1fr); gap: 14px; }
+  #pilgrimage-adventure :is(.pilgrimage-guide,.pilgrimage-progress-card), #pilgrimage-story :is(.story-hero,.story-reading,.chapter-journal) { padding: 20px; }
+  #pilgrimage-adventure .adventure-finale { align-items: flex-start; gap: 14px; padding: 20px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #pilgrimage-adventure .adventure-chapter-grid a { transition: color .18s ease; }
+  #pilgrimage-adventure .adventure-chapter-grid a:hover { color: #143e2d; text-decoration: underline; }
+}
+
+/* Passport landing layout: arrival controls together, stories below. */
+#pilgrimage-adventure .pilgrimage-shell { max-width: 1160px; }
+#pilgrimage-adventure .temple-hero { border-radius: 22px !important; padding: clamp(28px,4.5vw,54px) !important; }
+#pilgrimage-adventure .temple-hero-content { max-width: 730px; }
+#pilgrimage-adventure .temple-hero h1 { font-size: clamp(30px,4.4vw,48px) !important; margin: 16px 0 !important; }
+#pilgrimage-adventure .temple-hero-description { max-width: 570px; }
+#pilgrimage-adventure .temple-hero-meta { margin-top: 24px; display: flex; }
+#pilgrimage-adventure .temple-hero-meta span { padding: 8px 0; }
+#pilgrimage-adventure .pilgrimage-progress-card { grid-template-columns: minmax(140px,.55fr) minmax(0,2fr); align-items: center; gap: 28px; padding: 24px 28px; margin: 18px 0 0; border-color: #d6dfd7; background: #fff; }
+#pilgrimage-adventure .passport-stamps { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 10px; min-width: 0; }
+#pilgrimage-adventure .passport-stamps a { display: flex; flex-direction: column; align-items: center; gap: 8px; text-decoration: none; min-width: 0; padding: 6px 0; color: #617067; }
+#pilgrimage-adventure .passport-stamps .passport-stamp { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 6px 0; color: #617067; }
+#pilgrimage-adventure .passport-stamps span { display: grid; place-items: center; width: min(100%,56px); height: 58px; box-sizing: border-box; border: 1px dashed #bac8bd; border-radius: 12px; font-size: 20px; background: #f6f8f4; }
+#pilgrimage-adventure .passport-stamps small { font-size: 12px; line-height: 1.4; text-align: center; }
+#pilgrimage-adventure .passport-stamps small { display: none !important; }
+#pilgrimage-adventure .passport-stamps { display: none !important; }
+#pilgrimage-adventure .passport-stamps .collected span { color: #76571e; background: #fbefcd; border: 1px solid #c6aa64; font-size: 25px; }
+#pilgrimage-adventure .passport-stamps .current span { color: #23694f; border: 2px solid #378565; background: #e8f4eb; }
+#pilgrimage-adventure .pilgrimage-action-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; align-items: stretch; margin-top: 24px; }
+#pilgrimage-adventure .pilgrimage-action-grid > section { margin: 0 !important; padding: 24px !important; border: 1px solid #d8e1d9 !important; border-radius: 18px !important; box-shadow: none !important; min-width: 0; box-sizing: border-box; }
+#pilgrimage-adventure .pilgrimage-guide-heading { align-items: start; gap: 12px; }
+#pilgrimage-adventure .pilgrimage-guide-heading h2 { font-size: 23px; line-height: 1.4; margin-top: 8px; }
+#pilgrimage-adventure .pilgrimage-guide-heading span { font-size: 13px; color: #607467; }
+#pilgrimage-adventure .pilgrimage-guide-heading > button { min-height: 44px; font-size: 13px; padding: 8px 12px; border: 1px solid #d4dfd7; background: #fff; color: #35674e; white-space: nowrap; }
+#pilgrimage-adventure .next-stop-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 18px; text-align: left; }
+#pilgrimage-adventure .next-stop-card > div { min-width: 0; }
+#pilgrimage-adventure .next-stop-card b { font-size: 22px; line-height: 1.5; }
+#pilgrimage-adventure .next-stop-card small { font-size: 14px; line-height: 1.7; }
+#pilgrimage-adventure .next-stop-card button, #pilgrimage-adventure .scan-card .code-row button { background: #287c64 !important; color: #fff !important; border: 0; min-height: 48px; border-radius: 10px; box-shadow: none !important; }
+#pilgrimage-adventure .scan-card .card-title { align-items: start; gap: 12px; }
+#pilgrimage-adventure .scan-card .card-title b { font-size: 21px; line-height: 1.5; }
+#pilgrimage-adventure .scan-card .card-title small { font-size: 14px; line-height: 1.7; }
+#pilgrimage-adventure .scan-card .code-row { display: flex; gap: 10px; margin-top: 20px; }
+#pilgrimage-adventure .scan-card .code-row input { flex: 1; min-width: 0; width: 100%; box-sizing: border-box; }
+#pilgrimage-adventure .scan-card > button { background: #eff5f0 !important; border: 1px solid #c4d7ca !important; color: #2f634a !important; box-shadow: none !important; }
+#pilgrimage-adventure .adventure-chapters { margin-top: 40px; }
+#pilgrimage-adventure .adventure-chapters > header { padding-bottom: 18px; border-bottom: 1px solid #d7dfd6; }
+#pilgrimage-adventure .adventure-chapter-grid { gap: 24px; margin: 24px 0 32px; align-items: stretch; }
+#pilgrimage-adventure .adventure-chapter-grid { position: relative; z-index: 0; isolation: isolate; }
+#pilgrimage-adventure .adventure-chapter-grid > li { position: relative; z-index: 0; min-height: 0; overflow: visible; padding: 24px; border-radius: 16px; border-top: 3px solid #c1d0c0; }
+#pilgrimage-adventure .adventure-chapter-grid > .is-next { border: 2px solid #428768; border-top-width: 3px; }
+#pilgrimage-adventure .adventure-chapter-grid > .is-collected { border-top-color: #bf9b48; }
+#pilgrimage-adventure .chapter-card-top { margin-bottom: 20px; flex-wrap: wrap; }
+#pilgrimage-adventure .chapter-state { background: #f0f4ee; border-radius: 7px; padding: 6px 8px; font-size: 13px; }
+#pilgrimage-adventure .is-collected .chapter-state { background: #fbf1d9; color: #7a5b25; }
+#pilgrimage-adventure .adventure-chapter-grid h3 { font-size: 22px; line-height: 1.55; margin: 12px 0 8px; text-wrap: pretty; }
+#pilgrimage-adventure .adventure-chapter-grid > li > a { position: static !important; z-index: auto; display: flex !important; min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+#pilgrimage-adventure .chapter-card-detail { display: grid; gap: 10px; margin: 16px 0 4px; padding: 14px; border-radius: 12px; background: #f5f8f4; color: #5a7063; font-size: 13px; line-height: 1.7; }
+#pilgrimage-adventure .chapter-card-detail span { display: block; }
+#pilgrimage-adventure .chapter-card-detail strong { display: block; margin-bottom: 2px; color: #35674e; font-size: 12px; }
+#pilgrimage-adventure .chapter-card-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 16px; border-top: 1px solid #e4eae5; color: #287c64; font-size: 13px; line-height: 1.6; text-decoration: none; }
+#pilgrimage-adventure .is-next .chapter-card-status { color: #287c64; font-weight: 700; }
+#pilgrimage-adventure .adventure-chapter-grid p { font-size: 16px; line-height: 1.85; margin: 14px 0 24px; }
+#pilgrimage-adventure .pilgrimage-memory { margin-top: 20px; border-top: 1px solid #d8e1d9; }
+#pilgrimage-adventure .pilgrimage-memory summary { cursor: pointer; padding: 18px 0; font-size: 14px; font-weight: 700; color: #536b5d; }
+#pilgrimage-adventure .guide-note { font-size: 12px; line-height: 1.8; }
+@media (max-width: 850px) {
+  #pilgrimage-adventure .pilgrimage-progress-card { grid-template-columns: minmax(0,1fr); gap: 16px; padding: 20px; }
+  #pilgrimage-adventure .pilgrimage-action-grid { grid-template-columns: minmax(0,1fr); }
+}
+
+#pilgrimage-adventure .travel-directory { margin-top: 20px; border: 1px solid #cfddd3; border-radius: 14px; background: #fff; overflow: hidden; }
+#pilgrimage-adventure .travel-directory > summary { display: flex; align-items: center; gap: 12px; list-style: none; padding: 18px !important; margin: 0; background: #f2f7f2; cursor: pointer; }
+#pilgrimage-adventure .travel-directory > summary::-webkit-details-marker { display: none; }
+#pilgrimage-adventure .travel-summary-icon { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 10px; background: #dfeee3; color: #286448; font-size: 24px; }
+#pilgrimage-adventure .travel-summary-copy { display: grid; gap: 6px; flex: 1; min-width: 0; }
+#pilgrimage-adventure .travel-summary-copy b { font-size: 16px; color: #284f3c; line-height: 1.5; }
+#pilgrimage-adventure .travel-summary-copy small { font-size: 13px; font-weight: 400; color: #5b7061; line-height: 1.65; }
+#pilgrimage-adventure .travel-chevron { font-size: 24px; color: #416a52; flex: 0 0 20px; text-align: center; }
+#pilgrimage-adventure .travel-directory[open] .travel-chevron { transform: rotate(180deg); }
+#pilgrimage-adventure .travel-directory-intro { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; padding: 18px 16px 8px; color: #586d60; font-size: 13px; }
+#pilgrimage-adventure .travel-directory-intro small { font-size: 12px; }
+#pilgrimage-adventure .travel-stop-list { display: grid; gap: 12px; padding: 8px 14px 16px; margin: 0; list-style: none; }
+#pilgrimage-adventure .travel-stop-list > li { display: grid; grid-template-columns: 36px minmax(0,1fr); gap: 12px; padding: 16px; border: 1px solid #e0e7e1; border-radius: 12px; background: #fff; }
+#pilgrimage-adventure .travel-stop-list > li.next { border-color: #81ae92; background: #f3faf5; }
+#pilgrimage-adventure .travel-stop-number { width: 36px; height: 36px; display: grid; place-items: center; background: #f0f3ef; border-radius: 9px; color: #586c5d; font-size: 14px; font-weight: 750; }
+#pilgrimage-adventure .travel-stop-list .completed .travel-stop-number { background: #f7edcf; color: #826326; }
+#pilgrimage-adventure .travel-stop-list .next .travel-stop-number { background: #286448; color: #fff; }
+#pilgrimage-adventure .travel-stop-copy { min-width: 0; }
+#pilgrimage-adventure .travel-stop-title { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#pilgrimage-adventure .travel-stop-title b { font-size: 16px; line-height: 1.65; color: #304f3e; }
+#pilgrimage-adventure .travel-stop-title span { font-size: 12px; color: #617364; }
+#pilgrimage-adventure .travel-stop-list .next .travel-stop-title span { color: #216843; font-weight: 750; }
+#pilgrimage-adventure .travel-stop-copy p { font-size: 14px; line-height: 1.8; margin: 8px 0 6px; color: #415b4c; overflow-wrap: anywhere; }
+#pilgrimage-adventure .travel-stop-copy small { display: block; font-size: 13px; line-height: 1.8; color: #66776c; }
+#pilgrimage-adventure .travel-stop-copy .travel-distance { color: #376b50; margin-top: 4px; }
+#pilgrimage-adventure .travel-navigate { grid-column: 2; justify-self: start; min-height: 44px; padding: 10px 14px; display: inline-flex; align-items: center; gap: 16px; background: #edf5ee; color: #296447; border: 1px solid #cbded0; border-radius: 9px; font-size: 14px; box-shadow: none; }
+#pilgrimage-adventure .travel-navigate:hover { background: #dfeee3; }
+@media (max-width: 400px) {
+  #pilgrimage-adventure .travel-directory > summary { padding: 14px !important; gap: 8px; }
+  #pilgrimage-adventure .travel-summary-icon { display: none; }
+  #pilgrimage-adventure .travel-stop-list { padding: 8px 10px 12px; }
+  #pilgrimage-adventure .travel-stop-list > li { padding: 12px; gap: 10px; grid-template-columns: 28px minmax(0,1fr); }
+  #pilgrimage-adventure .travel-stop-number { width: 28px; height: 32px; }
+  #pilgrimage-adventure .travel-navigate { justify-self: stretch; justify-content: space-between; }
+}
+@media (max-width: 540px) {
+  #pilgrimage-adventure .temple-hero { padding: 26px 20px !important; }
+  #pilgrimage-adventure .temple-hero-meta { gap: 10px; font-size: 12px; }
+  #pilgrimage-adventure .passport-stamps { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px 8px; }
+  #pilgrimage-adventure .passport-stamps span { height: 44px; font-size: 16px; border-radius: 8px; }
+  #pilgrimage-adventure .passport-stamps .collected span { font-size: 21px; }
+  #pilgrimage-adventure .passport-stamps small { writing-mode: horizontal-tb; letter-spacing: 0; font-size: 13px; }
+  #pilgrimage-adventure .pilgrimage-action-grid > section { padding: 20px !important; }
+  #pilgrimage-adventure .adventure-chapter-grid > li { padding: 20px; }
+  #pilgrimage-adventure .scan-card .code-row { flex-wrap: wrap; }
+  #pilgrimage-adventure .scan-card .code-row input { flex-basis: 140px; }
+  #pilgrimage-adventure .scan-card .code-row button { flex-grow: 1; }
+}
+
+/* Consistent inner spacing without affecting scanners, quizzes or dialogs. */
+#pilgrimage-adventure .pilgrimage-shell > .back-link { margin-bottom: 20px; }
+#pilgrimage-adventure .pilgrimage-guide-heading { display: flex; justify-content: space-between; flex-wrap: wrap; }
+#pilgrimage-adventure .pilgrimage-guide-heading > div { min-width: 0; flex: 1 1 190px; }
+#pilgrimage-adventure .next-stop-card > div { display: grid; gap: 8px; }
+#pilgrimage-adventure .scan-card .card-title > div { display: grid; gap: 10px; min-width: 0; }
+#pilgrimage-adventure .scan-card .card-title small { display: block; }
+#pilgrimage-adventure .pilgrimage-guide .guide-note { margin: 16px 0 0; padding-top: 16px; border-top: 1px solid #e0e7df; }
+#pilgrimage-adventure .adventure-chapters > header p { max-width: 650px; margin: 12px 0 0; line-height: 1.8; }
+#pilgrimage-adventure .adventure-chapter-grid a { min-height: 48px; padding-top: 16px; line-height: 1.6; }
+#pilgrimage-adventure .adventure-finale { margin-top: 12px; padding: 28px; align-items: flex-start; gap: 24px; }
+#pilgrimage-adventure .adventure-finale > span { flex: 0 0 44px; line-height: 1.2; }
+#pilgrimage-adventure .adventure-finale > div { flex: 1; gap: 16px; }
+#pilgrimage-adventure .adventure-travel .pilgrimage-map li { gap: 12px; }
+#pilgrimage-adventure .map-stop-details { min-width: 0; overflow-wrap: anywhere; }
+@media (min-width: 851px) and (max-width: 1050px) {
+  #pilgrimage-adventure .adventure-chapter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 540px) {
+  #pilgrimage-adventure .pilgrimage-shell { padding-inline: 16px; }
+  #pilgrimage-adventure .pilgrimage-action-grid { gap: 18px; margin-top: 18px; }
+  #pilgrimage-adventure .adventure-chapters { margin-top: 32px; }
+  #pilgrimage-adventure .adventure-chapter-grid { gap: 18px; margin-top: 20px; }
+  #pilgrimage-adventure .next-stop-card { padding: 16px; }
+  #pilgrimage-adventure .next-stop-card > button { width: 100%; }
+  #pilgrimage-adventure .adventure-finale { padding: 22px 20px; gap: 12px; }
+  #pilgrimage-adventure .adventure-finale > span { flex-basis: 24px; font-size: 28px; }
+  #pilgrimage-adventure .adventure-finale h3 { font-size: 21px; }
+  #pilgrimage-adventure .adventure-travel .pilgrimage-map li { display: grid; grid-template-columns: 32px minmax(0,1fr); }
+  #pilgrimage-adventure .adventure-travel .pilgrimage-map li > button { grid-column: 2; justify-self: start; min-height: 44px; }
+}

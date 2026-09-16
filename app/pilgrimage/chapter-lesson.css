@@ -1,0 +1,69 @@
+#pilgrimage-story .chapter-lesson { padding: clamp(18px,4vw,32px); margin: 24px 0; border: 1px solid #bdd4c7; border-radius: 22px; background: #f5faf6; }
+#pilgrimage-story .lesson-heading { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; color: #41634d; font-size: 14px; }
+#pilgrimage-story .chapter-lesson h2 { font-size: clamp(24px,4vw,30px); line-height: 1.4; margin: 14px 0; }
+#pilgrimage-story .chapter-lesson p { font-size: 16px; line-height: 1.85; }
+#pilgrimage-story .lesson-question { padding-top: 14px; }
+#pilgrimage-story .lesson-meter { background: #dce8df; height: 6px; border-radius: 6px; overflow: hidden; }
+#pilgrimage-story .lesson-meter span { display: block; height: 100%; background: #26715a; transition: width .4s ease; }
+#pilgrimage-story .lesson-question h3 { font-size: 19px; line-height: 1.6; margin: 20px 0; }
+#pilgrimage-story .lesson-question fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+#pilgrimage-story .lesson-question legend { font-size: 14px; color: #556b60; margin-bottom: 10px; }
+#pilgrimage-story .lesson-question label { display: flex; align-items: center; gap: 12px; padding: 16px; min-height: 48px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #cbd9d0; background: white; cursor: pointer; font-size: 16px; box-sizing: border-box; }
+#pilgrimage-story .lesson-question label.selected { border-color: #287c64; background: #e3f3e9; }
+#pilgrimage-story .lesson-question input { width: 20px; height: 20px; accent-color: #287c64; flex-shrink: 0; }
+#pilgrimage-story .lesson-primary { width: 100%; background: #287c64; color: white; border: 0; margin: 14px 0; }
+#pilgrimage-story .lesson-primary:disabled { opacity: .5; cursor: not-allowed; }
+#pilgrimage-story .lesson-feedback { padding: 16px; margin-top: 16px; border-radius: 12px; background: #fff1d6; color: #715219; }
+#pilgrimage-story .lesson-feedback.correct { background: #dcefe1; color: #25583c; }
+#pilgrimage-story .lesson-feedback p { margin-bottom: 0; }
+#pilgrimage-story .lesson-complete { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+#pilgrimage-story .lesson-mini-seal { display: grid; place-items: center; width: 64px; height: 72px; border: 2px solid #b28b36; background: #fff2c4; color: #755314; font-size: 30px; border-radius: 14px; }
+#pilgrimage-story .lesson-complete h3 { font-size: 22px; margin: 0; }
+#pilgrimage-story .lesson-complete button { background: #fff; color: #32664c; border: 1px solid #a4c1ad; }
+#pilgrimage-story .lesson-complete details { flex-basis: 100%; padding: 16px 0; border-top: 1px solid #cbd9d0; }
+#pilgrimage-story .lesson-complete summary { cursor: pointer; min-height: 44px; font-weight: 700; }
+#pilgrimage-story .lesson-complete h4 { font-size: 16px; }
+#pilgrimage-story .chapter-lesson small, #pilgrimage-story .lesson-storage { font-size: 13px; line-height: 1.7; color: #566c60; }
+/* Native dialog stays in the top layer, independent of transformed page parents. */
+:root body #pilgrimage-story dialog.lesson-celebration { position: fixed !important; inset: 12px !important; margin: auto !important; width: min(560px,calc(100vw - 24px)) !important; max-width: calc(100vw - 24px) !important; height: fit-content !important; max-height: calc(100dvh - 24px) !important; padding: 0 !important; border: 1px solid #d2b66b !important; border-radius: 24px !important; overflow: auto !important; overscroll-behavior: contain; box-sizing: border-box; background: #102d29 !important; color: #fff5d5 !important; transform: none !important; animation: none !important; box-shadow: 0 24px 90px #0008 !important; }
+.lesson-celebration::backdrop { background: #061a20d9; backdrop-filter: blur(7px); }
+#pilgrimage-story .celebration-inner { position: relative; isolation: isolate; overflow: hidden; padding: 64px 26px 26px; text-align: center; background: radial-gradient(ellipse at 50% 27%,#456440 0%,#173c32 40%,#102d29 75%); }
+#pilgrimage-story .celebration-skip { position: absolute; top: 10px; right: 12px; color: #fff5d5; background: transparent; border: 1px solid #718565; font-size: 13px; z-index: 3; }
+#pilgrimage-story .celebration-kicker { color: #f2d883 !important; font-size: 12px !important; letter-spacing: .09em; }
+#pilgrimage-story .celebration-stage { height: 210px; position: relative; display: grid; place-items: center; margin: 14px auto; }
+#pilgrimage-story .celebration-seal { width: 138px; height: 162px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 3px double #ffe6a0; border-radius: 28px; background: linear-gradient(130deg,#ffe8a5,#be8f37 47%,#ffe4a0 72%,#c59b48); box-shadow: 0 0 35px #fce39350,inset 0 0 0 6px #624b2333; position: relative; z-index: 1; }
+#pilgrimage-story .celebration-seal strong { font-size: 68px; line-height: 1; color: #593c16; }
+#pilgrimage-story .celebration-seal small, #pilgrimage-story .celebration-seal span { font-size: 12px; color: #593c16; }
+#pilgrimage-story .celebration-orbit, #pilgrimage-story .celebration-ring { position: absolute; width: 196px; height: 196px; border: 1px solid #ebca7280; border-radius: 50%; }
+#pilgrimage-story .celebration-orbit { border-style: dashed; width: 226px; height: 226px; }
+#pilgrimage-story .celebration-phase { font-size: 14px; color: #f6da86; min-height: 26px; }
+#pilgrimage-story .lesson-celebration h2 { color: #fff5d5 !important; margin: 12px 0; }
+#pilgrimage-story .lesson-celebration p { color: #f3ecd1; }
+#pilgrimage-story .celebration-knowledge { padding: 18px; background: #ffffff0d; border: 1px solid #dfc87755; border-radius: 14px; margin: 20px 0; text-align: left; }
+#pilgrimage-story .celebration-knowledge b { color: #f7da8c; font-size: 14px; }
+#pilgrimage-story .celebration-knowledge p { margin: 8px 0 0; font-size: 15px; }
+#pilgrimage-story .celebration-continue { width: 100%; background: #f4d888; color: #263d2e; border: 0; font-weight: 750; }
+#pilgrimage-story .celebration-inner > small { display: block; margin-top: 12px; color: #c4cebe; }
+#pilgrimage-story .celebration-particles { position: absolute; inset: 170px 0 auto; height: 1px; pointer-events: none; }
+#pilgrimage-story .celebration-particles i { position: absolute; left: 50%; width: 5px; height: 9px; background: #ffe298; opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .lesson-celebration[data-reduced="false"] .celebration-seal { animation: lesson-seal-reveal 1.8s cubic-bezier(.17,.8,.3,1) both; }
+  .lesson-celebration[data-reduced="false"] .celebration-orbit { animation: lesson-orbit 4s ease-out both; }
+  .lesson-celebration[data-reduced="false"] .celebration-ring { animation: lesson-ring 2.8s ease-out both; }
+  .lesson-celebration[data-reduced="false"] .celebration-particles i { animation: lesson-spark 2.5s calc(1.1s + var(--delay)) ease-out both; }
+  .lesson-celebration[data-reduced="false"] .celebration-knowledge { animation: lesson-copy 1s 2s both; }
+}
+@keyframes lesson-seal-reveal { 0% { transform: scale(.35) rotateY(-100deg); opacity: 0; } 45% { opacity: 1; transform: scale(.8) rotateY(-30deg); } 75% { transform: scale(1.08) rotateY(8deg); } 100% { transform: scale(1) rotateY(0); } }
+@keyframes lesson-orbit { from { transform: rotate(-90deg) scale(.6); opacity: 0; } to { transform: rotate(90deg) scale(1); opacity: 1; } }
+@keyframes lesson-ring { 0% { opacity: 0; transform: scale(.2); } 45% { opacity: 1; } 100% { opacity: .5; transform: scale(1.12); } }
+@keyframes lesson-spark { 0% { opacity: 0; transform: rotate(var(--angle)) translateY(30px); } 20% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--angle)) translateY(var(--distance)) rotate(120deg); } }
+@keyframes lesson-copy { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 420px), (max-height: 650px) {
+  #pilgrimage-story .celebration-inner { padding: 60px 18px 22px; }
+  #pilgrimage-story .celebration-stage { height: 170px; }
+  #pilgrimage-story .celebration-seal { width: 110px; height: 134px; }
+  #pilgrimage-story .celebration-seal strong { font-size: 52px; }
+  #pilgrimage-story .celebration-ring { width: 154px; height: 154px; }
+  #pilgrimage-story .celebration-orbit { width: 174px; height: 174px; }
+}
+@media (prefers-reduced-motion: reduce) { #pilgrimage-story .lesson-celebration *, #pilgrimage-story .lesson-meter span { animation: none !important; transition: none !important; } #pilgrimage-story .celebration-particles { display: none; } }
