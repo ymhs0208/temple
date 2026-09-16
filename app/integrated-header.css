@@ -194,9 +194,9 @@ main:has(> .app-shell > .integrated-header),
     background: #edf3fb;
 }
 .app-shell > .topbar.integrated-header .header-navigation button.active {
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
+    background: #e4eefa !important;
+    border-radius: 8px !important;
+    box-shadow: inset 0 0 0 1px rgba(36, 85, 181, 0.1) !important;
     color: #2455b5 !important;
     font-weight: 750;
 }
