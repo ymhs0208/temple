@@ -88,6 +88,7 @@ type WishReflection = {
 };
 type SavedPlan = {
     tasks?: Task[];
+    tasksDate?: string;
     challengeName?: string;
     examDate?: string;
     goal?: string;
@@ -639,7 +640,8 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
         if (stored)
             try {
                 const data = JSON.parse(stored) as SavedPlan;
-                if (data.tasks?.length) setTasks(data.tasks);
+                if (data.tasks?.length && data.tasksDate === taipeiDate())
+                    setTasks(data.tasks);
                 if (data.deferredTasks?.length)
                     setDeferredTasks(data.deferredTasks);
                 if (data.taskAdjustmentCounts)
@@ -754,6 +756,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
             "wenchang-mvp",
             JSON.stringify({
                 tasks,
+                tasksDate: taipeiDate(),
                 challengeName: name,
                 examDate,
                 goal,
@@ -923,7 +926,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
                     void enqueueSync(tasks);
                     return;
                 }
-                if (data.tasks?.length) setTasks(data.tasks);
+                setTasks(data.tasks ?? []);
                 if (data.plan) {
                     setName(data.plan.challengeName ?? name);
                     setExamDate(data.plan.examDate);
