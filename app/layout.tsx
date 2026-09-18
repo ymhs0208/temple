@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-	title: "文昌同行｜30 日學習挑戰",
+	title: "文昌七媽學堂｜30 日學習挑戰",
 	description: "以每日任務與能量陪伴學生走過會考倒數。",
 	icons: {
 		icon: "/favicon.svg",
