@@ -51,18 +51,23 @@ npm install
 
 > `npm run dev` 與 `npm run build` 適合 macOS / Linux。Windows 請使用上方的 `vinext.cmd` 指令。
 
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+nvm install node
+npm install
+
 ## 環境變數
 
 部署環境需設定以下變數，敏感值必須設為 Secret，且不可提交到 Git。
 
-| 變數 | 用途 | 是否敏感 |
-| --- | --- | --- |
-| `SUPABASE_URL` | Supabase 專案網址 | 否 |
-| `SUPABASE_SERVICE_ROLE_KEY` | 後端資料庫管理權限 | 是 |
-| `LINE_LOGIN_CHANNEL_ID` | LINE Login Channel ID | 否 |
-| `NEXT_PUBLIC_LIFF_ID` | LINE LIFF ID | 否 |
-| `LINE_MESSAGING_ACCESS_TOKEN` | LINE OA 推播權杖 | 是 |
-| `LINE_MESSAGING_CHANNEL_SECRET` | LINE Webhook 驗證密鑰 | 是 |
+| 變數                            | 用途                  | 是否敏感 |
+| ------------------------------- | --------------------- | -------- |
+| `SUPABASE_URL`                  | Supabase 專案網址     | 否       |
+| `SUPABASE_SERVICE_ROLE_KEY`     | 後端資料庫管理權限    | 是       |
+| `LINE_LOGIN_CHANNEL_ID`         | LINE Login Channel ID | 否       |
+| `NEXT_PUBLIC_LIFF_ID`           | LINE LIFF ID          | 否       |
+| `LINE_MESSAGING_ACCESS_TOKEN`   | LINE OA 推播權杖      | 是       |
+| `LINE_MESSAGING_CHANNEL_SECRET` | LINE Webhook 驗證密鑰 | 是       |
 
 若任何 Access Token、Secret 或 Service Role Key 曾公開，請立即在對應平台撤銷並重新產生。
 
@@ -95,12 +100,12 @@ Cloudflare Workers Builds 已連接此倉庫。推送非 `main` 分支時，Clou
 
 ## 三人協作流程
 
-| 分支 | 用途 |
-| --- | --- |
-| `main` | 正式版，對應 `score.cc.cd` |
-| `dev-zhang` | zhang 的開發與測試 |
-| `dev-yoby96321` | yoby96321 的開發與測試 |
-| `dev-Nasa0402` | Nasa0402 的開發與測試 |
+| 分支            | 用途                       |
+| --------------- | -------------------------- |
+| `main`          | 正式版，對應 `score.cc.cd` |
+| `dev-zhang`     | zhang 的開發與測試         |
+| `dev-yoby96321` | yoby96321 的開發與測試     |
+| `dev-Nasa0402`  | Nasa0402 的開發與測試      |
 
 開始開發前：
 

@@ -9,4 +9,7 @@ create table if not exists public.user_preferences (
 alter table public.user_preferences add column if not exists morning_time time not null default '08:00';
 alter table public.user_preferences add column if not exists evening_time time not null default '20:30';
 alter table public.user_preferences add column if not exists timezone text not null default 'Asia/Taipei';
+alter table public.user_preferences add column if not exists morning_enabled boolean not null default true;
+alter table public.user_preferences add column if not exists evening_enabled boolean not null default true;
+alter table public.user_preferences add column if not exists weekly_enabled boolean not null default false;
 alter table public.user_preferences enable row level security;

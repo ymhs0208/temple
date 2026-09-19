@@ -42,6 +42,18 @@ create table if not exists public.user_companion_states (
   wish_reflections jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
+-- LINE 通知偏好；放進主 schema，避免只執行主 schema 時設定頁無法載入。
+create table if not exists public.user_preferences (
+  user_id uuid primary key references public.users(id) on delete cascade,
+  notifications_enabled boolean not null default true,
+  morning_time time not null default '08:00',
+  evening_time time not null default '20:30',
+  timezone text not null default 'Asia/Taipei',
+  morning_enabled boolean not null default true,
+  evening_enabled boolean not null default true,
+  weekly_enabled boolean not null default false,
+  updated_at timestamptz not null default now()
+);
 -- LINE 對話狀態：讓 webhook 能記住使用者正在看任務、規劃時間或剛完成任務。
 create table if not exists public.line_conversation_states (
   line_user_id text primary key references public.users(line_user_id) on delete cascade,
@@ -58,6 +70,7 @@ alter table public.daily_tasks enable row level security;
 alter table public.task_completions enable row level security;
 alter table public.energy enable row level security;
 alter table public.user_companion_states enable row level security;
+alter table public.user_preferences enable row level security;
 alter table public.line_conversation_states enable row level security;
 
 -- The server calls this function with the service-role key. It serializes a

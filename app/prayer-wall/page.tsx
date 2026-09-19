@@ -18,6 +18,8 @@ export default function PrayerWall() {
   const [anonymous, setAnonymous] = useState(true);
   const [idToken, setIdToken] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sentCelebration, setSentCelebration] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const load = () => {
@@ -42,31 +44,34 @@ export default function PrayerWall() {
       .catch(() => undefined);
   }, []);
   const post = async () => {
+    if (sending || !message.trim()) return;
     if (!idToken) {
       if (!liff.isLoggedIn()) liff.login();
       return;
     }
-    const response = await fetch("/api/prayer-wall", {
+    setSending(true);
+    setSentCelebration(false);
+    try {
+      const response = await fetch("/api/prayer-wall", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "post", idToken, message, anonymous }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setNotice(
-        data.error === "Please wait before posting again"
-          ? "請稍候一分鐘再發送下一則祈願。"
-          : "祈願發送失敗，請確認內容後再試。",
-      );
-      return;
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setNotice(data.error === "Please wait before posting again" ? "請稍候一分鐘再發送下一則祈願。" : "祈願發送失敗，請確認內容後再試。");
+        return;
+      }
+      setMessage("");
+      setSentCelebration(true);
+      setNotice(data.pending ? "你的祈願已送出，正在等待內容審核。" : "祈願已公開在祈福牆，願你今日順利。");
+      if (!data.pending) load();
+      window.setTimeout(() => setSentCelebration(false), 3200);
+    } catch {
+      setNotice("祈願發送失敗，請確認網路連線後再試。");
+    } finally {
+      setSending(false);
     }
-    setMessage("");
-    setNotice(
-      data.pending
-        ? "你的祈願已送出，正在等待內容審核。"
-        : "祈願已公開在祈福牆，願你今日順利。",
-    );
-    if (!data.pending) load();
   };
   const report = async (postId: string) => {
     if (!idToken) {
@@ -138,9 +143,10 @@ export default function PrayerWall() {
               />{" "}
               匿名發佈
             </label>
-            <button onClick={post}>{idToken ? "發布祈願" : "登入 LINE 後發布"}</button>
+          <button onClick={post} disabled={sending || !message.trim()}>{sending ? "正在傳送祈願…" : idToken ? "發布祈願" : "登入 LINE 後發布"}</button>
           </div>
           {notice && <p className="unlock-notice">{notice}</p>}
+          {sentCelebration && <div className="prayer-send-celebration" role="status" aria-live="polite"><div className="prayer-send-sparkles" aria-hidden="true"><i>✦</i><i>✧</i><i>✦</i><i>·</i><i>✧</i></div><div className="prayer-send-seal">✓</div><b>祈願已送出</b><span>願這份心意被溫柔接住</span></div>}
         </section>
         <section className="wall-list">
           <div className="wall-list-title">

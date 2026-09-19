@@ -1,95 +1,593 @@
 /* Shared dialog surfaces; scoped to overlays, never ordinary page cards. */
-:root { --dialog-ink:#26364c; --dialog-muted:#596c82; --dialog-accent:#3267b6; --dialog-border:#dce5ef; }
-:root body :is(.calendar-record-backdrop,.settlement-backdrop,.daily-checkin-backdrop,.checkin-ceremony,.focus-mode-backdrop,.sleep-reminder-backdrop,.badge-unlock-backdrop,.quiz-backdrop,.certificate-backdrop) {
-  position:fixed !important; inset:0 !important; z-index:2147483000 !important;
-  display:flex !important; align-items:center !important; justify-content:center !important;
-  width:100% !important; height:100dvh !important; padding:24px !important; margin:0 !important;
-  background:rgba(20,32,52,.62) !important; backdrop-filter:blur(8px) !important;
-  overflow:auto; overscroll-behavior:contain;
+:root {
+    --dialog-ink: #26364c;
+    --dialog-muted: #596c82;
+    --dialog-accent: #3267b6;
+    --dialog-border: #dce5ef;
 }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) {
-  box-sizing:border-box; position:relative !important; inset:auto !important;
-  width:min(520px,100%) !important; max-width:100% !important; min-width:0 !important;
-  max-height:calc(100dvh - 48px) !important; height:auto !important; margin:auto !important;
-  padding:32px !important; overflow:auto !important; overscroll-behavior:contain;
-  border:1px solid var(--dialog-border) !important; border-radius:24px !important;
-  background:#fff !important; color:var(--dialog-ink) !important;
-  box-shadow:0 24px 80px #101f3b30 !important; animation:app-dialog-enter .22s ease-out;
+:root
+    body
+    :is(
+        .calendar-record-backdrop,
+        .settlement-backdrop,
+        .daily-checkin-backdrop,
+        .checkin-ceremony,
+        .focus-mode-backdrop,
+        .sleep-reminder-backdrop,
+        .badge-unlock-backdrop,
+        .quiz-backdrop,
+        .certificate-backdrop
+    ) {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    padding: 24px !important;
+    margin: 0 !important;
+    background: rgba(20, 32, 52, 0.62) !important;
+    backdrop-filter: blur(8px) !important;
+    overflow: auto;
+    overscroll-behavior: contain;
 }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) > :is(h2,div:first-child) { max-width:100%; }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) :is(h2,h3) { color:var(--dialog-ink) !important; font-size:clamp(22px,3vw,28px) !important; line-height:1.45 !important; letter-spacing:normal !important; }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) :is(p,li) { font-size:16px; line-height:1.75; overflow-wrap:anywhere; }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) p { color:var(--dialog-muted); }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) small { font-size:13px !important; line-height:1.65; }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) em { font-style:normal !important; color:var(--dialog-accent) !important; }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) button { min-height:46px; font-size:14px !important; line-height:1.5; border-radius:12px !important; letter-spacing:normal !important; box-shadow:none !important; white-space:normal; }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) button::before,body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) button::after { display:none !important; }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) :is(button,input):focus-visible { outline:3px solid #4387df !important; outline-offset:3px; }
-body :is(.calendar-record-close,.settlement-close,.daily-checkin-close,.focus-modal-close,.quiz-close,.collection-close) { position:absolute !important; top:12px !important; right:12px !important; left:auto !important; width:44px !important; height:44px !important; min-height:44px !important; padding:0 !important; display:grid !important; place-items:center; background:#f0f4f9 !important; border:1px solid #dce5ef !important; color:#52657c !important; font-size:25px !important; border-radius:50% !important; box-shadow:none !important; z-index:5; }
-body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog):has(:is(.calendar-record-close,.settlement-close,.daily-checkin-close,.focus-modal-close,.quiz-close,.collection-close)) { padding-top:64px !important; }
-body :is(.daily-checkin-passage,.daily-checkin-question,.focus-mode-note,.calendar-record-summary,.checkin-ceremony-step) { border-radius:14px !important; padding:16px !important; background:#f1f6fc !important; border:1px solid #e0e9f4 !important; color:#345474 !important; box-shadow:none !important; }
-body :is(.daily-checkin-options,.focus-mode-list) { display:grid; gap:10px; margin:20px 0; }
-body .daily-checkin-options button { display:flex; align-items:center; gap:12px; text-align:left; padding:14px; background:#fff !important; color:#334c69 !important; border:1px solid #cedbea !important; }
-body .daily-checkin-options button.selected { border:2px solid #3267b6 !important; background:#edf4ff !important; }
-body .daily-checkin-options button b { background:#e6eef9 !important; color:#3267b6 !important; border-radius:8px; }
-body :is(.daily-checkin-submit,.settlement-done,.checkin-ceremony-card > button,.sleep-reminder-dialog > button,.badge-unlock-dialog > button) { background:#3267b6 !important; color:white !important; border:1px solid #3267b6 !important; width:100%; padding:14px 18px !important; margin-top:18px; }
-body .settlement-share { border:1px solid #cbd9eb !important; background:#f4f8ff !important; color:#3267b6 !important; }
-body .settlement-stats { gap:8px; border:0 !important; background:#f3f7fc !important; border-radius:16px; padding:16px 8px; }
-body .focus-mode-list button { display:flex; flex-wrap:wrap; gap:14px; padding:20px !important; border:1px solid #c3d7f1 !important; background:#edf4ff !important; color:#315e99 !important; }
-body .focus-mode-list button > div { flex:1; min-width:140px; }
-body .focus-mode-list button i { font-style:normal; color:#3267b6 !important; }
-body .calendar-record { width:min(600px,100%) !important; }
-body .calendar-record-heading { position:static !important; padding:0 0 20px !important; border-bottom:1px solid #e6edf4; }
-body .calendar-record li { display:flex; gap:12px; padding:16px 0; border-bottom:1px solid #e6edf4; }
-body .calendar-record li > div { flex:1; min-width:0; }
-body .calendar-record li > span { flex-shrink:0; font-size:14px; }
-body .certificate-dialog { width:min(680px,100%) !important; }
-body .checkin-ceremony-card { background:linear-gradient(160deg,#fff,#eff8f3) !important; }
-body .sleep-reminder-dialog { background:linear-gradient(160deg,#fff,#f0f3ff) !important; }
-body .badge-unlock-dialog { background:linear-gradient(160deg,#fffdf6,#f5f1ff) !important; }
-:root body .focus-immersive { z-index:2147482999 !important; background:radial-gradient(ellipse at top,#244d69,#122838 75%) !important; padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom)) !important; overflow:auto; }
-body .focus-immersive button { min-height:48px; border-radius:12px !important; box-shadow:none !important; }
-body .focus-immersive .focus-confirm { background:#b7e8db !important; color:#163e3b !important; }
-body .focus-session-content h2 { font-variant-numeric:tabular-nums; font-size:clamp(64px,14vw,140px) !important; }
-body:has(:is(.calendar-record-backdrop,.settlement-backdrop,.daily-checkin-backdrop,.checkin-ceremony,.focus-mode-backdrop,.sleep-reminder-backdrop,.badge-unlock-backdrop,.quiz-backdrop,.certificate-backdrop),.focus-immersive,dialog[open]) { overflow:hidden; }
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    ) {
+    box-sizing: border-box;
+    position: relative !important;
+    inset: auto !important;
+    width: min(520px, 100%) !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    max-height: calc(100dvh - 48px) !important;
+    height: auto !important;
+    margin: auto !important;
+    padding: 32px !important;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+    border: 1px solid var(--dialog-border) !important;
+    border-radius: 24px !important;
+    background: #fff !important;
+    color: var(--dialog-ink) !important;
+    box-shadow: 0 24px 80px #101f3b30 !important;
+    animation: app-dialog-enter 0.22s ease-out;
+}
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    )
+    > :is(h2, div:first-child) {
+    max-width: 100%;
+}
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    )
+    :is(h2, h3) {
+    color: var(--dialog-ink) !important;
+    font-size: clamp(22px, 3vw, 28px) !important;
+    line-height: 1.45 !important;
+    letter-spacing: normal !important;
+}
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    )
+    :is(p, li) {
+    font-size: 16px;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+}
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    )
+    p {
+    color: var(--dialog-muted);
+}
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    )
+    small {
+    font-size: 13px !important;
+    line-height: 1.65;
+}
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    )
+    em {
+    font-style: normal !important;
+    color: var(--dialog-accent) !important;
+}
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    )
+    button {
+    min-height: 46px;
+    font-size: 14px !important;
+    line-height: 1.5;
+    border-radius: 12px !important;
+    letter-spacing: normal !important;
+    box-shadow: none !important;
+    white-space: normal;
+}
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    )
+    :is(button, input):focus-visible {
+    outline: 3px solid #4387df !important;
+    outline-offset: 3px;
+}
+body
+    :is(
+        .calendar-record-close,
+        .settlement-close,
+        .daily-checkin-close,
+        .focus-modal-close,
+        .quiz-close,
+        .collection-close
+    ) {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    left: auto !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center;
+    background: #f0f4f9 !important;
+    border: 1px solid #dce5ef !important;
+    color: #52657c !important;
+    font-size: 25px !important;
+    border-radius: 50% !important;
+    box-shadow: none !important;
+    z-index: 5;
+}
+body
+    :is(
+        .calendar-record,
+        .settlement-modal,
+        .daily-checkin-dialog,
+        .checkin-ceremony-card,
+        .focus-mode-dialog,
+        .sleep-reminder-dialog,
+        .badge-unlock-dialog,
+        .quiz-dialog,
+        .certificate-dialog,
+        .app-confirm-dialog
+    ):has(
+        :is(
+            .calendar-record-close,
+            .settlement-close,
+            .daily-checkin-close,
+            .focus-modal-close,
+            .quiz-close,
+            .collection-close
+        )
+    ) {
+    padding-top: 64px !important;
+}
+body
+    :is(
+        .daily-checkin-passage,
+        .daily-checkin-question,
+        .focus-mode-note,
+        .calendar-record-summary,
+        .checkin-ceremony-step
+    ) {
+    border-radius: 14px !important;
+    padding: 16px !important;
+    background: #f1f6fc !important;
+    border: 1px solid #e0e9f4 !important;
+    color: #345474 !important;
+    box-shadow: none !important;
+}
+body :is(.daily-checkin-options, .focus-mode-list) {
+    display: grid;
+    gap: 10px;
+    margin: 20px 0;
+}
+body .daily-checkin-options button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    padding: 14px;
+    background: #fff !important;
+    color: #334c69 !important;
+    border: 1px solid #cedbea !important;
+}
+body .daily-checkin-options button.selected {
+    border: 2px solid #3267b6 !important;
+    background: #edf4ff !important;
+}
+body .daily-checkin-options button b {
+    background: #e6eef9 !important;
+    color: #3267b6 !important;
+    border-radius: 8px;
+}
+body
+    :is(
+        .daily-checkin-submit,
+        .settlement-done,
+        .checkin-ceremony-card > button,
+        .sleep-reminder-dialog > button,
+        .badge-unlock-dialog > button
+    ) {
+    background: #3267b6 !important;
+    color: white !important;
+    border: 1px solid #3267b6 !important;
+    width: 100%;
+    padding: 14px 18px !important;
+    margin-top: 18px;
+}
+body .settlement-share {
+    border: 1px solid #cbd9eb !important;
+    background: #f4f8ff !important;
+    color: #3267b6 !important;
+}
+body .settlement-stats {
+    gap: 8px;
+    border: 0 !important;
+    background: #f3f7fc !important;
+    border-radius: 16px;
+    padding: 16px 8px;
+}
+body .focus-mode-list button {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 20px !important;
+    border: 1px solid #c3d7f1 !important;
+    background: #edf4ff !important;
+    color: #315e99 !important;
+}
+body .focus-mode-list button > div {
+    flex: 1;
+    min-width: 140px;
+}
+body .focus-mode-list button i {
+    font-style: normal;
+    color: #3267b6 !important;
+}
+body .calendar-record {
+    width: min(600px, 100%) !important;
+}
+body .calendar-record-heading {
+    position: static !important;
+    padding: 0 0 20px !important;
+    border-bottom: 1px solid #e6edf4;
+}
+body .calendar-record li {
+    display: flex;
+    gap: 12px;
+    padding: 16px 0;
+    border-bottom: 1px solid #e6edf4;
+}
+body .calendar-record li > div {
+    flex: 1;
+    min-width: 0;
+}
+body .calendar-record li > span {
+    flex-shrink: 0;
+    font-size: 14px;
+}
+body .certificate-dialog {
+    width: min(680px, 100%) !important;
+}
+body .checkin-ceremony-card {
+    background: linear-gradient(160deg, #fff, #eff8f3) !important;
+}
+body .sleep-reminder-dialog {
+    background: linear-gradient(160deg, #fff, #f0f3ff) !important;
+}
+body .badge-unlock-dialog {
+    background: linear-gradient(160deg, #fffdf6, #f5f1ff) !important;
+}
+:root body .focus-immersive {
+    z-index: 2147482999 !important;
+    background: radial-gradient(
+        ellipse at top,
+        #244d69,
+        #122838 75%
+    ) !important;
+    padding: max(24px, env(safe-area-inset-top)) 24px
+        max(24px, env(safe-area-inset-bottom)) !important;
+    overflow: auto;
+    max-height: none !important;
+}
+body .focus-immersive button {
+    min-height: 48px;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+}
+body .focus-immersive .focus-confirm {
+    background: #b7e8db !important;
+    color: #163e3b !important;
+}
+body .focus-session-content h2 {
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(64px, 14vw, 140px) !important;
+}
+body:has(
+    :is(
+        .calendar-record-backdrop,
+        .settlement-backdrop,
+        .daily-checkin-backdrop,
+        .checkin-ceremony,
+        .focus-mode-backdrop,
+        .sleep-reminder-backdrop,
+        .badge-unlock-backdrop,
+        .quiz-backdrop,
+        .certificate-backdrop
+    ),
+    .focus-immersive,
+    dialog[open]
+) {
+    overflow: hidden;
+}
 /* Native dialogs are in the top layer, not inside a flex backdrop.
    Keep their positioning independent from the relative card styles above. */
 :root body dialog.app-confirm-dialog {
-  position:fixed !important;
-  inset:16px !important;
-  margin:auto !important;
-  width:min(440px,calc(100vw - 32px)) !important;
-  height:fit-content !important;
-  max-width:calc(100vw - 32px) !important;
-  max-height:calc(100dvh - 32px) !important;
-  min-width:0 !important;
-  min-height:0 !important;
-  box-sizing:border-box;
-  overflow:auto !important;
-  overscroll-behavior:contain;
-  transform:none !important;
-  translate:none !important;
-  animation:none !important;
+    position: fixed !important;
+    inset: 16px !important;
+    margin: auto !important;
+    width: min(440px, calc(100vw - 32px)) !important;
+    height: fit-content !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    box-sizing: border-box;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+    transform: none !important;
+    translate: none !important;
+    animation: none !important;
 }
-body .app-confirm-dialog::backdrop,body #badge-collection .collection-dialog::backdrop { background:rgba(20,32,52,.62); backdrop-filter:blur(8px); }
-body .app-confirm-dialog h2 { margin:16px 0 12px; }
-body .app-confirm-dialog p { margin:0; white-space:pre-line; }
-body .app-confirm-icon { width:48px; height:48px; display:grid; place-items:center; border-radius:14px; background:#edf4ff; color:#3267b6; font-size:26px; font-weight:700; }
-body .app-confirm-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:28px; }
-body .app-confirm-actions button { min-width:0; white-space:normal; overflow-wrap:anywhere; padding:12px; border:1px solid #d4deeb; background:#f4f7fb; color:#49617a; cursor:pointer; }
-body .app-confirm-actions .confirm-primary { background:#3267b6; color:white; border-color:#3267b6; }
-body .app-confirm-actions .confirm-danger { background:#b54444; color:white; border-color:#b54444; }
-body #badge-collection .collection-dialog { border-radius:24px; border:1px solid #e2d9f2; }
-@keyframes app-dialog-enter { from { opacity:0; translate:0 12px; } to { opacity:1; translate:0 0; } }
-@media(max-width:600px) {
- :root body :is(.calendar-record-backdrop,.settlement-backdrop,.daily-checkin-backdrop,.checkin-ceremony,.focus-mode-backdrop,.sleep-reminder-backdrop,.badge-unlock-backdrop,.quiz-backdrop,.certificate-backdrop) { padding:12px !important; }
- body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) { padding:24px 20px !important; max-height:calc(100dvh - 24px) !important; border-radius:20px !important; }
- body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog):has(:is(.calendar-record-close,.settlement-close,.daily-checkin-close,.focus-modal-close,.quiz-close,.collection-close)) { padding-top:64px !important; }
- body .focus-session-actions { flex-wrap:wrap; gap:12px; }
- body .focus-session-actions button { width:100%; }
+body .app-confirm-dialog::backdrop,
+body #badge-collection .collection-dialog::backdrop {
+    background: rgba(20, 32, 52, 0.62);
+    backdrop-filter: blur(8px);
 }
-@media(prefers-reduced-motion:reduce) { body :is(.calendar-record,.settlement-modal,.daily-checkin-dialog,.checkin-ceremony-card,.focus-mode-dialog,.sleep-reminder-dialog,.badge-unlock-dialog,.quiz-dialog,.certificate-dialog,.app-confirm-dialog) { animation:none !important; } }
-@media(max-width:480px) {
-  body .app-confirm-actions { grid-template-columns:minmax(0,1fr); gap:10px; }
-  body .app-confirm-actions button { width:100%; min-height:48px; }
+body .app-confirm-dialog h2 {
+    margin: 16px 0 12px;
+}
+body .app-confirm-dialog p {
+    margin: 0;
+    white-space: pre-line;
+}
+body .app-confirm-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #edf4ff;
+    color: #3267b6;
+    font-size: 26px;
+    font-weight: 700;
+}
+body .app-confirm-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+}
+body .app-confirm-actions button {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    padding: 12px;
+    border: 1px solid #d4deeb;
+    background: #f4f7fb;
+    color: #49617a;
+    cursor: pointer;
+}
+body .app-confirm-actions .confirm-primary {
+    background: #3267b6;
+    color: white;
+    border-color: #3267b6;
+}
+body .app-confirm-actions .confirm-danger {
+    background: #b54444;
+    color: white;
+    border-color: #b54444;
+}
+body #badge-collection .collection-dialog {
+    border-radius: 24px;
+    border: 1px solid #e2d9f2;
+}
+@keyframes app-dialog-enter {
+    from {
+        opacity: 0;
+        translate: 0 12px;
+    }
+    to {
+        opacity: 1;
+        translate: 0 0;
+    }
+}
+@media (max-width: 600px) {
+    :root
+        body
+        :is(
+            .calendar-record-backdrop,
+            .settlement-backdrop,
+            .daily-checkin-backdrop,
+            .checkin-ceremony,
+            .focus-mode-backdrop,
+            .sleep-reminder-backdrop,
+            .badge-unlock-backdrop,
+            .quiz-backdrop,
+            .certificate-backdrop
+        ) {
+        padding: 12px !important;
+    }
+    body
+        :is(
+            .calendar-record,
+            .settlement-modal,
+            .daily-checkin-dialog,
+            .checkin-ceremony-card,
+            .focus-mode-dialog,
+            .sleep-reminder-dialog,
+            .badge-unlock-dialog,
+            .quiz-dialog,
+            .certificate-dialog,
+            .app-confirm-dialog
+        ) {
+        padding: 24px 20px !important;
+        max-height: calc(100dvh - 24px) !important;
+        border-radius: 20px !important;
+    }
+    body
+        :is(
+            .calendar-record,
+            .settlement-modal,
+            .daily-checkin-dialog,
+            .checkin-ceremony-card,
+            .focus-mode-dialog,
+            .sleep-reminder-dialog,
+            .badge-unlock-dialog,
+            .quiz-dialog,
+            .certificate-dialog,
+            .app-confirm-dialog
+        ):has(
+            :is(
+                .calendar-record-close,
+                .settlement-close,
+                .daily-checkin-close,
+                .focus-modal-close,
+                .quiz-close,
+                .collection-close
+            )
+        ) {
+        padding-top: 64px !important;
+    }
+    body .focus-session-actions {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    body .focus-session-actions button {
+        width: 100%;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    body
+        :is(
+            .calendar-record,
+            .settlement-modal,
+            .daily-checkin-dialog,
+            .checkin-ceremony-card,
+            .focus-mode-dialog,
+            .sleep-reminder-dialog,
+            .badge-unlock-dialog,
+            .quiz-dialog,
+            .certificate-dialog,
+            .app-confirm-dialog
+        ) {
+        animation: none !important;
+    }
+}
+@media (max-width: 480px) {
+    body .app-confirm-actions {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+    body .app-confirm-actions button {
+        width: 100%;
+        min-height: 48px;
+    }
 }
