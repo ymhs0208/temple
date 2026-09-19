@@ -47,9 +47,9 @@ export function UnlockReveal({ stopId, collected, onDismiss }: { stopId: string;
       <button className="unlock-reveal-skip" type="button" onClick={() => { if (settled) onDismiss(); else setSettled(true); }}>{settled ? "收下碎片，返回巡禮" : "略過動畫"}</button>
     </div>
     <div className="unlock-reveal-content">
-      <div className="unlock-reveal-progress"><span>碎片收集進度</span><b>{collected} / 7</b></div>
-      <div className="unlock-reveal-track" role="progressbar" aria-label="已收集的巡禮碎片" aria-valuemin={0} aria-valuemax={7} aria-valuenow={collected}><span style={{ width: Math.min(100, collected / 7 * 100) + "%" }} /></div>
-      <p id="unlock-reveal-description">{collected === 7 ? "七塊碎片已集齊！讀完本站故事後，回巡禮頁挑戰最終問答。" : `再收集 ${7 - collected} 塊碎片，就能開啟最終問答。`}</p>
+        <div className="unlock-reveal-progress"><span>碎片收集進度</span><b>{collected} / {pilgrimageStops.length}</b></div>
+        <div className="unlock-reveal-track" role="progressbar" aria-label="已收集的巡禮碎片" aria-valuemin={0} aria-valuemax={pilgrimageStops.length} aria-valuenow={collected}><span style={{ width: Math.min(100, collected / pilgrimageStops.length * 100) + "%" }} /></div>
+        <p id="unlock-reveal-description">{collected >= pilgrimageStops.length ? "七塊碎片已集齊！讀完本站故事後，回巡禮頁挑戰最終問答。" : `再收集 ${pilgrimageStops.length - collected} 塊碎片，就能開啟最終問答。`}</p>
       <section className="unlock-reveal-learning"><span>這一站，你會認識</span><p>{lesson.takeaway}</p><div><b>讀故事</b><span aria-hidden="true">→</span><b>答 2 題</b><span aria-hidden="true">→</span><b>獲得學習徽印</b></div></section>
       <p className="unlock-reveal-note">已解鎖故事與探索小記；學習徽印需完成本站知識挑戰。</p>
       <a className="unlock-reveal-primary" href={`/pilgrimage/${stop.id}`}>閱讀故事，開始知識挑戰 <span aria-hidden="true">→</span></a>

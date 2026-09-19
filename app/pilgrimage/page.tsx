@@ -596,7 +596,7 @@ export default function Pilgrimage() {
                                 </span>
                             </summary>
                             <div className="travel-directory-intro">
-                                <span>依巡禮順序排列 · 共 8 站</span>
+                                <span>依巡禮順序排列 · 共 {matsus.length} 站</span>
                                 <small>跨縣市旅程，可分次完成</small>
                             </div>
                             <ol className="travel-stop-list">
@@ -882,7 +882,7 @@ export default function Pilgrimage() {
                             <small>
                                 {isAllCollected
                                     ? "七塊碎片已集滿，請在下方開始最終問答。"
-                                    : `再收集 ${8 - unlockedCount} 塊碎片，就能開啟終章。`}
+                                    : `再收集 ${matsus.length - unlockedCount} 塊碎片，就能開啟終章。`}
                             </small>
                         </div>
                     </aside>
