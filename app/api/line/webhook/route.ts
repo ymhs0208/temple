@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { taipeiDate } from "@/lib/taipei-date";
-import { learningUrl } from "@/lib/line-reminder";
+import { learningUrl, flexHeader, flexTaskRow } from "@/lib/line-reminder";
 
 type LineEvent = {
   type?: string;
@@ -53,21 +53,19 @@ async function replyFlex(replyToken: string, title: string, intro: string, tasks
   if (!accessToken) throw new Error("LINE Messaging API is not configured");
   const bubble = {
     type: "bubble",
-    header: { type: "box", layout: "vertical", backgroundColor: "#287C64", paddingAll: "18px", contents: [
-      { type: "text", text: "文昌同行・AI 學習教練", size: "xs", color: "#DDF5E8" },
-      { type: "text", text: title, size: "xl", weight: "bold", color: "#FFFFFF", margin: "sm" },
-    ] },
-    body: { type: "box", layout: "vertical", spacing: "md", paddingAll: "18px", contents: [
-      { type: "text", text: intro, size: "sm", color: "#40536B", wrap: true },
-      ...tasks.slice(0, 5).map((task) => ({ type: "box", layout: "horizontal", spacing: "sm", alignItems: "center", contents: [
-        { type: "text", text: task.subject, flex: 1, size: "sm", color: "#243B53", wrap: true },
-        { type: "text", text: `${task.minutes} 分鐘`, size: "xs", color: "#287C64", weight: "bold", align: "end" },
-        ...(allowCompletion ? [{ type: "button", style: "link", height: "sm", action: { type: "postback", label: "完成", data: `action=complete&taskId=${task.id}`, displayText: `完成${task.subject}` } }] : []),
+    size: "mega",
+    header: flexHeader(title, "#245747", "AI 學習教練"),
+    body: { type: "box", layout: "vertical", spacing: "md", paddingAll: "24px", contents: [
+      { type: "text", text: intro, size: "sm", color: "#53645D", wrap: true },
+      ...tasks.slice(0, 5).map((task, index) => ({ type: "box", layout: "vertical", spacing: "sm", contents: [
+        flexTaskRow(task, index, "#245747"),
+        ...(allowCompletion ? [{ type: "button", style: "link", color: "#245747", height: "sm", action: { type: "postback", label: `完成第 ${index + 1} 項`, data: `action=complete&taskId=${task.id}`, displayText: `完成${task.subject}` } }] : []),
       ] })),
+      ...(tasks.length > 5 ? [{ type: "text", text: "更多任務請至今日學習查看", size: "xs", color: "#7B857F", wrap: true }] : []),
     ] },
-    footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "14px", contents: [
-      { type: "button", style: "primary", color: "#287C64", action: { type: "uri", label: "開始今天學習", uri: learningUrl("/today") } },
-      { type: "button", style: "link", action: { type: "uri", label: "查看完整進度", uri: learningUrl("/progress") } },
+    footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "24px", paddingTop: "0px", contents: [
+      { type: "button", style: "primary", color: "#245747", action: { type: "uri", label: "開始今天學習", uri: learningUrl("/today") } },
+      { type: "button", style: "link", color: "#62726B", height: "sm", action: { type: "uri", label: "查看完整進度", uri: learningUrl("/progress") } },
     ] },
   };
   const message: Record<string, unknown> = { type: "flex", altText: `${title}・${intro}`.slice(0, 400), contents: bubble };
