@@ -109,14 +109,6 @@ const validPhysicalQRCodes = [
     "QR07",
 ];
 
-type BarcodeDetectorInstance = {
-    detect: (source: HTMLVideoElement) => Promise<{ rawValue: string }[]>;
-};
-type BarcodeDetectorConstructor = new (options?: {
-    formats?: string[];
-}) => BarcodeDetectorInstance;
-type ScannerWindow = Window &
-    typeof globalThis & { BarcodeDetector?: BarcodeDetectorConstructor };
 function qrCodeFromValue(value: string) {
     try {
         return (
@@ -173,8 +165,6 @@ export default function Pilgrimage() {
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const scanCardRef = useRef<HTMLElement>(null);
-    const streamRef = useRef<MediaStream | null>(null);
-    const animationRef = useRef<number | null>(null);
 
     const unlockedCount = visits.length;
     const unlockedMatsus = matsus.slice(0, unlockedCount);
@@ -328,52 +318,87 @@ export default function Pilgrimage() {
     useEffect(() => {
         if (!scannerOpen) return;
         let cancelled = false;
+        let stream: MediaStream | null = null;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const video = videoRef.current;
         const stop = () => {
-            if (animationRef.current)
-                cancelAnimationFrame(animationRef.current);
-            streamRef.current?.getTracks().forEach((track) => track.stop());
-            streamRef.current = null;
+            clearTimeout(timer);
+            stream?.getTracks().forEach((track) => track.stop());
+            if (video) video.srcObject = null;
         };
         const start = async () => {
             try {
-                const Detector = (window as ScannerWindow).BarcodeDetector;
-                if (!Detector) {
-                    setNotice(
-                        "此瀏覽器暫不支援相機辨識，請使用碎片碼手動解鎖。",
-                    );
-                    setScannerOpen(false);
-                    return;
+                setNotice("");
+                if (!window.isSecureContext) {
+                    throw new Error("INSECURE_CONTEXT");
                 }
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment" },
+                if (!navigator.mediaDevices?.getUserMedia) {
+                    throw new Error("CAMERA_UNAVAILABLE");
+                }
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: { ideal: "environment" },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                    },
                     audio: false,
                 });
-                if (cancelled) {
-                    stream.getTracks().forEach((track) => track.stop());
+                if (cancelled || !video) {
+                    stop();
                     return;
                 }
-                streamRef.current = stream;
-                const video = videoRef.current;
-                if (!video) return;
                 video.srcObject = stream;
                 await video.play();
-                const detector = new Detector({ formats: ["qr_code"] });
-                const scan = async () => {
-                    if (cancelled || !videoRef.current) return;
-                    try {
-                        const result = await detector.detect(videoRef.current);
-                        if (result[0]?.rawValue) {
-                            setCode(qrCodeFromValue(result[0].rawValue));
+                // Software decoding also works when BarcodeDetector is unavailable.
+                const { default: jsQR } = await import("jsqr");
+                if (cancelled) return;
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d", { willReadFrequently: true });
+                if (!context) throw new Error("DECODER_UNAVAILABLE");
+                const scan = () => {
+                    if (cancelled) return;
+                    if (video.readyState >= 2 && video.videoWidth && video.videoHeight) {
+                        const scale = Math.min(1, 960 / video.videoWidth);
+                        canvas.width = Math.round(video.videoWidth * scale);
+                        canvas.height = Math.round(video.videoHeight * scale);
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const frame = context.getImageData(0, 0, canvas.width, canvas.height);
+                        const result = jsQR(frame.data, frame.width, frame.height);
+                        if (result?.data) {
+                            stop();
+                            setCode(qrCodeFromValue(result.data));
                             setNotice("已讀取碎片碼，請按「解鎖」確認。");
                             setScannerOpen(false);
                             return;
                         }
-                    } catch {}
-                    animationRef.current = requestAnimationFrame(scan);
+                    }
+                    timer = setTimeout(() => {
+                        try {
+                            scan();
+                        } catch {
+                            stop();
+                            setNotice("影像辨識暫時失敗，請重新開啟相機，或手動輸入碎片碼。");
+                            setScannerOpen(false);
+                        }
+                    }, 180);
                 };
-                void scan();
-            } catch {
-                setNotice("無法開啟相機，請確認相機權限或改用手動輸入。");
+                scan();
+            } catch (error) {
+                stop();
+                if (cancelled) return;
+                const name = error instanceof Error ? error.name : "";
+                const message = error instanceof Error ? error.message : "";
+                if (message === "INSECURE_CONTEXT") {
+                    setNotice("相機需要安全連線，請使用 HTTPS 網址開啟本頁。");
+                } else if (name === "NotAllowedError" || name === "SecurityError") {
+                    setNotice("相機存取被拒絕，請在瀏覽器的網站設定允許相機後重試。若在 LINE 等 App 內開啟，請改用 Safari 或 Chrome 開啟本頁。");
+                } else if (name === "NotFoundError") {
+                    setNotice("找不到可用的相機，請改用有相機的裝置或手動輸入碎片碼。");
+                } else if (name === "NotReadableError" || name === "AbortError") {
+                    setNotice("相機暫時無法啟動，請關閉其他使用相機的 App 後重試，或手動輸入碎片碼。");
+                } else {
+                    setNotice("無法啟動掃描，請使用 Safari 或 Chrome 開啟本頁重試，或手動輸入碎片碼。");
+                }
                 setScannerOpen(false);
             }
         };
