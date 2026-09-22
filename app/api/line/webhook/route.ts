@@ -1,3 +1,4 @@
+import { buildPilgrimageFlex, isPilgrimageCommand } from "@/lib/line-pilgrimage";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { taipeiDate } from "@/lib/taipei-date";
 import { learningUrl, flexHeader, flexTaskRow } from "@/lib/line-reminder";
@@ -131,10 +132,6 @@ async function learningContext(lineUserId?: string) {
   return { user, plan, tasks: taskList, completed: new Set((completions ?? []).map((row) => row.task_id)) };
 }
 
-function taskLines(tasks: { subject: string; minutes: number; task_type: string; id: string }[], completed: Set<string>) {
-  return tasks.map((task, index) => `${completed.has(task.id) ? "✓" : `${index + 1}.`} ${task.subject} ${task.minutes} 分鐘｜${task.task_type}`).join("\n");
-}
-
 function oneHourPlan(tasks: { subject: string; minutes: number; task_type: string; id: string }[], completed: Set<string>, source: string) {
   const match = source.match(/(\d+(?:\.\d+)?)\s*(小時|分鐘|分)/);
   const capacity = match ? Math.max(15, Math.round(Number(match[1]) * (match[2] === "小時" ? 60 : 1))) : 60;
@@ -149,7 +146,7 @@ function oneHourPlan(tasks: { subject: string; minutes: number; task_type: strin
 }
 
 function helpText() {
-  return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・完成英文\n・完成數學\n・我只有一小時\n・查看進度\n・給我一句鼓勵";
+  return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・完成英文\n・完成數學\n・我只有一小時\n・查看進度\n・給我一句鼓勵\n・七媽巡禮（七關地點與導航）";
 }
 
 async function answer(event: LineEvent) {
@@ -164,6 +161,17 @@ async function answer(event: LineEvent) {
     if (postback?.get("action") !== "complete") return;
   }
   const command = event.message?.text?.trim().replace(/\s+/g, "") ?? "";
+  if (isPilgrimageCommand(command)) {
+    const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
+    if (!accessToken) throw new Error("LINE Messaging API is not configured");
+    const response = await fetch("https://api.line.me/v2/bot/message/reply", {
+      method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ replyToken: event.replyToken, messages: [buildPilgrimageFlex()] }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Pilgrimage reply failed: ${response.status}`);
+    return;
+  }
   const context = await learningContext(event.source?.userId);
   if (!context || !context.plan) {
     await reply(event.replyToken, "歡迎來到文昌同行 ✦\n請先開啟 LIFF 建立學習計畫，之後我就能依你的任務提供建議。\n\n" + helpText());
@@ -230,10 +238,6 @@ async function answer(event: LineEvent) {
   }
   if (command.includes("祈福")) {
     await reply(event.replyToken, `🌸 今日祈福\n完成學習後，也可以留下一句祝福或抽一支學習籤。\n\n開啟祈福頁：${learningUrl("/prayer")}`);
-    return;
-  }
-  if (command.includes("巡禮") || command.includes("宮廟")) {
-    await reply(event.replyToken, `⛩ 文昌巡禮\n掃描現場 QR Code，解鎖宮廟故事與學習成就。\n\n開始巡禮：${learningUrl("/pilgrimage")}`);
     return;
   }
   if (command.includes("鼓勵") || command.includes("籤") || command.includes("加油")) {

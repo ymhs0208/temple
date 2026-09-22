@@ -1,7 +1,7 @@
 export type ReminderTask = { subject: string; minutes: number };
 export type ReminderKind = "morning" | "evening";
 
-export function learningUrl(path: "/today" | "/progress" | "/prayer" | "/pilgrimage") {
+export function learningUrl(path: "/today" | "/progress" | "/prayer" | "/pilgrimage" | `/pilgrimage/${string}`) {
   const base = process.env.NEXT_PUBLIC_APP_URL;
   if (base) {
     const url = new URL(path, base);
