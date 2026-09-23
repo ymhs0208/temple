@@ -14,7 +14,7 @@ type LineEvent = {
 };
 
 type Task = { id: string; subject: string; minutes: number; task_type: string };
-type QuickReply = { label: string; text?: string; data?: string };
+type QuickReply = { label: string; text?: string; data?: string; uri?: string };
 
 const today = () => taipeiDate();
 
@@ -60,7 +60,7 @@ async function replyTextWithQuickReplies(replyToken: string, text: string, items
   await fetch("https://api.line.me/v2/bot/message/reply", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ replyToken, messages: [{ type: "text", text: text.slice(0, 4900), quickReply: { items: items.slice(0, 13).map((item) => ({ type: "action", action: item.data ? { type: "postback", label: item.label, data: item.data, displayText: item.label } : { type: "message", label: item.label, text: item.text ?? item.label } })) } }] }),
+    body: JSON.stringify({ replyToken, messages: [{ type: "text", text: text.slice(0, 4900), quickReply: { items: items.slice(0, 13).map((item) => ({ type: "action", action: item.uri ? { type: "uri", label: item.label, uri: item.uri } : item.data ? { type: "postback", label: item.label, data: item.data, displayText: item.label } : { type: "message", label: item.label, text: item.text ?? item.label } })) } }] }),
   });
 }
 
@@ -122,7 +122,7 @@ async function replyFlex(replyToken: string, title: string, intro: string, tasks
     ] },
   };
   const message: Record<string, unknown> = { type: "flex", altText: `${title}・${intro}`.slice(0, 400), contents: bubble };
-  if (quickReplies.length) message.quickReply = { items: quickReplies.slice(0, 13).map((item) => ({ type: "action", action: item.data ? { type: "postback", label: item.label, data: item.data, displayText: item.label } : { type: "message", label: item.label, text: item.text ?? item.label } })) };
+  if (quickReplies.length) message.quickReply = { items: quickReplies.slice(0, 13).map((item) => ({ type: "action", action: item.uri ? { type: "uri", label: item.label, uri: item.uri } : item.data ? { type: "postback", label: item.label, data: item.data, displayText: item.label } : { type: "message", label: item.label, text: item.text ?? item.label } })) };
   await fetch("https://api.line.me/v2/bot/message/reply", {
     method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ replyToken, messages: [message] }),
@@ -290,11 +290,15 @@ async function answer(event: LineEvent) {
   if (!context || !context.plan) {
     let startUrl = "";
     try { startUrl = learningUrl("/today"); } catch { /* Configuration can be completed after the first reply. */ }
-    await reply(event.replyToken, `歡迎來到文昌同行 ✦\n\n我是你的學習同行，會陪你把目標拆成今天做得到的一小步。\n\n請先開啟 LIFF 建立學習計畫；完成後，我就能依你的任務幫你安排、提醒與記錄。${startUrl ? `\n\n開始建立計畫：${startUrl}` : ""}`);
+    await replyTextWithQuickReplies(event.replyToken, "歡迎來到文昌同行 ✦\n\n我是你的學習同行，會陪你把目標拆成今天做得到的一小步。\n\n先建立你的學習計畫，之後我就能幫你安排、提醒與記錄。", startUrl ? [{ label: "開始建立計畫", uri: startUrl }] : []);
     return;
   }
   const { tasks, completed, plan } = context;
 	const state = await conversationState(event.source?.userId);
+	if (/^(嗨|哈囉|你好|早安|晚安|hello|hi)$/.test(command.toLowerCase())) {
+		await replyTextWithQuickReplies(event.replyToken, `嗨，${context.user.display_name || "同學"} ✦\n今天也一起完成一小步。你想先做什麼？`, menuReplies);
+		return;
+	}
 	const addTask = parseNewTaskCommand(command);
 	if (postback?.get("action") === "add_task_confirm") {
 		const subject = postback.get("subject")?.trim() ?? "";
