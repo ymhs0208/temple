@@ -206,6 +206,15 @@ function helpText() {
   return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・新增英文 30 分鐘\n・完成英文\n・我只有一小時\n・查看進度\n・給我一句鼓勵\n・七媽巡禮（七關地點與導航）\n・巡禮集章卡\n・連續學習成就";
 }
 
+const menuReplies: QuickReply[] = [
+  { label: "今天讀什麼", text: "今天讀什麼" },
+  { label: "新增任務", text: "新增任務" },
+  { label: "查看進度", text: "查看進度" },
+  { label: "我有 30 分鐘", text: "我有 30 分鐘" },
+  { label: "學習成就", text: "連續學習成就" },
+  { label: "巡禮集章卡", text: "巡禮集章卡" },
+];
+
 async function answer(event: LineEvent) {
   if (!event.replyToken) return;
   const postback = event.type === "postback" ? new URLSearchParams(event.postback?.data ?? "") : null;
@@ -238,7 +247,8 @@ async function answer(event: LineEvent) {
   if (event.type !== "message" || event.message?.type !== "text") {
     if (postback?.get("action") !== "complete") return;
   }
-  const command = event.message?.text?.trim().replace(/\s+/g, "") ?? "";
+  const originalCommand = event.message?.text?.trim() ?? "";
+  const command = originalCommand.replace(/\s+/g, "");
   const achievementKind = /集章|印章|巡禮卡/.test(command) ? "stamps" : /連續學習|學習成就|我的成就|學習徽章/.test(command) ? "study" : null;
   if (achievementKind) {
     if (!event.source?.userId || (event.source.type && event.source.type !== "user")) {
@@ -320,8 +330,8 @@ async function answer(event: LineEvent) {
 		]);
 		return;
 	}
-	const asksForTime = /幫我安排|幫我排|我只有幾分鐘|不知道讀什麼|怎麼安排/.test(command) && !/\d+\s*(小時|分鐘|分)/.test(command);
-	if (asksForTime || state?.state === "awaiting_time") {
+	const asksForTime = /幫我安排|幫我排|我只有幾分鐘|不知道讀什麼|怎麼安排/.test(command) && !/\d+(?:\.\d+)?\s*(小時|分鐘|分)/.test(command);
+	if (asksForTime) {
 		await saveConversationState(event.source?.userId, "awaiting_time", { prompt: "請提供今天可用的學習時間" });
 		await replyTextWithQuickReplies(event.replyToken, "可以，今天你有多少時間？我會依未完成任務幫你排好順序。", [
 			{ label: "15 分鐘", text: "我有 15 分鐘" },
@@ -349,7 +359,7 @@ async function answer(event: LineEvent) {
 		await replyCompletion(event.replyToken, target.subject, completedCount, tasks.length, completedMinutes, nextTask);
 		return;
 	}
-  if (command.includes("今天讀什麼") || command.includes("今日任務")) {
+  if (/今天讀什麼|今日任務|今天安排|今日安排|待辦/.test(command)) {
     await saveConversationState(event.source?.userId, "viewing_today_tasks");
     if (tasks.length) await replyFlex(event.replyToken, "今天，從一件事開始", `弱科優先：${plan.weak_subject}。先完成第一項就很棒！`, tasks.filter((task) => !completed.has(task.id)), [
       { label: "我有 15 分鐘", text: "我有 15 分鐘" },
@@ -369,7 +379,7 @@ async function answer(event: LineEvent) {
     ]);
     return;
   }
-  if (command.includes("查看進度") || command.includes("我的進度") || command === "進度") {
+  if (/查看進度|我的進度|完成幾項|完成率|進度/.test(command)) {
     const done = tasks.filter((task) => completed.has(task.id));
     const minutes = done.reduce((sum, task) => sum + task.minutes, 0);
     const nextTask = tasks.find((task) => !completed.has(task.id));
@@ -381,13 +391,13 @@ async function answer(event: LineEvent) {
     await reply(event.replyToken, `🌸 今日祈福\n完成學習後，也可以留下一句祝福或抽一支學習籤。\n\n開啟祈福頁：${learningUrl("/prayer")}`);
     return;
   }
-  if (command.includes("鼓勵") || command.includes("籤") || command.includes("加油")) {
+  if (/鼓勵|籤|加油|打氣|累了|好累/.test(command)) {
     const done = tasks.filter((task) => completed.has(task.id)).length;
     const message = done === tasks.length && tasks.length ? "今日任務已完成。穩定累積的你，正在靠近目標。" : done ? "你已經開始前進了；把下一個小任務完成，就是今天最踏實的進步。" : `先從 ${plan.weak_subject} 的 15 分鐘開始。積跬步以至千里，今天的努力會留下力量。`;
     await reply(event.replyToken, `🌕 今日鼓勵\n${message}`);
     return;
   }
-  await reply(event.replyToken, helpText());
+  await replyTextWithQuickReplies(event.replyToken, `我收到「${originalCommand.slice(0, 80)}」，目前可以幫你安排學習、查看進度或管理巡禮。\n\n${helpText()}`, menuReplies);
 }
 
 export async function POST(request: Request) {
