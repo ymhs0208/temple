@@ -203,7 +203,7 @@ function oneHourPlan(tasks: { subject: string; minutes: number; task_type: strin
 }
 
 function helpText() {
-  return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・新增英文 30 分鐘\n・完成英文\n・我只有一小時\n・查看進度\n・給我一句鼓勵\n・七媽巡禮（七關地點與導航）\n・巡禮集章卡\n・連續學習成就";
+  return "我是文昌同行 ✦\n你的每日學習陪伴，把大目標拆成今天的一小步。\n\n我可以幫你：\n・安排今天要讀什麼\n・新增或完成學習任務\n・查看進度與連續成就\n・在需要時給你一句鼓勵\n・開啟七媽巡禮與集章卡\n\n直接傳「今天讀什麼」就開始，或點下方選單。";
 }
 
 const menuReplies: QuickReply[] = [
@@ -288,7 +288,9 @@ async function answer(event: LineEvent) {
   }
   const context = await learningContext(event.source?.userId);
   if (!context || !context.plan) {
-    await reply(event.replyToken, "歡迎來到文昌同行 ✦\n請先開啟 LIFF 建立學習計畫，之後我就能依你的任務提供建議。\n\n" + helpText());
+    let startUrl = "";
+    try { startUrl = learningUrl("/today"); } catch { /* Configuration can be completed after the first reply. */ }
+    await reply(event.replyToken, `歡迎來到文昌同行 ✦\n\n我是你的學習同行，會陪你把目標拆成今天做得到的一小步。\n\n請先開啟 LIFF 建立學習計畫；完成後，我就能依你的任務幫你安排、提醒與記錄。${startUrl ? `\n\n開始建立計畫：${startUrl}` : ""}`);
     return;
   }
   const { tasks, completed, plan } = context;

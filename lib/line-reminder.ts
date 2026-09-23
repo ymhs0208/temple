@@ -13,9 +13,9 @@ export function learningUrl(path: "/today" | "/progress" | "/prayer" | "/pilgrim
   return `https://liff.line.me/${id}${path}`;
 }
 const text = (value: string, size = "sm", color = "#40536B") => ({ type: "text", text: value, size, color, wrap: true });
-export function flexHeader(title: string, color: string, eyebrow = "你的學習陪伴") {
+export function flexHeader(title: string, color: string, eyebrow = "每天一小步 · 學習有同行") {
   return { type: "box", layout: "vertical", backgroundColor: color, paddingAll: "24px", spacing: "md", contents: [
-    { ...text("文昌同行  /  " + eyebrow, "xs", "#E5EDE9"), weight: "bold" },
+    { ...text("文昌同行  ·  " + eyebrow, "xs", "#E5EDE9"), weight: "bold" },
     { ...text(title, "xl", "#FFFFFF"), weight: "bold" },
     { type: "box", layout: "vertical", width: "32px", height: "3px", backgroundColor: "#D9BD81", contents: [] },
   ] };
