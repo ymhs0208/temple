@@ -47,10 +47,17 @@ export async function POST(request: Request) {
   let stage = "request";
   try {
     const body = (await request.json()) as { idToken?: string; hours?: number; weak?: string; goal?: string; challengeName?: string; wishes?: string[]; examDate?: string; tasks?: IncomingTask[]; companionState?: CompanionState };
-    if (!body.idToken || !body.hours || !body.weak || !body.tasks?.length)
-      return Response.json({ error: "Missing required progress data", code: "SYNC_REQUEST" }, { status: 400 });
-    if (body.tasks.length > 5 || body.tasks.some((task) => !task.subject || !task.detail || task.minutes < 1 || task.minutes > 180))
-      return Response.json({ error: "Invalid task data", code: "SYNC_REQUEST" }, { status: 400 });
+    if (typeof body.idToken !== "string" || !body.idToken.trim() || typeof body.hours !== "number" || !Number.isFinite(body.hours) || body.hours <= 0 || typeof body.weak !== "string" || !body.weak.trim() || !Array.isArray(body.tasks) || !body.tasks.length)
+      return Response.json({ error: "請先完成學習計畫，再同步到雲端。", code: "SYNC_REQUEST" }, { status: 400 });
+    const normalizedTasks = body.tasks.map((task) => ({
+      subject: typeof task?.subject === "string" ? task.subject.trim().slice(0, 40) : "",
+      minutes: typeof task?.minutes === "number" ? task.minutes : Number(task?.minutes),
+      detail: typeof task?.detail === "string" && task.detail.trim() ? task.detail.trim().slice(0, 120) : "自主學習",
+      done: task?.done === true,
+    }));
+    if (normalizedTasks.length > 5 || normalizedTasks.some((task) => !task.subject || !Number.isInteger(task.minutes) || task.minutes < 1 || task.minutes > 180))
+      return Response.json({ error: "請確認每個任務都有科目，分鐘需介於 1 到 180。", code: "SYNC_TASKS" }, { status: 400 });
+    body.tasks = normalizedTasks;
 
     stage = "line_identity";
     const identity = await verifyLineIdToken(body.idToken);

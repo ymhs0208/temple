@@ -892,8 +892,8 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
                     if (!response.ok) {
                         const failure = (await response
                             .json()
-                            .catch(() => null)) as { code?: string } | null;
-                        throw new Error(failure?.code ?? "SYNC_UNKNOWN");
+                            .catch(() => null)) as { code?: string; error?: string } | null;
+                        throw new Error(failure?.error ? `${failure.code ?? "SYNC_UNKNOWN"}: ${failure.error}` : failure?.code ?? "SYNC_UNKNOWN");
                     }
                     setSyncStatus("已同步至雲端學習紀錄");
                     return true;
