@@ -1,3 +1,5 @@
+import { buildStampFlex, buildStudyAchievementFlex } from "@/lib/line-achievements";
+import { readAchievementRecords } from "@/lib/achievement-records";
 import { buildPilgrimageFlex, isPilgrimageCommand } from "@/lib/line-pilgrimage";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { taipeiDate } from "@/lib/taipei-date";
@@ -6,7 +8,7 @@ import { learningUrl, flexHeader, flexTaskRow } from "@/lib/line-reminder";
 type LineEvent = {
   type?: string;
   replyToken?: string;
-  source?: { userId?: string };
+  source?: { userId?: string; type?: string };
   message?: { type?: string; text?: string };
   postback?: { data?: string };
 };
@@ -15,6 +17,19 @@ type Task = { id: string; subject: string; minutes: number; task_type: string };
 type QuickReply = { label: string; text?: string; data?: string };
 
 const today = () => taipeiDate();
+
+async function updateReminderChoice(lineUserId: string | undefined, action: "snooze" | "pause", minutes = 30, kind: "morning" | "evening" = "morning") {
+  if (!lineUserId) return false;
+  const db = supabaseAdmin();
+  const { data: user } = await db.from("users").select("id").eq("line_user_id", lineUserId).maybeSingle();
+  if (!user) return false;
+  const values = action === "pause"
+    ? { reminders_paused_until: today(), reminder_snoozed_until: null, reminder_snoozed_kind: null }
+    : { reminder_snoozed_until: new Date(Date.now() + minutes * 60_000).toISOString(), reminders_paused_until: null, reminder_snoozed_kind: kind };
+  const { error } = await db.from("user_preferences").upsert({ user_id: user.id, ...values }, { onConflict: "user_id" });
+  if (error) throw error;
+  return true;
+}
 
 async function signatureIsValid(body: string, receivedSignature: string | null) {
   const secret = process.env.LINE_MESSAGING_CHANNEL_SECRET;
@@ -46,6 +61,43 @@ async function replyTextWithQuickReplies(replyToken: string, text: string, items
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ replyToken, messages: [{ type: "text", text: text.slice(0, 4900), quickReply: { items: items.slice(0, 13).map((item) => ({ type: "action", action: item.data ? { type: "postback", label: item.label, data: item.data, displayText: item.label } : { type: "message", label: item.label, text: item.text ?? item.label } })) } }] }),
+  });
+}
+
+function parseNewTaskCommand(command: string) {
+  const match = command.match(/^(?:新增|加入|建立)(?:任務)?(.+?)(\d{1,3})(?:分鐘|分|min)$/i);
+  if (!match) return null;
+  const subject = match[1].replace(/^(?:今天|今日)/, "").trim();
+  const minutes = Number(match[2]);
+  if (!subject || !Number.isInteger(minutes) || minutes < 1 || minutes > 180) return null;
+  return { subject: subject.slice(0, 40), minutes };
+}
+
+async function replyNewTaskConfirmation(replyToken: string, subject: string, minutes: number) {
+  const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
+  if (!accessToken) throw new Error("LINE Messaging API is not configured");
+  const message = {
+    type: "flex", altText: `確認新增任務：${subject} ${minutes} 分鐘`,
+    contents: {
+      type: "bubble", size: "mega",
+      header: flexHeader("新增一小步", "#245747", "今日學習安排"),
+      body: { type: "box", layout: "vertical", spacing: "md", paddingAll: "24px", contents: [
+        { type: "text", text: "要把這件事放進今天的學習清單嗎？", size: "sm", color: "#53645D", wrap: true },
+        { type: "box", layout: "vertical", spacing: "xs", margin: "lg", paddingAll: "16px", backgroundColor: "#F5F1E8", cornerRadius: "12px", contents: [
+          { type: "text", text: subject, size: "xl", weight: "bold", color: "#245747", wrap: true },
+          { type: "text", text: `${minutes} 分鐘・今天`, size: "sm", color: "#AA5146" },
+        ] },
+        { type: "text", text: "確認後會新增到今日任務最後一項，不會覆蓋原本安排。", size: "xs", color: "#788279", wrap: true, margin: "lg" },
+      ] },
+      footer: { type: "box", layout: "horizontal", spacing: "sm", paddingAll: "24px", paddingTop: "0px", contents: [
+        { type: "button", style: "primary", color: "#245747", flex: 2, action: { type: "postback", label: "確認新增", data: `action=add_task_confirm&subject=${encodeURIComponent(subject)}&minutes=${minutes}`, displayText: "確認新增任務" } },
+        { type: "button", style: "secondary", color: "#EEE9DF", flex: 1, action: { type: "postback", label: "取消", data: "action=add_task_cancel", displayText: "取消新增" } },
+      ] },
+    },
+  };
+  await fetch("https://api.line.me/v2/bot/message/reply", {
+    method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ replyToken, messages: [message] }),
   });
 }
 
@@ -105,6 +157,9 @@ async function replyCompletion(replyToken: string, subject: string, completedCou
     ...(nextTask ? [{ label: `開始${nextTask.subject}`, data: `action=start&taskId=${nextTask.id}` }] : []),
     { label: "休息一下", text: "休息一下" },
     { label: "查看成果", text: "查看進度" },
+    { label: "學習成就", text: "連續學習成就" },
+    { label: "集章卡", text: "巡禮集章卡" },
+    { label: "新增任務", text: "新增任務" },
     { label: "今日祈福", text: "祈福" },
     { label: "開始巡禮", text: "巡禮" },
   ], false);
@@ -116,6 +171,8 @@ async function replyProgress(replyToken: string, doneCount: number, totalCount: 
     ...(nextTask ? [{ label: `開始${nextTask.subject}`, data: `action=start&taskId=${nextTask.id}` }] : []),
     { label: "今天讀什麼", text: "今天讀什麼" },
     { label: "查看網站進度", text: "查看進度" },
+    { label: "學習成就", text: "連續學習成就" },
+    { label: "新增任務", text: "新增任務" },
   ], false);
 }
 
@@ -146,12 +203,33 @@ function oneHourPlan(tasks: { subject: string; minutes: number; task_type: strin
 }
 
 function helpText() {
-  return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・完成英文\n・完成數學\n・我只有一小時\n・查看進度\n・給我一句鼓勵\n・七媽巡禮（七關地點與導航）";
+  return "我是文昌同行學習軍師 ✦\n\n你可以直接傳：\n・今天讀什麼\n・新增英文 30 分鐘\n・完成英文\n・我只有一小時\n・查看進度\n・給我一句鼓勵\n・七媽巡禮（七關地點與導航）\n・巡禮集章卡\n・連續學習成就";
 }
 
 async function answer(event: LineEvent) {
   if (!event.replyToken) return;
   const postback = event.type === "postback" ? new URLSearchParams(event.postback?.data ?? "") : null;
+  if (postback?.get("action") === "add_task_cancel") {
+    await replyTextWithQuickReplies(event.replyToken, "已取消，今天的學習安排沒有變動。", [
+      { label: "今天讀什麼", text: "今天讀什麼" },
+      { label: "新增任務", text: "新增任務" },
+    ]);
+    return;
+  }
+  if (postback?.get("action") === "snooze_reminder" || postback?.get("action") === "pause_reminders") {
+    try {
+      const paused = postback.get("action") === "pause_reminders";
+      const reminderKind = postback.get("kind") === "evening" ? "evening" : "morning";
+      const updated = await updateReminderChoice(event.source?.userId, paused ? "pause" : "snooze", Number(postback.get("minutes")) || 30, reminderKind);
+      await reply(event.replyToken, updated
+        ? (paused ? "今天的提醒已暫停 🌙\n明天會自動恢復，不影響你的學習紀錄。" : "好的，提醒會在 30 分鐘後再回來 ✦\n今天的學習安排不會變動。")
+        : "找不到已連結的學習帳號，請先從 LIFF 登入並同步一次。");
+    } catch (error) {
+      console.error("Unable to update reminder choice", error);
+      await reply(event.replyToken, "提醒設定暫時無法更新，請稍後再試。你原本的提醒設定沒有被清除。");
+    }
+    return;
+  }
   if (postback?.get("action") === "start") {
     await saveConversationState(event.source?.userId, "focus_started", { taskId: postback.get("taskId") });
     await reply(event.replyToken, "專注已準備好 ✦\n請在網站開啟倒數，完成後回到 LINE 點選完成任務。\n" + learningUrl("/today"));
@@ -161,6 +239,32 @@ async function answer(event: LineEvent) {
     if (postback?.get("action") !== "complete") return;
   }
   const command = event.message?.text?.trim().replace(/\s+/g, "") ?? "";
+  const achievementKind = /集章|印章|巡禮卡/.test(command) ? "stamps" : /連續學習|學習成就|我的成就|學習徽章/.test(command) ? "study" : null;
+  if (achievementKind) {
+    if (!event.source?.userId || (event.source.type && event.source.type !== "user")) {
+      await reply(event.replyToken, "請在與官方帳號的一對一聊天室查看個人成就。");
+      return;
+    }
+    try {
+      const records = await readAchievementRecords(event.source.userId, achievementKind);
+      if (!records) {
+        await reply(event.replyToken, "先登入並同步紀錄，就能開啟你的專屬收藏卡。\n" + learningUrl(achievementKind === "stamps" ? "/pilgrimage" : "/today"));
+        return;
+      }
+      const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
+      if (!accessToken) throw new Error("LINE Messaging API is not configured");
+      const response = await fetch("https://api.line.me/v2/bot/message/reply", {
+        method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ replyToken: event.replyToken, messages: [achievementKind === "stamps" ? buildStampFlex(records) : buildStudyAchievementFlex(records)] }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok) throw new Error(`Achievement reply failed: ${response.status}`);
+    } catch (error) {
+      console.error("Achievement card unavailable", error);
+      await reply(event.replyToken, "收藏卡暫時無法載入，請稍後再試。你的紀錄不受影響。");
+    }
+    return;
+  }
   if (isPilgrimageCommand(command)) {
     const accessToken = process.env.LINE_MESSAGING_ACCESS_TOKEN;
     if (!accessToken) throw new Error("LINE Messaging API is not configured");
@@ -179,6 +283,43 @@ async function answer(event: LineEvent) {
   }
   const { tasks, completed, plan } = context;
 	const state = await conversationState(event.source?.userId);
+	const addTask = parseNewTaskCommand(command);
+	if (postback?.get("action") === "add_task_confirm") {
+		const subject = postback.get("subject")?.trim() ?? "";
+		const minutes = Number(postback.get("minutes"));
+		if (!subject || !Number.isInteger(minutes) || minutes < 1 || minutes > 180) {
+			await reply(event.replyToken, "這筆新增任務資料已失效，請重新傳「新增英文 30 分鐘」。");
+			return;
+		}
+		const sortOrder = tasks.reduce((max, task) => Math.max(max, Number((task as Task & { sort_order?: number }).sort_order ?? -1)), -1) + 1;
+		const { data: inserted, error } = await supabaseAdmin().from("daily_tasks").insert({
+			plan_id: plan.id, task_date: today(), subject, minutes, task_type: "LINE 新增", sort_order: sortOrder,
+		}).select("id, subject, minutes, task_type").single();
+		if (error || !inserted) {
+			console.error("LINE task creation failed", error);
+			await reply(event.replyToken, "任務暫時無法新增，請稍後再試；原本的安排沒有變動。");
+			return;
+		}
+		await saveConversationState(event.source?.userId, "task_added", { taskId: inserted.id });
+		await replyFlex(event.replyToken, "任務已加入今天", `已把「${subject}」放進今日清單，完成後可直接在 LINE 打卡。`, [inserted], [
+			{ label: "查看今日任務", text: "今天讀什麼" },
+			{ label: "查看進度", text: "查看進度" },
+		], false);
+		return;
+	}
+	if (addTask) {
+		await saveConversationState(event.source?.userId, "confirming_task_add", addTask);
+		await replyNewTaskConfirmation(event.replyToken, addTask.subject, addTask.minutes);
+		return;
+	}
+	if (/^(?:新增|加入|建立)(?:任務)?$/.test(command)) {
+		await saveConversationState(event.source?.userId, "awaiting_task_details");
+		await replyTextWithQuickReplies(event.replyToken, "請用這個格式告訴我：新增科目＋分鐘\n例如：新增英文 30 分鐘", [
+			{ label: "新增英文 30 分鐘", text: "新增英文 30 分鐘" },
+			{ label: "新增數學 45 分鐘", text: "新增數學 45 分鐘" },
+		]);
+		return;
+	}
 	const asksForTime = /幫我安排|幫我排|我只有幾分鐘|不知道讀什麼|怎麼安排/.test(command) && !/\d+\s*(小時|分鐘|分)/.test(command);
 	if (asksForTime || state?.state === "awaiting_time") {
 		await saveConversationState(event.source?.userId, "awaiting_time", { prompt: "請提供今天可用的學習時間" });

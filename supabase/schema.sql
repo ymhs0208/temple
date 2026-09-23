@@ -54,6 +54,9 @@ create table if not exists public.user_preferences (
   weekly_enabled boolean not null default false,
   updated_at timestamptz not null default now()
 );
+alter table public.user_preferences add column if not exists reminders_paused_until date;
+alter table public.user_preferences add column if not exists reminder_snoozed_until timestamptz;
+alter table public.user_preferences add column if not exists reminder_snoozed_kind text check (reminder_snoozed_kind in ('morning', 'evening'));
 -- LINE 對話狀態：讓 webhook 能記住使用者正在看任務、規劃時間或剛完成任務。
 create table if not exists public.line_conversation_states (
   line_user_id text primary key references public.users(line_user_id) on delete cascade,

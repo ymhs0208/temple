@@ -10,6 +10,9 @@ type Preference = {
   morning_enabled: boolean;
   evening_enabled: boolean;
   weekly_enabled: boolean;
+  reminders_paused_until?: string | null;
+  reminder_snoozed_until?: string | null;
+  reminder_snoozed_kind?: "morning" | "evening" | null;
 };
 
 const timeAt = (timeZone: string) => {
@@ -36,20 +39,26 @@ export async function POST(request: Request) {
     const db = supabaseAdmin();
     const { data: preferences, error } = await db
       .from("user_preferences")
-      .select("user_id, morning_time, evening_time, timezone, morning_enabled, evening_enabled, weekly_enabled")
+      .select("user_id, morning_time, evening_time, timezone, morning_enabled, evening_enabled, weekly_enabled, reminders_paused_until, reminder_snoozed_until, reminder_snoozed_kind")
       .eq("notifications_enabled", true);
     if (error) throw error;
 
     let sent = 0;
     for (const preference of (preferences ?? []) as Preference[]) {
       const timezone = preference.timezone || "Asia/Taipei";
+      const localDate = dateAt(timezone);
+      if (preference.reminders_paused_until === localDate) continue;
+      const snoozeAt = preference.reminder_snoozed_until ? new Date(preference.reminder_snoozed_until).getTime() : 0;
+      const snoozeDue = Boolean(snoozeAt && snoozeAt <= Date.now());
+      if (snoozeAt && !snoozeDue) continue;
       const now = timeAt(timezone);
       const weekly = preference.weekly_enabled && new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short" }).format(new Date()) === "Sun";
-      const kind = preference.morning_enabled && preference.morning_time.slice(0, 5) === now
+      const scheduledKind = preference.morning_enabled && preference.morning_time.slice(0, 5) === now
         ? "morning"
         : (preference.evening_enabled || weekly) && preference.evening_time.slice(0, 5) === now
           ? "evening"
           : null;
+      const kind = snoozeDue && preference.reminder_snoozed_kind ? preference.reminder_snoozed_kind : scheduledKind;
       if (!kind) continue;
 
       const { data: user, error: userError } = await db
@@ -61,8 +70,8 @@ export async function POST(request: Request) {
 
       const { data: plan } = await db.from("study_plans").select("id, weak_subject, created_at").eq("user_id", preference.user_id).order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (!plan) continue;
-      const summary = kind === "evening" && weekly ? await weeklyLearning(preference.user_id, dateAt(timezone)) : null;
-      const { data: tasks, error: tasksError } = await db.from("daily_tasks").select("id, subject, minutes, sort_order").eq("plan_id", plan.id).eq("task_date", dateAt(timezone)).order("sort_order");
+      const summary = kind === "evening" && weekly ? await weeklyLearning(preference.user_id, localDate) : null;
+      const { data: tasks, error: tasksError } = await db.from("daily_tasks").select("id, subject, minutes, sort_order").eq("plan_id", plan.id).eq("task_date", localDate).order("sort_order");
       if (tasksError) throw tasksError;
       if (!tasks?.length && !summary) continue;
       const todayTasks = tasks ?? [];
@@ -77,7 +86,7 @@ export async function POST(request: Request) {
 
       const { data: delivery, error: deliveryError } = await db
         .from("line_notification_deliveries")
-        .insert({ user_id: preference.user_id, reminder_kind: kind, scheduled_for: dateAt(timezone) })
+        .insert({ user_id: preference.user_id, reminder_kind: kind, scheduled_for: localDate })
         .select("id")
         .maybeSingle();
       if (deliveryError || !delivery) continue;
@@ -87,7 +96,10 @@ export async function POST(request: Request) {
         headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}`, "X-Line-Retry-Key": delivery.id },
         body: JSON.stringify({ to: user.line_user_id, messages: [message] }),
       });
-      if (response.ok) sent += 1;
+      if (response.ok) {
+        sent += 1;
+        if (snoozeDue) await db.from("user_preferences").update({ reminder_snoozed_until: null, reminder_snoozed_kind: null }).eq("user_id", preference.user_id);
+      }
       else await db.from("line_notification_deliveries").delete().eq("id", delivery.id);
     }
     return Response.json({ ok: true, sent });

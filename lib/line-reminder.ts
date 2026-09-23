@@ -36,7 +36,7 @@ function progressBar(rate: number, color: string) {
   ] : [] };
 }
 
-function card(title: string, intro: string, lines: string[], label: string, path: "/today" | "/progress", color: string, rate?: number, tasks: ReminderTask[] = []) {
+function card(title: string, intro: string, lines: string[], label: string, path: "/today" | "/progress", color: string, rate?: number, tasks: ReminderTask[] = [], footerActions: Record<string, unknown>[] = []) {
   return {
     type: "flex" as const, altText: `${title}・${intro}`.slice(0, 400),
     contents: {
@@ -56,6 +56,7 @@ function card(title: string, intro: string, lines: string[], label: string, path
       ] },
       footer: { type: "box", layout: "vertical", paddingAll: "24px", paddingTop: "0px", contents: [
         { type: "button", style: "primary", color, action: { type: "uri", label, uri: learningUrl(path) } },
+        ...footerActions,
       ] },
     },
   };
@@ -74,7 +75,10 @@ export function buildReminderFlex({ kind, displayName, tasks, pending, dayNumber
       coachHint,
       ...(pending.length > 5 ? ["其餘任務請至網站查看"] : [])],
     kind === "morning" ? "前往今日任務" : "繼續學習", "/today", kind === "morning" ? "#245747" : "#394D70",
-    tasks.length ? (tasks.length - pending.length) / tasks.length * 100 : 0, pending);
+    tasks.length ? (tasks.length - pending.length) / tasks.length * 100 : 0, pending, [
+      { type: "button", style: "link", color: "#62726B", height: "sm", action: { type: "postback", label: "延後 30 分鐘", data: `action=snooze_reminder&minutes=30&kind=${kind}`, displayText: "延後 30 分鐘" } },
+      { type: "button", style: "link", color: "#AA5146", height: "sm", action: { type: "postback", label: "今天暫停", data: "action=pause_reminders", displayText: "今天暫停提醒" } },
+    ]);
 }
 export function buildWeeklyFlex({ minutes, rate, subjects, period, heading }: {
   minutes: number; rate: number; subjects: string[]; period: string; heading?: string;

@@ -11,5 +11,8 @@ alter table public.user_preferences add column if not exists evening_time time n
 alter table public.user_preferences add column if not exists timezone text not null default 'Asia/Taipei';
 alter table public.user_preferences add column if not exists morning_enabled boolean not null default true;
 alter table public.user_preferences add column if not exists evening_enabled boolean not null default true;
+alter table public.user_preferences add column if not exists reminders_paused_until date;
+alter table public.user_preferences add column if not exists reminder_snoozed_until timestamptz;
+alter table public.user_preferences add column if not exists reminder_snoozed_kind text check (reminder_snoozed_kind in ('morning', 'evening'));
 alter table public.user_preferences add column if not exists weekly_enabled boolean not null default false;
 alter table public.user_preferences enable row level security;

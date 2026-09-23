@@ -7,6 +7,7 @@ export function isPilgrimageCommand(command: string) {
 
 export function buildPilgrimageFlex() {
   return {
+    quickReply: { items: [{ type: "action", action: { type: "message", label: "我的集章卡", text: "巡禮集章卡" } }] },
     type: "flex", altText: "七媽巡禮・七個關卡地點、故事與地圖導航",
     contents: {
       type: "carousel",
