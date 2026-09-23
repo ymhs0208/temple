@@ -4,6 +4,7 @@ import { buildPilgrimageFlex, isPilgrimageCommand } from "@/lib/line-pilgrimage"
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { taipeiDate } from "@/lib/taipei-date";
 import { learningUrl, flexHeader, flexTaskRow } from "@/lib/line-reminder";
+import { buildTimePlan, parseAvailableMinutes } from "@/lib/line-planning";
 
 type LineEvent = {
   type?: string;
@@ -189,19 +190,6 @@ async function learningContext(lineUserId?: string) {
   return { user, plan, tasks: taskList, completed: new Set((completions ?? []).map((row) => row.task_id)) };
 }
 
-function oneHourPlan(tasks: { subject: string; minutes: number; task_type: string; id: string }[], completed: Set<string>, source: string) {
-  const match = source.match(/(\d+(?:\.\d+)?)\s*(小時|分鐘|分)/);
-  const capacity = match ? Math.max(15, Math.round(Number(match[1]) * (match[2] === "小時" ? 60 : 1))) : 60;
-  let remaining = capacity;
-  const selected = tasks.filter((task) => !completed.has(task.id)).flatMap((task) => {
-    if (remaining <= 0) return [];
-    const minutes = Math.min(task.minutes, remaining);
-    remaining -= minutes;
-    return [{ ...task, minutes }];
-  });
-  return selected.length ? selected : tasks.slice(0, 1).map((task) => ({ ...task, minutes: Math.min(task.minutes, capacity) }));
-}
-
 function helpText() {
   return "我是文昌同行 ✦\n你的每日學習陪伴，把大目標拆成今天的一小步。\n\n我可以幫你：\n・安排今天要讀什麼\n・新增或完成學習任務\n・查看進度與連續成就\n・在需要時給你一句鼓勵\n・開啟七媽巡禮與集章卡\n\n直接傳「今天讀什麼」就開始，或點下方選單。";
 }
@@ -336,7 +324,7 @@ async function answer(event: LineEvent) {
 		]);
 		return;
 	}
-	const asksForTime = /幫我安排|幫我排|我只有幾分鐘|不知道讀什麼|怎麼安排/.test(command) && !/\d+(?:\.\d+)?\s*(小時|分鐘|分)/.test(command);
+	const asksForTime = /幫我安排|幫我排|我只有|只剩|剩下|不知道讀什麼|怎麼安排|能讀多久|有多少時間/.test(command) && !parseAvailableMinutes(command);
 	if (asksForTime) {
 		await saveConversationState(event.source?.userId, "awaiting_time", { prompt: "請提供今天可用的學習時間" });
 		await replyTextWithQuickReplies(event.replyToken, "可以，今天你有多少時間？我會依未完成任務幫你排好順序。", [
@@ -376,10 +364,18 @@ async function answer(event: LineEvent) {
     else await reply(event.replyToken, "今天還沒有任務。請先在文昌同行建立或調整你的學習計畫。");
     return;
   }
-  if (command.includes("只有") || command.includes("剩") || command.includes("小時") || command.includes("分鐘")) {
+	if (/只有|只剩|剩下|小時|分鐘|半小時/.test(command) && parseAvailableMinutes(command)) {
     await saveConversationState(event.source?.userId, "planning_time", { source: command });
-    const selected = oneHourPlan(tasks, completed, command);
-    await replyFlex(event.replyToken, "為你排好這段時間", "今天不用一次完成全部，先完成這份安排就好。完成後可直接點卡片下方的「完成」按鈕。", selected, [
+	    const planResult = buildTimePlan(tasks, completed, command);
+	    if (!planResult.tasks.length) {
+	      await replyTextWithQuickReplies(event.replyToken, "今天的未完成任務已經排完了 ✦\n想繼續累積，可以到網站新增下一個小目標。", [
+	        { label: "查看成果", text: "查看進度" },
+	        { label: "新增任務", text: "新增任務" },
+	      ]);
+	      return;
+	    }
+	    const plannedMinutes = planResult.tasks.reduce((sum, task) => sum + task.minutes, 0);
+	    await replyFlex(event.replyToken, "為你排好這段時間", `你有 ${planResult.capacity} 分鐘，我先排了 ${plannedMinutes} 分鐘。先完成這幾項就很好；完成後可直接在 LINE 打卡。`, planResult.tasks, [
       { label: "查看進度", text: "查看進度" },
       { label: "我有更多時間", text: "我有一小時" },
     ]);
