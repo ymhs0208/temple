@@ -857,13 +857,39 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
         token = idToken,
         nextWishes = wishes,
     ) => {
+        const normalizedTasks = nextTasks.map((task) => ({
+            ...task,
+            subject: typeof task.subject === "string" ? task.subject.trim() : "",
+            minutes: Number(task.minutes),
+            detail:
+                typeof task.detail === "string" && task.detail.trim()
+                    ? task.detail.trim()
+                    : "自主學習",
+            done: task.done === true,
+        }));
+        // While an input is being edited it can briefly be empty or zero. Keep
+        // that local draft, but never send an invalid transient task to the API.
+        const canSync =
+            normalizedTasks.length > 0 &&
+            normalizedTasks.length <= 5 &&
+            normalizedTasks.every(
+                (task) =>
+                    task.subject.length > 0 &&
+                    Number.isInteger(task.minutes) &&
+                    task.minutes >= 1 &&
+                    task.minutes <= 180,
+            );
+        if (!canSync) {
+            localStorage.setItem(PENDING_SYNC_KEY, "1");
+            return Promise.resolve(false);
+        }
         if (!token) {
             localStorage.setItem(PENDING_SYNC_KEY, "1");
             return Promise.resolve(false);
         }
         const payload = {
             idToken: token,
-            tasks: nextTasks,
+            tasks: normalizedTasks,
             hours,
             weak,
             goal,
