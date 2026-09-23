@@ -14,6 +14,10 @@
 
 提醒卡的「延後 30 分鐘」會在延後時間重新送出同類提醒；「今天暫停」會跳過當日後續提醒，隔天自動恢復。兩個狀態儲存在 `user_preferences`，需要套用 `supabase/notification-preferences.sql` 的欄位遷移。
 
+## 同步資料保護
+
+同步已改為合併今天的任務，保留 LINE 或其他裝置新增的資料，不再整批刪除今天任務。正式環境請先執行 `supabase/safe-sync-learning-progress.sql` 更新既有的 `sync_learning_progress` RPC；只更新程式碼而未執行這個遷移時，舊 RPC 仍會整批重建任務。
+
 ## 驗證
 
 `node --test tests/line-achievements.test.mjs tests/line-pilgrimage.test.mjs tests/line-flex.test.mjs`

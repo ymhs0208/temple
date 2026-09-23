@@ -2,7 +2,7 @@ import { verifyLineIdToken } from "@/lib/line";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { taipeiDate } from "@/lib/taipei-date";
 
-type IncomingTask = { subject: string; minutes: number; detail: string; done: boolean };
+type IncomingTask = { id?: string; subject: string; minutes: number; detail: string; done: boolean };
 type CompanionState = {
   oracleTickets?: number; oraclePlanksSpent?: number; oracleResultId?: number | null;
   dailyFortuneTask?: unknown; focusRewardMinutes?: number; wishReflections?: unknown;
@@ -30,16 +30,30 @@ async function legacySync(
   const { data: plan, error: planError } = existing ? await db.from("study_plans").update(planData).eq("id", existing.id).select("id").single() : await db.from("study_plans").insert(planData).select("id").single();
   if (planError || !plan) throw planError ?? new Error("Plan unavailable");
   const taskDate = taipeiDate();
-  const { error: deleteError } = await db.from("daily_tasks").delete().eq("plan_id", plan.id).eq("task_date", taskDate);
-  if (deleteError) throw deleteError;
-  const { data: storedTasks, error: taskError } = await db.from("daily_tasks").insert(body.tasks.map((task, index) => ({ plan_id: plan.id, task_date: taskDate, subject: task.subject, minutes: task.minutes, task_type: task.detail, sort_order: index }))).select("id, sort_order");
-  if (taskError || !storedTasks) throw taskError ?? new Error("Task unavailable");
-  const completed = storedTasks.filter((task) => body.tasks[task.sort_order]?.done).map((task) => ({ task_id: task.id, user_id: user.id }));
-  if (completed.length) {
-    const { error: completionError } = await db.from("task_completions").upsert(completed, { onConflict: "task_id,user_id" });
-    if (completionError) throw completionError;
+  const { data: existingTasks, error: existingTaskError } = await db.from("daily_tasks").select("id, sort_order").eq("plan_id", plan.id).eq("task_date", taskDate).order("sort_order");
+  if (existingTaskError) throw existingTaskError;
+  let insertedCount = 0;
+  for (const [index, task] of body.tasks.entries()) {
+    const existingTask = (task.id && existingTasks?.find((row) => row.id === task.id)) ?? (!task.id ? existingTasks?.[index] : undefined);
+    if (existingTask) {
+      const { error } = await db.from("daily_tasks").update({ subject: task.subject, minutes: task.minutes, task_type: task.detail }).eq("id", existingTask.id);
+      if (error) throw error;
+      if (task.done) {
+        const { error: completionError } = await db.from("task_completions").upsert({ task_id: existingTask.id, user_id: user.id }, { onConflict: "task_id,user_id" });
+        if (completionError) throw completionError;
+      }
+    } else {
+      const nextOrder = (existingTasks?.reduce((max, row) => Math.max(max, row.sort_order), -1) ?? -1) + 1 + insertedCount;
+      const { data: inserted, error } = await db.from("daily_tasks").insert({ plan_id: plan.id, task_date: taskDate, subject: task.subject, minutes: task.minutes, task_type: task.detail, sort_order: nextOrder }).select("id").single();
+      if (error || !inserted) throw error ?? new Error("Task unavailable");
+      insertedCount += 1;
+      if (task.done) {
+        const { error: completionError } = await db.from("task_completions").upsert({ task_id: inserted.id, user_id: user.id }, { onConflict: "task_id,user_id" });
+        if (completionError) throw completionError;
+      }
+    }
   }
-  const { error: energyError } = await db.from("energy").upsert({ user_id: user.id, current_energy: Math.min(100, 42 + completed.length * 10), prayer_planks: 10 + completed.length, updated_at: new Date().toISOString() });
+  const { error: energyError } = await db.from("energy").upsert({ user_id: user.id, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
   if (energyError) throw energyError;
 }
 
@@ -50,6 +64,7 @@ export async function POST(request: Request) {
     if (typeof body.idToken !== "string" || !body.idToken.trim() || typeof body.hours !== "number" || !Number.isFinite(body.hours) || body.hours <= 0 || typeof body.weak !== "string" || !body.weak.trim() || !Array.isArray(body.tasks) || !body.tasks.length)
       return Response.json({ error: "請先完成學習計畫，再同步到雲端。", code: "SYNC_REQUEST" }, { status: 400 });
     const normalizedTasks = body.tasks.map((task) => ({
+      id: typeof task?.id === "string" ? task.id : undefined,
       subject: typeof task?.subject === "string" ? task.subject.trim().slice(0, 40) : "",
       minutes: typeof task?.minutes === "number" ? task.minutes : Number(task?.minutes),
       detail: typeof task?.detail === "string" && task.detail.trim() ? task.detail.trim().slice(0, 120) : "自主學習",

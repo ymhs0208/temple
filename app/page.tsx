@@ -16,6 +16,7 @@ import "./integrated-header.css";
 import confetti from "canvas-confetti"; // ✨ 新增這行引入紙花套件
 
 type Task = {
+    id?: string;
     subject: string;
     minutes: number;
     detail: string;
@@ -859,6 +860,7 @@ export default function Home({ initialTab = "today" }: { initialTab?: Tab }) {
     ) => {
         const normalizedTasks = nextTasks.map((task) => ({
             ...task,
+            id: task.id,
             subject: typeof task.subject === "string" ? task.subject.trim() : "",
             minutes: Number(task.minutes),
             detail:

@@ -98,6 +98,9 @@ declare
   v_user_id uuid;
   v_plan_id uuid;
   v_completed_count integer;
+  v_task record;
+  v_existing_id uuid;
+  v_next_order integer;
 begin
   if jsonb_typeof(p_tasks) <> 'array' or jsonb_array_length(p_tasks) not between 1 and 5 then
     raise exception 'invalid task list';
@@ -120,23 +123,36 @@ begin
     wishes = excluded.wishes
   returning id into v_plan_id;
 
-  delete from daily_tasks where plan_id = v_plan_id and task_date = p_task_date;
-  insert into daily_tasks (plan_id, task_date, subject, minutes, task_type, sort_order)
-  select v_plan_id, p_task_date, task.subject, task.minutes, task.detail, task.position - 1
-  from jsonb_to_recordset(p_tasks) with ordinality as task(subject text, minutes integer, detail text, done boolean, position bigint)
-  where length(trim(task.subject)) > 0 and length(trim(task.detail)) > 0 and task.minutes between 1 and 180;
-
-  if (select count(*) from daily_tasks where plan_id = v_plan_id and task_date = p_task_date) <> jsonb_array_length(p_tasks) then
-    raise exception 'invalid task data';
-  end if;
-
-  insert into task_completions (task_id, user_id)
-  select daily_tasks.id, v_user_id
-  from daily_tasks
-  join jsonb_to_recordset(p_tasks) with ordinality as task(subject text, minutes integer, detail text, done boolean, position bigint)
-    on daily_tasks.sort_order = task.position - 1
-  where daily_tasks.plan_id = v_plan_id and daily_tasks.task_date = p_task_date and coalesce(task.done, false)
-  on conflict (task_id, user_id) do nothing;
+  -- Merge the submitted snapshot into today's rows. Existing rows are matched
+  -- by id when available, or by position for legacy clients without ids.
+  -- Rows absent from this request are intentionally preserved so LINE and
+  -- another device cannot be erased by a stale browser snapshot.
+  for v_task in
+    select id as task_id, subject, minutes, detail, done, position
+    from jsonb_to_recordset(p_tasks) with ordinality as task(id text, subject text, minutes integer, detail text, done boolean, position bigint)
+  loop
+    if length(trim(v_task.subject)) = 0 or v_task.minutes is null or v_task.minutes not between 1 and 180 then
+      raise exception 'invalid task data';
+    end if;
+    v_existing_id := null;
+    if v_task.task_id is not null and v_task.task_id ~* '^[0-9a-f-]{36}$' then
+      select id into v_existing_id from daily_tasks where id = v_task.task_id::uuid and plan_id = v_plan_id and task_date = p_task_date;
+    end if;
+    if v_existing_id is null then
+      select id into v_existing_id from daily_tasks where plan_id = v_plan_id and task_date = p_task_date and sort_order = v_task.position - 1;
+    end if;
+    if v_existing_id is null then
+      select coalesce(max(sort_order), -1) + 1 into v_next_order from daily_tasks where plan_id = v_plan_id and task_date = p_task_date;
+      insert into daily_tasks (plan_id, task_date, subject, minutes, task_type, sort_order)
+      values (v_plan_id, p_task_date, trim(v_task.subject), v_task.minutes, coalesce(nullif(trim(v_task.detail), ''), '自主學習'), v_next_order)
+      returning id into v_existing_id;
+    else
+      update daily_tasks set subject = trim(v_task.subject), minutes = v_task.minutes, task_type = coalesce(nullif(trim(v_task.detail), ''), '自主學習') where id = v_existing_id;
+    end if;
+    if coalesce(v_task.done, false) then
+      insert into task_completions (task_id, user_id) values (v_existing_id, v_user_id) on conflict (task_id, user_id) do nothing;
+    end if;
+  end loop;
 
   select count(*) into v_completed_count
   from task_completions
@@ -146,8 +162,8 @@ begin
   insert into energy (user_id, current_energy, prayer_planks, updated_at)
   values (v_user_id, least(100, 42 + v_completed_count * 10), 10 + v_completed_count, now())
   on conflict (user_id) do update set
-    current_energy = excluded.current_energy,
-    prayer_planks = excluded.prayer_planks,
+    current_energy = greatest(energy.current_energy, excluded.current_energy),
+    prayer_planks = greatest(energy.prayer_planks, excluded.prayer_planks),
     updated_at = excluded.updated_at;
 end;
 $$;
