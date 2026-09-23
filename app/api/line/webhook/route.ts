@@ -245,7 +245,7 @@ async function answer(event: LineEvent) {
     return;
   }
   if (event.type !== "message" || event.message?.type !== "text") {
-    if (postback?.get("action") !== "complete") return;
+    if (!["complete", "add_task_confirm"].includes(postback?.get("action") ?? "")) return;
   }
   const originalCommand = event.message?.text?.trim() ?? "";
   const command = originalCommand.replace(/\s+/g, "");
